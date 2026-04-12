@@ -62,7 +62,8 @@ Room-temp guidance (100% hydration starter, 75% dough hydration):
 | 24 C (75 F) | 30% | 15% | 10% | 5%   |
 | 21 C (70 F) | 40% | 20% | 12% | 7%   |
 
-Cold retard (3-5 C after 2-4 h bulk at 24 C, 75% hydration):
+Cold retard (fridge hardcoded at 4°C; bulk duration scales with dough temp:
+2h@27°C, 3h@24°C, 4h@21°C; 75% hydration):
 
 | Cold retard duration | Starter % |
 |---|---|
@@ -108,6 +109,11 @@ All percentages relative to **total flour weight (F)**.
     additional_water = F * hydration - starter_water
     salt             = F * 0.02
 
+### Rounding
+All gram values rounded to nearest integer (Math.round). Baker's percentages
+displayed to 0 decimal places. Rounding applied at display only — internal
+calculations use full precision.
+
 ---
 
 ## UI Layout
@@ -145,17 +151,25 @@ Now ---------------------------------------------------------- +48 h
 
 **Below the timeline — derived schedule** (read-only, updates live):
 ```
-Sun 21:00  Feed your starter
-Mon 07:00  Mix dough  <-- mix handle
-Mon 08:00  Bulk fermentation begins
-Mon 12:00  Shape & refrigerate
-Mon 12:00  Cold retard begins
-Tue 08:00  Remove from fridge, preheat oven
-Tue 09:00  Bake  <-- bake handle
-Tue 10:00  Ready to eat
+Sun 21:00  Feed your starter           ← mix - 10h
+Mon 07:00  Mix & bulk fermentation     ← mix handle
+Mon 10:00  Shape & refrigerate         ← mix + bulk duration (3h at 24°C)
+Mon 10:00  Cold retard begins          ← shape time
+Tue 07:45  Remove from fridge          ← bake - 1h15m (preheat + temper)
+Tue 08:15  Preheat oven               ← bake - 45m
+Tue 09:00  Bake                        ← bake handle
+Tue 09:45  Out of oven                 ← bake + 45m
+Tue 10:15  Ready to eat               ← bake + 1h15m (45m bake + 30m cool)
 ```
 
-- Starter feed time = mix time - 10 h (adjusts with dough temp)
+**Fixed durations:**
+- Starter feed: 10h before mix
+- Bulk fermentation: 3h at 24°C (2h at 27°C, 4h at 21°C — linear interpolation)
+- Preheat oven: 45 min
+- Bake: 45 min
+- Cool before eating: 30 min
+- Remove from fridge → preheat: 30 min tempering
+
 - Method (counter vs fridge) auto-selected from window; user can override and see
   the zone recalculate
 
@@ -612,6 +626,21 @@ This is the riskiest UI piece. Everything else works without it.
 | 16 | Time arithmetic: use `date-fns` in adapters to avoid DST edge cases |
 | 17 | Starter % clamped so base_flour stays positive (derived from starter_hydration) |
 | 18 | Timeline drag: debounce use-case invocation to prevent UI jank |
+| 19 | Rounding: all gram values rounded to nearest integer, displayed with 0 decimals |
+| 20 | Fridge temperature: hardcoded 4°C, not user-adjustable in v1 |
+| 21 | Schedule fixed durations: preheat 45 min, bake 45 min, cool 30 min |
+| 22 | Mix = bulk start (no autolyse gap); "Mix dough" and "Bulk fermentation begins" are a single event |
+| 23 | Default starter %: 10% (green zone for 14h window at 24°C / 75% hydration) |
+| 24 | Cold retard bulk split: 3h at 24°C, scales with temp (2h@27°C, 4h@21°C, linear interpolation) |
+| 25 | Starter feed time: fixed 10h before mix (temp adjustment deferred to future iteration) |
+| 26 | Zone boundaries scale with temp and hydration using same Ratkowsky + water activity models as starter % |
+| 27 | Timeline debounce: 150ms after handle rest |
+| 28 | Custom hydration: clicking any preset re-selects it and closes custom input |
+| 29 | Leavening switch: sourdough-specific inputs (starter %, hydration, zone, schedule) hide when yeast selected; yeast row hides when sourdough selected |
+| 30 | Yeast recipes: show simplified proof schedule (mix, first rise 1.5h, shape, second rise 45min, preheat, bake, ready) |
+| 31 | Walking skeleton (Slice 1) defaults to yeast; Slice 2 changes app default to sourdough |
+| 32 | Override reset: "Use recommended" link restores auto-calculated starter % and method |
+| 33 | Mobile: timeline touch targets min 44px; drag handles use press-and-drag gesture |
 
 ---
 

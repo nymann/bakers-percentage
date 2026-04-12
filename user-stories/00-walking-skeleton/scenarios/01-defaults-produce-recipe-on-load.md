@@ -22,4 +22,5 @@ And the finished loaf weight shows 800g
 - F = 919.5 / (1 + 0.75 + 0.02) = 519.5g
 - Flour ≈ 520g, Water ≈ 390g, Salt ≈ 10g, Yeast ≈ 5g
 - Total slightly exceeds target dough because yeast weight is excluded from flour formula per baker's math convention
-- Exact rounding rules determined during implementation
+- All gram values rounded to nearest integer (Math.round); internal calculations use full precision
+- This scenario uses the Slice 1 yeast default. After Slice 2 ships, the app default changes to sourdough (see Story 04, scenario 06)
