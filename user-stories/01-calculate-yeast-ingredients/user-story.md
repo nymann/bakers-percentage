@@ -8,7 +8,8 @@ As a home baker, I want to adjust loaf count, weight, and yeast type and see ing
 
 ## Acceptance Criteria
 - Changing loaf count updates total weight but per-loaf weights stay the same
+- Multiple loaves shows both per-loaf and total ingredient weights
 - Changing finished weight recalculates flour, water, salt, yeast
-- Selecting instant yeast: yeast = F x 1%
-- Selecting fresh yeast: yeast = F x 3%
+- Selecting instant yeast: yeast = F × 1%
+- Selecting fresh yeast: yeast = F × 3%
 - Results update live as inputs change

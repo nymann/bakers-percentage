@@ -8,18 +8,18 @@ Given the app loads for the first time
 When the page finishes rendering
 Then the results table shows:
   | Ingredient | Grams | Baker's % |
-  | Flour      | 437   | 100%      |
-  | Water      | 328   | 75%       |
-  | Salt       | 9     | 2%        |
-  | Yeast      | 4     | 1%        |
-And the total dough weight is approximately 778g
+  | Flour      | 520   | 100%      |
+  | Water      | 390   | 75%       |
+  | Salt       | 10    | 2%        |
+  | Yeast      | 5     | 1%        |
+And the total dough weight is approximately 925g
 And the finished loaf weight shows 800g
 ```
 
 ## Notes
 - Defaults: 1 loaf, 800g finished, 75% hydration, instant yeast, 2% salt, 13% bake-off
-- Target dough = 800 / (1 - 0.13) = 919.5g
-- F = 919.5 / (1 + 0.75 + 0.02) = 519.2g — wait, let me recalculate
-- F = 919.5 / (1 + 0.75 + 0.02) = 919.5 / 1.77 = 519.5g
-- Flour = 519.5g, Water = 389.6g, Salt = 10.4g, Yeast = 5.2g
-- Exact values TBD — hand-calc to be verified during implementation
+- Target dough = 800 / (1 − 0.13) = 919.5g
+- F = 919.5 / (1 + 0.75 + 0.02) = 519.5g
+- Flour ≈ 520g, Water ≈ 390g, Salt ≈ 10g, Yeast ≈ 5g
+- Total slightly exceeds target dough because yeast weight is excluded from flour formula per baker's math convention
+- Exact rounding rules determined during implementation

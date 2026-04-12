@@ -16,3 +16,4 @@ As a sourdough baker, I want to drag mix and bake handles on a visual timeline w
 - Dragging either handle live-updates schedule, starter %, and method
 - Dragging mix handle into red zone shows warning and disables recipe output
 - Use-case invocation debounced during drag
+- Replaces the datetime picker from Slice 3

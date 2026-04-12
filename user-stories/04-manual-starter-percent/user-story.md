@@ -7,8 +7,12 @@
 As a sourdough baker, I want to enter my own starter percentage and see the recipe split flour and water into base and starter contributions, so that I can use my experience to control fermentation.
 
 ## Acceptance Criteria
-- Selecting sourdough leavening reveals starter % and starter hydration inputs
+- Sourdough is the default leavening on first load
+- Selecting sourdough reveals starter %, starter hydration, and dough temperature inputs
 - Starter hydration defaults to 100%
-- Recipe shows base flour, water, salt, and starter as separate rows
+- Dough temperature defaults to 24°C (in advanced section)
+- Recipe shows base flour, additional water, salt, and starter as separate rows
 - Starter flour and starter water are correctly subtracted from totals
 - Starter % clamped so base flour remains positive
+- Dough temperature clamped to 15–35°C
+- Starter hydration clamped to 50–200%

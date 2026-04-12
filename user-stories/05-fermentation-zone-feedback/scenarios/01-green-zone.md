@@ -3,8 +3,8 @@
 ## Scenario Outline
 
 ```gherkin
-Given sourdough is selected at 24C and 75% hydration
-When the fermentation window is <hours> hours
+Given sourdough is selected at 24°C and 75% hydration
+When the user enters <hours> hours for fermentation duration
 Then the zone indicator shows green
 
 Examples:

@@ -8,12 +8,14 @@ As a home baker, I want to see a complete recipe with real ingredient weights th
 
 ## Acceptance Criteria
 - App loads with defaults: 1 loaf, 800g, 75% hydration, instant yeast, 2% salt, 13% bake-off loss
-- CalculateRecipe use case executes with defaults on load
-- ResultsTable renders flour, water, salt, and yeast in grams
-- Gram values match baker's math hand-calculation for the defaults
-- Hexagonal architecture in place: domain, application (ports + use cases), adapters (driving + driven)
-- Architecture tests enforce dependency rules (domain depends on nothing, application depends on domain + ports only, adapters depend on ports + domain)
+- Results table renders flour, water, salt, and yeast in grams with baker's percentages
+- Gram values match baker's math for the defaults
+- All inputs and results visible without scrolling on a single page
+
+## Non-Functional Requirements
+- Hexagonal architecture: domain, application (ports + use cases), adapters (driving + driven)
+- Architecture tests enforce dependency rules
 - Deployed to GitHub Pages via CI on every push to main
 
 ## Purpose
-Proves the full vertical slice: Vue driving adapter -> use case -> domain objects -> rendered output. Also establishes the ports & adapters structure, architecture enforcement tests, and a working deployment pipeline. The thinnest possible end-to-end that's shippable.
+Proves the full vertical slice: Vue driving adapter → use case → domain → rendered output. The thinnest possible end-to-end that's shippable.
