@@ -190,6 +190,12 @@ Inputs are clamped to sane ranges with clear feedback:
 | Bake-off loss | 5-25% | Clamp, show note |
 | Bake time | Now + 4 h to now + 48 h | Disable red-zone handles |
 | Mix-to-bake window | >= 4 h | Red zone warning, recipe disabled |
+| Starter % | Capped so base_flour > 0 | Clamp, show note |
+
+**Starter % upper bound:** At high starter % with high starter hydration, the
+flour contributed by the starter can approach or exceed total flour weight F.
+Enforce: `starter_pct < (1 + starter_hydration) / starter_hydration` so that
+`base_flour` remains positive. UI clamps before domain construction.
 
 Domain objects enforce these invariants at construction.
 
@@ -247,6 +253,8 @@ interface FermentationPort {
 }
 
 // application/port/TimePort.ts
+// All time arithmetic uses date-fns internally (via adapters) to avoid
+// DST boundary bugs when schedules span midnight or 24-48 h windows.
 interface TimePort {
   now(): Date
 }
@@ -561,6 +569,8 @@ UI: `TimelineSlider` replaces datetime picker
 - Zone-coloured background
 - Draggable mix + bake handles with 15-min snap
 - Live recalculation on drag
+- Debounce use-case invocation during drag (fire on handle rest, not per pixel)
+  to avoid jank from repeated logistic/Ratkowsky calculations
 Tests: driving adapter (handle interactions, zone rendering)
 
 This is the riskiest UI piece. Everything else works without it.
@@ -574,6 +584,7 @@ This is the riskiest UI piece. Everything else works without it.
 - **Vite** — static build, zero backend
 - **Vitest** — unit + contract tests
 - **Vue Test Utils** — driving adapter (component) tests
+- **date-fns** — immutable date arithmetic (DST-safe schedule calculations)
 - **Tailwind CSS** — styling
 - Deploy: GitHub Pages, Netlify, or Cloudflare Pages
 
@@ -598,6 +609,9 @@ This is the riskiest UI piece. Everything else works without it.
 | 13 | Validation: domain enforces invariants; UI clamps inputs before construction |
 | 14 | Delivery: five incremental slices, each independently shippable |
 | 15 | Driving adapter tests: Vue Test Utils with stubbed use cases |
+| 16 | Time arithmetic: use `date-fns` in adapters to avoid DST edge cases |
+| 17 | Starter % clamped so base_flour stays positive (derived from starter_hydration) |
+| 18 | Timeline drag: debounce use-case invocation to prevent UI jank |
 
 ---
 
