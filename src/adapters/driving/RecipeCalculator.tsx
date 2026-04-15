@@ -467,7 +467,7 @@ function RecipeCalculatorView() {
                     onChange={(e) => recommendation.overrideMethod(e.target.value as FermentationMethod)}
                   >
                     <option value="same-day">Counter (same-day)</option>
-                    <option value="cold-retard">Fridge (cold retard)</option>
+                    <option value="cold-retard">Fridge (overnight)</option>
                   </select>
                 </label>
               </div>
