@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateSchedule, type ScheduleConfig } from '../../src/domain/BakingSchedule'
+import { createSchedule, type ScheduleConfig } from '../../src/domain/BakingSchedule'
 
 describe('generateSchedule: same-day at 24C', () => {
   const bakeTime = new Date('2026-04-16T18:00:00')
@@ -11,7 +11,7 @@ describe('generateSchedule: same-day at 24C', () => {
     totalHours: 6,
   }
 
-  const events = generateSchedule(config)
+  const events = createSchedule(config).events
 
   it('returns 7 events (no cold retard steps)', () => {
     expect(events).toHaveLength(7)
@@ -73,7 +73,7 @@ describe('generateSchedule: yeast', () => {
     totalHours: 0,
   }
 
-  const events = generateSchedule(config)
+  const events = createSchedule(config).events
 
   it('returns 8 events', () => {
     expect(events).toHaveLength(8)
@@ -142,13 +142,13 @@ describe('generateSchedule: starter feed tracks mix time', () => {
     { tempC: 24, label: '24C (bulk 3h)' },
     { tempC: 27, label: '27C (bulk 2h)' },
   ])('at $label, feed is always 10h before mix', ({ tempC }) => {
-    const events = generateSchedule({
+    const events = createSchedule({
       bakeTime,
       leavingType: 'sourdough',
       doughTempC: tempC,
       fermentationMethod: 'cold-retard',
       totalHours: 24,
-    })
+    }).events
 
     const mix = events.find(e => e.name === 'Mix & bulk fermentation')!
     const feed = events.find(e => e.name === 'Feed your starter')!
@@ -161,13 +161,13 @@ describe('generateSchedule: starter feed tracks mix time', () => {
     { tempC: 24, label: '24C' },
     { tempC: 27, label: '27C' },
   ])('same-day at $label also has feed 10h before mix', ({ tempC }) => {
-    const events = generateSchedule({
+    const events = createSchedule({
       bakeTime,
       leavingType: 'sourdough',
       doughTempC: tempC,
       fermentationMethod: 'same-day',
       totalHours: 6,
-    })
+    }).events
 
     const mix = events.find(e => e.name === 'Mix & bulk fermentation')!
     const feed = events.find(e => e.name === 'Feed your starter')!
@@ -186,7 +186,7 @@ describe('generateSchedule: cold retard at 24C', () => {
     totalHours: 24,
   }
 
-  const events = generateSchedule(config)
+  const events = createSchedule(config).events
 
   it('returns 9 events', () => {
     expect(events).toHaveLength(9)

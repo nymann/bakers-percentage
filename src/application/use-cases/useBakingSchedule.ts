@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { generateSchedule, type ScheduleEvent } from '../../domain/BakingSchedule'
+import { createSchedule, type ScheduleEvent } from '../../domain/BakingSchedule'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
 import type { FermentationMethod } from '../../domain/StarterRecommendation'
 
@@ -11,7 +11,7 @@ export function useBakingSchedule(
   totalHours: number,
 ): ScheduleEvent[] {
   return useMemo(
-    () => generateSchedule({ bakeTime, leavingType, doughTempC, fermentationMethod, totalHours }),
+    () => createSchedule({ bakeTime, leavingType, doughTempC, fermentationMethod, totalHours }).events,
     [bakeTime, leavingType, doughTempC, fermentationMethod, totalHours],
   )
 }
