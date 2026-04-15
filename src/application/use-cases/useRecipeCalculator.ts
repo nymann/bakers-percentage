@@ -212,6 +212,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   return {
     recipe,
+    hydration,
     loaves,
     salt,
     bakeOffLoss,

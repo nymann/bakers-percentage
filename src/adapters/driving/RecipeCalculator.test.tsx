@@ -1061,3 +1061,45 @@ describe('Scenario 04: selecting fresh yeast shows 3% yeast', () => {
     expect(yeastCells).toContain('3%')
   })
 })
+
+describe('Scenario 04 (story 05): default fermentation duration', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+  }
+
+  it('shows fermentation duration defaulting to 14h with green zone', () => {
+    renderWithFlags(allFlags)
+
+    const durationInput = screen.getByRole('spinbutton', {
+      name: /fermentation duration/i,
+    })
+    expect(durationInput).toHaveValue(14)
+
+    expect(screen.getByText(/green/i)).toBeInTheDocument()
+  })
+
+  it('hides fermentation zone when flag is off', () => {
+    renderWithFlags({ ...allFlags, 'fermentation-zone-feedback': false })
+
+    expect(
+      screen.queryByRole('spinbutton', { name: /fermentation duration/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('hides fermentation zone when yeast is selected', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const leaveningSelect = screen.getByRole('combobox', {
+      name: /leavening type/i,
+    })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    expect(
+      screen.queryByRole('spinbutton', { name: /fermentation duration/i }),
+    ).not.toBeInTheDocument()
+  })
+})

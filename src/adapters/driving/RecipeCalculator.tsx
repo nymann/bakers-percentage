@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
+import { useFermentationZone } from '../../application/use-cases/useFermentationZone'
 import type { YeastType } from '../../domain/Recipe'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
 import { HYDRATION_PRESETS } from '../../domain/Hydration'
@@ -174,6 +175,7 @@ function RecipeCalculatorView() {
   const manualStarterEnabled = useFeatureFlag('manual-starter-percent')
   const {
     recipe,
+    hydration,
     loaves,
     salt,
     bakeOffLoss,
@@ -200,6 +202,9 @@ function RecipeCalculatorView() {
 
   const hydrationPresetEnabled = useFeatureFlag('hydration-preset')
   const validationEnabled = useFeatureFlag('validate-basic-inputs')
+  const fermentationZoneEnabled = useFeatureFlag('fermentation-zone-feedback')
+
+  const fermentation = useFermentationZone(doughTemperature, hydration)
 
   const weightInput = useNumberInput(
     recipe.finishedWeightPerLoaf,
@@ -219,6 +224,7 @@ function RecipeCalculatorView() {
     changeStarterHydration(n / 100), leavingType,
   )
   const doughTemperatureInput = useNumberInput(doughTemperature, changeDoughTemperature, leavingType)
+  const fermentationDurationInput = useNumberInput(fermentation.duration, fermentation.changeFermentationDuration, leavingType)
 
   return (
     <section
@@ -378,6 +384,30 @@ function RecipeCalculatorView() {
             </>
           )}
         </fieldset>
+      )}
+
+      {fermentationZoneEnabled && leavingType === 'sourdough' && (
+        <div style={{ marginBottom: tokens.spacing.md }}>
+          <div style={{ marginBottom: tokens.spacing.sm }}>
+            <label>
+              Fermentation duration (h){' '}
+              <input
+                type="number"
+                value={fermentationDurationInput.value}
+                onChange={(e) => fermentationDurationInput.onChange(e.target.value)}
+                onBlur={fermentationDurationInput.onBlur}
+              />
+            </label>
+            {validationEnabled && <ClampNote result={fermentation.clampNote} />}
+          </div>
+          <p role="status">
+            Fermentation zone:{' '}
+            <strong>{fermentation.zone.charAt(0).toUpperCase() + fermentation.zone.slice(1)}</strong>
+          </p>
+          {fermentation.warning && (
+            <p role="alert">{fermentation.warning}</p>
+          )}
+        </div>
       )}
 
       <Table>

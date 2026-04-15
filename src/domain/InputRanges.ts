@@ -18,6 +18,7 @@ export const BAKE_OFF_LOSS_RANGE: InputRange = { min: 0.05, max: 0.25, unit: '%'
 
 export const STARTER_HYDRATION_RANGE: InputRange = { min: 0.5, max: 2.0, unit: '%' }
 export const DOUGH_TEMPERATURE_RANGE: InputRange = { min: 15, max: 35, unit: '°C' }
+export const FERMENTATION_DURATION_RANGE: InputRange = { min: 1, max: 72, unit: 'h' }
 
 export function starterPercentRange(hydration: number, starterHydration: number): InputRange {
   return { min: 0.01, max: Math.min(0.99, hydration / starterHydration), unit: '%' }

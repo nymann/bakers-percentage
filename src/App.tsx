@@ -7,6 +7,7 @@ const featureFlags = createInMemoryFeatureFlags({
   'hydration-preset': true,
   'validate-basic-inputs': true,
   'manual-starter-percent': true,
+  'fermentation-zone-feedback': true,
 })
 
 export function App() {
