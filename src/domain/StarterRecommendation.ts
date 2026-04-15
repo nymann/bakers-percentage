@@ -15,14 +15,14 @@ export type StarterRecommendation = {
 const BULK_HOURS_AT_REF = 3
 const REF_TEMP = 24
 const BULK_TEMP_SCALE = 3
-const MIN_COLD_HOURS = 6
+const SAME_DAY_MAX_HOURS = 12
 
 function bulkHours(tempC: number): number {
   return BULK_HOURS_AT_REF + (REF_TEMP - tempC) / BULK_TEMP_SCALE
 }
 
 export function hasColdPhase(window: FermentationWindow): boolean {
-  return window.totalHours > bulkHours(window.doughTempC) + MIN_COLD_HOURS
+  return window.totalHours > SAME_DAY_MAX_HOURS
 }
 
 const A0 = 2.8777
