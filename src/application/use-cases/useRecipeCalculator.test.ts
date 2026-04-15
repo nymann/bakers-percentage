@@ -245,6 +245,24 @@ describe('useRecipeCalculator', () => {
     expect(result.current.clampNotes.starterPercent.clamped).toBe(true)
   })
 
+  it('clamps dough temperature below minimum to 15', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeDoughTemperature(10))
+
+    expect(result.current.doughTemperature).toBe(15)
+    expect(result.current.clampNotes.doughTemperature.clamped).toBe(true)
+  })
+
+  it('clamps dough temperature above maximum to 35', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeDoughTemperature(40))
+
+    expect(result.current.doughTemperature).toBe(35)
+    expect(result.current.clampNotes.doughTemperature.clamped).toBe(true)
+  })
+
   it('recalculates when finished weight changes', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 

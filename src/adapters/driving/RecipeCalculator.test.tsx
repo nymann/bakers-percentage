@@ -717,6 +717,39 @@ describe('Scenario 03 (story 04): clamp starter % for positive base flour', () =
   })
 })
 
+describe('Scenario 04 (story 04): clamp dough temperature to valid range', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+  }
+
+  it.each([
+    { input: '10', result: 15 },
+    { input: '40', result: 35 },
+  ])(
+    'clamps dough temperature $input to $result and shows range note',
+    async ({ input, result }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const advanced = screen.getByRole('group', { name: /advanced/i })
+      const tempInput = within(advanced).getByRole('spinbutton', {
+        name: /dough temperature/i,
+      })
+      await user.clear(tempInput)
+      await user.type(tempInput, input)
+
+      expect(
+        screen.getByText(/valid range.*15.*35/i),
+      ).toBeInTheDocument()
+
+      await user.tab()
+      expect(tempInput).toHaveValue(result)
+    },
+  )
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })
