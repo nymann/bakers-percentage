@@ -419,6 +419,37 @@ describe('Scenario 01 (story 03): clamp loaves to valid range', () => {
   })
 })
 
+describe('Scenario 02 (story 03): clamp finished weight to valid range', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'validate-basic-inputs': true,
+  }
+
+  it.each([
+    { input: '50', result: 100 },
+    { input: '6000', result: 5000 },
+  ])(
+    'clamps finished weight $input to $result and shows range note',
+    async ({ input, result }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const weightInput = screen.getByRole('spinbutton', {
+        name: /finished weight/i,
+      })
+      await user.clear(weightInput)
+      await user.type(weightInput, input)
+
+      expect(
+        screen.getByText(/valid range.*100.*5000/i),
+      ).toBeInTheDocument()
+
+      await user.tab()
+      expect(weightInput).toHaveValue(result)
+    },
+  )
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })
