@@ -14,6 +14,8 @@ import {
   LOAVES_RANGE,
   FINISHED_WEIGHT_RANGE,
   HYDRATION_RANGE,
+  SALT_RANGE,
+  BAKE_OFF_LOSS_RANGE,
   type ClampResult,
 } from '../../domain/InputRanges'
 
@@ -28,17 +30,23 @@ type ClampNotes = {
   loaves: ClampResult
   finishedWeight: ClampResult
   hydration: ClampResult
+  salt: ClampResult
+  bakeOffLoss: ClampResult
 }
 
 const INITIAL_CLAMP_NOTES: ClampNotes = {
   loaves: { value: DEFAULTS.loaves, clamped: false, range: LOAVES_RANGE },
   finishedWeight: { value: DEFAULTS.finishedWeight, clamped: false, range: FINISHED_WEIGHT_RANGE },
   hydration: { value: 0.75, clamped: false, range: HYDRATION_RANGE },
+  salt: { value: DEFAULTS.salt, clamped: false, range: SALT_RANGE },
+  bakeOffLoss: { value: DEFAULTS.bakeOffLoss, clamped: false, range: BAKE_OFF_LOSS_RANGE },
 }
 
 export function useRecipeCalculator() {
   const [finishedWeight, setFinishedWeight] = useState(DEFAULTS.finishedWeight)
   const [loaves, setLoaves] = useState(DEFAULTS.loaves)
+  const [salt, setSalt] = useState(DEFAULTS.salt)
+  const [bakeOffLoss, setBakeOffLoss] = useState(DEFAULTS.bakeOffLoss)
   const [yeastType, setYeastType] = useState<YeastType>('instant')
   const [hydrationSelection, setHydrationSelection] =
     useState<HydrationSelection>({ mode: 'preset', preset: 'Open crumb' })
@@ -47,13 +55,14 @@ export function useRecipeCalculator() {
   const recipe = useMemo(
     () =>
       calculateRecipe({
-        ...DEFAULTS,
         finishedWeight,
         loaves,
+        salt,
+        bakeOffLoss,
         hydration: hydrationPercentage(hydrationSelection),
         yeast: yeastPercentage(yeastType),
       }),
-    [finishedWeight, loaves, hydrationSelection, yeastType],
+    [finishedWeight, loaves, salt, bakeOffLoss, hydrationSelection, yeastType],
   )
 
   const changeFinishedWeight = useCallback(
@@ -103,14 +112,36 @@ export function useRecipeCalculator() {
     [],
   )
 
+  const changeSalt = useCallback(
+    (percentage: number) => {
+      const result = clampToRange(percentage, SALT_RANGE)
+      setSalt(result.value)
+      setClampNotes((prev) => ({ ...prev, salt: result }))
+    },
+    [],
+  )
+
+  const changeBakeOffLoss = useCallback(
+    (percentage: number) => {
+      const result = clampToRange(percentage, BAKE_OFF_LOSS_RANGE)
+      setBakeOffLoss(result.value)
+      setClampNotes((prev) => ({ ...prev, bakeOffLoss: result }))
+    },
+    [],
+  )
+
   return {
     recipe,
     loaves,
+    salt,
+    bakeOffLoss,
     yeastType,
     hydrationSelection,
     clampNotes,
     changeFinishedWeight,
     changeLoafCount,
+    changeSalt,
+    changeBakeOffLoss,
     selectYeastType,
     selectHydrationPreset,
     enterCustomHydration,

@@ -491,6 +491,49 @@ describe('Scenario 03 (story 03): clamp hydration to valid range', () => {
   )
 })
 
+describe('Scenario 04 (story 03): clamp salt to valid range', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'validate-basic-inputs': true,
+  }
+
+  it.each([
+    { input: '-1', result: 0 },
+    { input: '8', result: 5 },
+  ])(
+    'clamps salt $input to $result and shows range note',
+    async ({ input, result }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const advanced = screen.getByRole('group', { name: /advanced/i })
+      const saltInput = within(advanced).getByRole('spinbutton', {
+        name: /salt/i,
+      })
+      await user.clear(saltInput)
+      await user.type(saltInput, input)
+
+      expect(
+        screen.getByText(/valid range.*0.*5/i),
+      ).toBeInTheDocument()
+
+      await user.tab()
+      expect(saltInput).toHaveValue(result)
+    },
+  )
+
+  it('hides advanced section when validate-basic-inputs flag is off', () => {
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'validate-basic-inputs': false,
+    })
+
+    expect(
+      screen.queryByRole('group', { name: /advanced/i }),
+    ).not.toBeInTheDocument()
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })

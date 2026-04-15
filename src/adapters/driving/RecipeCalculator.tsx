@@ -93,11 +93,15 @@ function RecipeCalculatorView() {
   const {
     recipe,
     loaves,
+    salt,
+    bakeOffLoss,
     yeastType,
     hydrationSelection,
     clampNotes,
     changeFinishedWeight,
     changeLoafCount,
+    changeSalt,
+    changeBakeOffLoss,
     selectYeastType,
     selectHydrationPreset,
     enterCustomHydration,
@@ -112,6 +116,12 @@ function RecipeCalculatorView() {
     changeFinishedWeight,
   )
   const loafInput = useNumberInput(loaves, changeLoafCount)
+  const saltInput = useNumberInput(Math.round(salt * 100), (n) =>
+    changeSalt(n / 100),
+  )
+  const bakeOffLossInput = useNumberInput(Math.round(bakeOffLoss * 100), (n) =>
+    changeBakeOffLoss(n / 100),
+  )
 
   return (
     <section
@@ -197,6 +207,40 @@ function RecipeCalculatorView() {
             </>
           )}
         </div>
+      )}
+
+      {validationEnabled && (
+        <fieldset
+          role="group"
+          aria-label="Advanced"
+          style={{ marginBottom: tokens.spacing.md, border: 'none', padding: 0 }}
+        >
+          <legend>Advanced</legend>
+          <div style={{ marginBottom: tokens.spacing.sm }}>
+            <label>
+              Salt (%){' '}
+              <input
+                type="number"
+                value={saltInput.value}
+                onChange={(e) => saltInput.onChange(e.target.value)}
+                onBlur={saltInput.onBlur}
+              />
+            </label>
+            <ClampNote result={clampNotes.salt} />
+          </div>
+          <div style={{ marginBottom: tokens.spacing.sm }}>
+            <label>
+              Bake-off loss (%){' '}
+              <input
+                type="number"
+                value={bakeOffLossInput.value}
+                onChange={(e) => bakeOffLossInput.onChange(e.target.value)}
+                onBlur={bakeOffLossInput.onBlur}
+              />
+            </label>
+            <ClampNote result={clampNotes.bakeOffLoss} />
+          </div>
+        </fieldset>
       )}
 
       <Table>

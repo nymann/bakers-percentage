@@ -160,6 +160,24 @@ describe('useRecipeCalculator', () => {
     expect(result.current.clampNotes.loaves.clamped).toBe(false)
   })
 
+  it('clamps salt below minimum to 0', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeSalt(-0.01))
+
+    expect(result.current.clampNotes.salt.value).toBe(0)
+    expect(result.current.clampNotes.salt.clamped).toBe(true)
+  })
+
+  it('clamps salt above maximum to 5%', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeSalt(0.08))
+
+    expect(result.current.clampNotes.salt.value).toBe(0.05)
+    expect(result.current.clampNotes.salt.clamped).toBe(true)
+  })
+
   it('recalculates when finished weight changes', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 
