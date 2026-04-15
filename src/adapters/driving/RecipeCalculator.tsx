@@ -188,10 +188,13 @@ function RecipeCalculatorView() {
             Custom
           </button>
           {hydrationSelection.mode === 'custom' && (
-            <CustomHydrationInput
-              percentage={hydrationSelection.percentage}
-              onChange={enterCustomHydration}
-            />
+            <>
+              <CustomHydrationInput
+                percentage={hydrationSelection.percentage}
+                onChange={enterCustomHydration}
+              />
+              {validationEnabled && <ClampNote result={clampNotes.hydration} />}
+            </>
           )}
         </div>
       )}

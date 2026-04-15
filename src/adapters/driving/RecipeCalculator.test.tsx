@@ -450,6 +450,47 @@ describe('Scenario 02 (story 03): clamp finished weight to valid range', () => {
   )
 })
 
+describe('Scenario 03 (story 03): clamp hydration to valid range', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'hydration-preset': true,
+    'validate-basic-inputs': true,
+  }
+
+  it.each([
+    { input: '30', result: 50 },
+    { input: '110', result: 100 },
+  ])(
+    'clamps hydration $input to $result and shows range note',
+    async ({ input, result }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const hydrationGroup = screen.getByRole('group', {
+        name: /hydration/i,
+      })
+      await user.click(
+        within(hydrationGroup).getByRole('button', {
+          name: /custom hydration/i,
+        }),
+      )
+
+      const customInput = screen.getByRole('spinbutton', {
+        name: /custom hydration/i,
+      })
+      await user.clear(customInput)
+      await user.type(customInput, input)
+
+      expect(
+        screen.getByText(/valid range.*50.*100/i),
+      ).toBeInTheDocument()
+
+      await user.tab()
+      expect(customInput).toHaveValue(result)
+    },
+  )
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })
