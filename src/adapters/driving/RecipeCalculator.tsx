@@ -145,7 +145,7 @@ function RecipeCalculatorView() {
               onClick={() => selectHydrationPreset(preset.name)}
               style={{ marginRight: tokens.spacing.sm }}
             >
-              {preset.name} ({Math.round(preset.percentage * 100)}%)
+              {preset.name}
             </button>
           ))}
           <button
