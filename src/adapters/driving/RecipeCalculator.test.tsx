@@ -1128,3 +1128,28 @@ describe('Scenario 01 (story 05): green zone for ideal window', () => {
     },
   )
 })
+
+describe('Scenario 02 (story 05): yellow zone for tight/very sour window', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+  }
+
+  it.each([4, 5, 30, 36])(
+    'shows yellow zone for %ih at 24°C/75%%',
+    async (hours) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const durationInput = screen.getByRole('spinbutton', {
+        name: /fermentation duration/i,
+      })
+      await user.clear(durationInput)
+      await user.type(durationInput, String(hours))
+
+      expect(screen.getByText(/yellow/i)).toBeInTheDocument()
+    },
+  )
+})
