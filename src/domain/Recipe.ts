@@ -9,15 +9,6 @@ export function yeastPercentage(type: YeastType): number {
   return YEAST_PERCENTAGES[type]
 }
 
-export type RecipeInput = {
-  finishedWeight: number
-  loaves: number
-  hydration: number
-  salt: number
-  yeast: number
-  bakeOffLoss: number
-}
-
 export type IngredientRow = {
   name: string
   grams: number
@@ -30,26 +21,41 @@ export type RecipeOutput = {
   finishedWeightPerLoaf: number
 }
 
-export function calculateRecipe(input: RecipeInput): RecipeOutput {
-  const targetDoughPerLoaf = input.finishedWeight / (1 - input.bakeOffLoss)
-  const flour = targetDoughPerLoaf / (1 + input.hydration + input.salt)
+export interface RecipeCalculation {
+  calculate(): RecipeOutput
+}
 
-  const water = flour * input.hydration
-  const salt = flour * input.salt
-  const yeast = flour * input.yeast
+export class YeastRecipe implements RecipeCalculation {
+  constructor(
+    readonly finishedWeight: number,
+    readonly loaves: number,
+    readonly hydration: number,
+    readonly salt: number,
+    readonly yeast: number,
+    readonly bakeOffLoss: number,
+  ) {}
 
-  const totalDoughPerLoaf = flour + water + salt + yeast
+  calculate(): RecipeOutput {
+    const targetDoughPerLoaf = this.finishedWeight / (1 - this.bakeOffLoss)
+    const flour = targetDoughPerLoaf / (1 + this.hydration + this.salt)
 
-  const ingredients: IngredientRow[] = [
-    { name: 'Flour', grams: Math.round(flour), percentage: 1 },
-    { name: 'Water', grams: Math.round(water), percentage: input.hydration },
-    { name: 'Salt', grams: Math.round(salt), percentage: input.salt },
-    { name: 'Yeast', grams: Math.round(yeast), percentage: input.yeast },
-  ]
+    const water = flour * this.hydration
+    const salt = flour * this.salt
+    const yeast = flour * this.yeast
 
-  return {
-    ingredients,
-    totalDoughWeight: Math.round(totalDoughPerLoaf * input.loaves),
-    finishedWeightPerLoaf: input.finishedWeight,
+    const totalDoughPerLoaf = flour + water + salt + yeast
+
+    const ingredients: IngredientRow[] = [
+      { name: 'Flour', grams: Math.round(flour), percentage: 1 },
+      { name: 'Water', grams: Math.round(water), percentage: this.hydration },
+      { name: 'Salt', grams: Math.round(salt), percentage: this.salt },
+      { name: 'Yeast', grams: Math.round(yeast), percentage: this.yeast },
+    ]
+
+    return {
+      ingredients,
+      totalDoughWeight: Math.round(totalDoughPerLoaf * this.loaves),
+      finishedWeightPerLoaf: this.finishedWeight,
+    }
   }
 }

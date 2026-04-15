@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
-  calculateRecipe,
+  YeastRecipe,
   yeastPercentage,
   type YeastType,
 } from '../../domain/Recipe'
 import {
-  calculateSourdoughRecipe,
+  SourdoughRecipe,
   type LeavingType,
 } from '../../domain/SourdoughRecipe'
 import {
@@ -79,23 +79,8 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
   const recipe = useMemo(
     () =>
       leavingType === 'sourdough'
-        ? calculateSourdoughRecipe({
-            finishedWeight,
-            loaves,
-            salt,
-            bakeOffLoss,
-            hydration,
-            starterPercent,
-            starterHydration,
-          })
-        : calculateRecipe({
-            finishedWeight,
-            loaves,
-            salt,
-            bakeOffLoss,
-            hydration,
-            yeast: yeastPercentage(yeastType),
-          }),
+        ? new SourdoughRecipe(finishedWeight, loaves, hydration, salt, bakeOffLoss, starterPercent, starterHydration).calculate()
+        : new YeastRecipe(finishedWeight, loaves, hydration, salt, yeastPercentage(yeastType), bakeOffLoss).calculate(),
     [finishedWeight, loaves, salt, bakeOffLoss, hydration, yeastType, leavingType, starterPercent, starterHydration],
   )
 
