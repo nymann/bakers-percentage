@@ -184,6 +184,15 @@ describe('useRecipeCalculator', () => {
     expect(result.current.leavingType).toBe('yeast')
   })
 
+  it('starts with sourdough when initialLeavening is sourdough', () => {
+    const { result } = renderHook(() => useRecipeCalculator('sourdough'))
+
+    expect(result.current.leavingType).toBe('sourdough')
+    expect(result.current.starterPercent).toBe(0.1)
+    expect(result.current.starterHydration).toBe(1.0)
+    expect(result.current.doughTemperature).toBe(24)
+  })
+
   it('switches to sourdough leavening and exposes starter defaults', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 

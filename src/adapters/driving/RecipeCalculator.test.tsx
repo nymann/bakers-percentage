@@ -783,6 +783,47 @@ describe('Scenario 05 (story 04): clamp starter hydration to valid range', () =>
   )
 })
 
+describe('Scenario 06 (story 04): sourdough is default leavening', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+  }
+
+  it('defaults to sourdough with starter inputs visible', () => {
+    renderWithFlags(allFlags)
+
+    const leaveningSelect = screen.getByRole('combobox', {
+      name: /leavening type/i,
+    })
+    expect(leaveningSelect).toHaveValue('sourdough')
+
+    // Starter % input visible
+    expect(
+      screen.getByRole('spinbutton', { name: /starter \(%\)/i }),
+    ).toBeInTheDocument()
+
+    // Starter hydration shows 100%
+    const advanced = screen.getByRole('group', { name: /advanced/i })
+    const starterHydrationInput = within(advanced).getByRole('spinbutton', {
+      name: /starter hydration/i,
+    })
+    expect(starterHydrationInput).toHaveValue(100)
+  })
+
+  it('shows sourdough recipe rows on first load', () => {
+    renderWithFlags(allFlags)
+
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const ingredientNames = rows.slice(1).map((row) =>
+      within(row).getAllByRole('cell')[0].textContent,
+    )
+
+    expect(ingredientNames).toEqual(['Base flour', 'Water', 'Salt', 'Starter'])
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })
