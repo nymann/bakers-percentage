@@ -1,12 +1,5 @@
 export type FermentationMethod = 'same-day' | 'cold-retard'
 
-export type FermentationWindow = {
-  totalHours: number
-  doughTempC: number
-  hydration: number
-  starterHydration: number
-}
-
 export type StarterRecommendation = {
   method: FermentationMethod
   starterPercent: number
@@ -19,10 +12,6 @@ const SAME_DAY_MAX_HOURS = 12
 
 export function bulkHours(tempC: number): number {
   return BULK_HOURS_AT_REF + (REF_TEMP - tempC) / BULK_TEMP_SCALE
-}
-
-export function hasColdPhase(window: FermentationWindow): boolean {
-  return window.totalHours > SAME_DAY_MAX_HOURS
 }
 
 const A0 = 2.8777
@@ -48,15 +37,32 @@ function coldRetardStarterPercent(totalHours: number, tempC: number): number {
   return COLD_COEFFICIENT * Math.pow(coldHours, -COLD_EXPONENT)
 }
 
-export function recommendStarterPercent(window: FermentationWindow): StarterRecommendation {
-  if (hasColdPhase(window)) {
-    return {
-      method: 'cold-retard',
-      starterPercent: coldRetardStarterPercent(window.totalHours, window.doughTempC),
-    }
+export class FermentationWindow {
+  constructor(
+    readonly totalHours: number,
+    readonly doughTempC: number,
+    readonly hydration: number,
+    readonly starterHydration: number,
+  ) {}
+
+  get hasColdPhase(): boolean {
+    return this.totalHours > SAME_DAY_MAX_HOURS
   }
-  return {
-    method: 'same-day',
-    starterPercent: sameDayStarterPercent(window.totalHours, window.doughTempC),
+
+  withTotalHours(hours: number): FermentationWindow {
+    return new FermentationWindow(hours, this.doughTempC, this.hydration, this.starterHydration)
+  }
+
+  recommendStarterPercent(): StarterRecommendation {
+    if (this.hasColdPhase) {
+      return {
+        method: 'cold-retard',
+        starterPercent: coldRetardStarterPercent(this.totalHours, this.doughTempC),
+      }
+    }
+    return {
+      method: 'same-day',
+      starterPercent: sameDayStarterPercent(this.totalHours, this.doughTempC),
+    }
   }
 }

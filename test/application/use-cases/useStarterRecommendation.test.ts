@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useStarterRecommendation } from '../../../src/application/use-cases/useStarterRecommendation'
+import { FermentationWindow } from '../../../src/domain/StarterRecommendation'
 
 describe('Scenario 05: override starter percent', () => {
   it('auto-recommends starter % for a given window', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 6, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(6, 24, 0.75, 1.0)),
     )
 
     expect(result.current.recommendedPercent).toBeGreaterThan(0)
@@ -15,7 +16,7 @@ describe('Scenario 05: override starter percent', () => {
 
   it('uses manual override when user changes starter %', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 14, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(14, 24, 0.75, 1.0)),
     )
 
     const recommended = result.current.recommendedPercent
@@ -29,7 +30,7 @@ describe('Scenario 05: override starter percent', () => {
 
   it('reports auto-selected method', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 6, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(6, 24, 0.75, 1.0)),
     )
     expect(result.current.autoMethod).toBe('same-day')
     expect(result.current.effectiveMethod).toBe('same-day')
@@ -39,7 +40,7 @@ describe('Scenario 05: override starter percent', () => {
 describe('Scenario 06: override method', () => {
   it('auto-selects cold retard for long window', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 14, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(14, 24, 0.75, 1.0)),
     )
     expect(result.current.autoMethod).toBe('cold-retard')
     expect(result.current.effectiveMethod).toBe('cold-retard')
@@ -47,7 +48,7 @@ describe('Scenario 06: override method', () => {
 
   it('recalculates starter % when method is overridden to same-day', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 14, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(14, 24, 0.75, 1.0)),
     )
 
     const coldRetardPercent = result.current.recommendedPercent
@@ -63,7 +64,7 @@ describe('Scenario 06: override method', () => {
 describe('Scenario 08: reset to recommended', () => {
   it('clears starter % override', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 14, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(14, 24, 0.75, 1.0)),
     )
 
     act(() => result.current.overrideStarterPercent(0.25))
@@ -77,7 +78,7 @@ describe('Scenario 08: reset to recommended', () => {
 
   it('clears method override', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 14, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(14, 24, 0.75, 1.0)),
     )
 
     act(() => result.current.overrideMethod('same-day'))
@@ -91,7 +92,7 @@ describe('Scenario 08: reset to recommended', () => {
 
   it('clears both overrides at once', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 14, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(14, 24, 0.75, 1.0)),
     )
 
     act(() => {
@@ -107,14 +108,14 @@ describe('Scenario 08: reset to recommended', () => {
 
   it('hasAnyOverride is false when no overrides active', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 6, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(6, 24, 0.75, 1.0)),
     )
     expect(result.current.hasAnyOverride).toBe(false)
   })
 
   it('hasAnyOverride is true when either override active', () => {
     const { result } = renderHook(() =>
-      useStarterRecommendation({ totalHours: 14, doughTempC: 24, hydration: 0.75, starterHydration: 1.0 }),
+      useStarterRecommendation(new FermentationWindow(14, 24, 0.75, 1.0)),
     )
 
     act(() => result.current.overrideStarterPercent(0.25))

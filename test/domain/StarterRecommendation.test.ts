@@ -1,29 +1,15 @@
 import { describe, it, expect, test } from 'vitest'
-import {
-  hasColdPhase,
-  recommendStarterPercent,
-  type FermentationWindow,
-} from '../../src/domain/StarterRecommendation'
+import { FermentationWindow } from '../../src/domain/StarterRecommendation'
 
 describe('Scenario 01: same-day adapter selected for no cold phase', () => {
+  const window = new FermentationWindow(6, 24, 0.75, 1.0)
+
   it('selects same-day when window has no cold phase', () => {
-    const window: FermentationWindow = {
-      totalHours: 6,
-      doughTempC: 24,
-      hydration: 0.75,
-      starterHydration: 1.0,
-    }
-    expect(hasColdPhase(window)).toBe(false)
+    expect(window.hasColdPhase).toBe(false)
   })
 
   it('returns a starter percent using same-day path', () => {
-    const window: FermentationWindow = {
-      totalHours: 6,
-      doughTempC: 24,
-      hydration: 0.75,
-      starterHydration: 1.0,
-    }
-    const result = recommendStarterPercent(window)
+    const result = window.recommendStarterPercent()
     expect(result.method).toBe('same-day')
     expect(result.starterPercent).toBeGreaterThan(0)
     expect(result.starterPercent).toBeLessThan(1)
@@ -47,13 +33,8 @@ describe('Scenario 03: same-day starter % matches empirical table', () => {
   ])(
     'at $temp°C for $hours hours recommends within 15% of $expected',
     ({ temp, hours, expected }) => {
-      const window: FermentationWindow = {
-        totalHours: hours,
-        doughTempC: temp,
-        hydration: 0.75,
-        starterHydration: 1.0,
-      }
-      const result = recommendStarterPercent(window)
+      const window = new FermentationWindow(hours, temp, 0.75, 1.0)
+      const result = window.recommendStarterPercent()
       expect(result.method).toBe('same-day')
       const error = Math.abs(result.starterPercent - expected) / expected
       expect(error).toBeLessThanOrEqual(0.15)
@@ -70,13 +51,8 @@ describe('Scenario 04: cold retard starter % matches empirical table', () => {
     '$coldHours hours cold retard recommends within 20% of $expected',
     ({ coldHours, expected }) => {
       const bulkAt24 = 3
-      const window: FermentationWindow = {
-        totalHours: bulkAt24 + coldHours,
-        doughTempC: 24,
-        hydration: 0.75,
-        starterHydration: 1.0,
-      }
-      const result = recommendStarterPercent(window)
+      const window = new FermentationWindow(bulkAt24 + coldHours, 24, 0.75, 1.0)
+      const result = window.recommendStarterPercent()
       expect(result.method).toBe('cold-retard')
       const error = Math.abs(result.starterPercent - expected) / expected
       expect(error).toBeLessThanOrEqual(0.20)
@@ -85,24 +61,14 @@ describe('Scenario 04: cold retard starter % matches empirical table', () => {
 })
 
 describe('Scenario 02: cold retard adapter selected for overnight', () => {
+  const window = new FermentationWindow(16, 24, 0.75, 1.0)
+
   it('selects cold retard when window has cold phase', () => {
-    const window: FermentationWindow = {
-      totalHours: 16,
-      doughTempC: 24,
-      hydration: 0.75,
-      starterHydration: 1.0,
-    }
-    expect(hasColdPhase(window)).toBe(true)
+    expect(window.hasColdPhase).toBe(true)
   })
 
   it('returns a starter percent using cold-retard path', () => {
-    const window: FermentationWindow = {
-      totalHours: 16,
-      doughTempC: 24,
-      hydration: 0.75,
-      starterHydration: 1.0,
-    }
-    const result = recommendStarterPercent(window)
+    const result = window.recommendStarterPercent()
     expect(result.method).toBe('cold-retard')
     expect(result.starterPercent).toBeGreaterThan(0)
     expect(result.starterPercent).toBeLessThan(1)

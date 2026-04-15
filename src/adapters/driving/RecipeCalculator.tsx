@@ -6,7 +6,7 @@ import { useBakeTime } from '../../application/use-cases/useBakeTime'
 import { useBakingSchedule } from '../../application/use-cases/useBakingSchedule'
 import type { YeastType } from '../../domain/Recipe'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
-import type { FermentationMethod } from '../../domain/StarterRecommendation'
+import { FermentationWindow, type FermentationMethod } from '../../domain/StarterRecommendation'
 import { HYDRATION_PRESETS } from '../../domain/Hydration'
 import type { ClampResult } from '../../domain/InputRanges'
 import { useFeatureFlag } from '../../feature-flags'
@@ -239,12 +239,9 @@ function RecipeCalculatorView() {
     }
   }, [autoRecommendActive, bakeTime.duration, fermentation.changeFermentationDuration])
 
-  const recommendation = useStarterRecommendation({
-    totalHours: effectiveDuration,
-    doughTempC: doughTemperature,
-    hydration,
-    starterHydration,
-  })
+  const recommendation = useStarterRecommendation(
+    new FermentationWindow(effectiveDuration, doughTemperature, hydration, starterHydration),
+  )
 
   useEffect(() => {
     if (autoRecommendActive) {

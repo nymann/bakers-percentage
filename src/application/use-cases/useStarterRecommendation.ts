@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
-  recommendStarterPercent,
+  FermentationWindow,
   type FermentationMethod,
-  type FermentationWindow,
 } from '../../domain/StarterRecommendation'
 
 export function useStarterRecommendation(window: FermentationWindow) {
@@ -10,7 +9,7 @@ export function useStarterRecommendation(window: FermentationWindow) {
   const [methodOverride, setMethodOverride] = useState<FermentationMethod | null>(null)
 
   const autoResult = useMemo(
-    () => recommendStarterPercent(window),
+    () => window.recommendStarterPercent(),
     [window.totalHours, window.doughTempC, window.hydration, window.starterHydration],
   )
 
@@ -18,7 +17,7 @@ export function useStarterRecommendation(window: FermentationWindow) {
 
   const recommendation = useMemo(() => {
     if (methodOverride && methodOverride !== autoResult.method) {
-      return recommendStarterPercent({ ...window, totalHours: window.totalHours })
+      return window.recommendStarterPercent()
     }
     return autoResult
   }, [autoResult, methodOverride, window.totalHours, window.doughTempC, window.hydration, window.starterHydration])
@@ -27,12 +26,10 @@ export function useStarterRecommendation(window: FermentationWindow) {
     if (methodOverride === null || methodOverride === autoResult.method) {
       return autoResult.starterPercent
     }
-    // Recalculate with the overridden method by using a synthetic window
-    // that forces the desired method selection
     if (methodOverride === 'same-day') {
-      return recommendStarterPercent({ ...window, totalHours: Math.min(window.totalHours, 12) }).starterPercent
+      return window.withTotalHours(Math.min(window.totalHours, 12)).recommendStarterPercent().starterPercent
     }
-    return recommendStarterPercent({ ...window, totalHours: Math.max(window.totalHours, 13) }).starterPercent
+    return window.withTotalHours(Math.max(window.totalHours, 13)).recommendStarterPercent().starterPercent
   }, [autoResult, methodOverride, window.totalHours, window.doughTempC, window.hydration, window.starterHydration])
 
   const isOverridden = percentOverride !== null
