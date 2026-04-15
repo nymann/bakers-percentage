@@ -622,6 +622,60 @@ describe('Scenario 01 (story 04): selecting sourdough reveals starter inputs', (
   })
 })
 
+describe('Scenario 02 (story 04): recipe splits flour and water for starter', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'hydration-preset': true,
+  }
+
+  it('shows base flour, water, salt, starter rows with correct grams', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Default is sourdough with 10% starter. Change to 20%.
+    const starterInput = screen.getByRole('spinbutton', {
+      name: /starter \(%\)/i,
+    })
+    await user.clear(starterInput)
+    await user.type(starterInput, '20')
+
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    expect(cells).toEqual([
+      ['Base flour', '416', '80%'],
+      ['Water', '286', '75%'],
+      ['Salt', '10', '2%'],
+      ['Starter', '208', '20%'],
+    ])
+  })
+
+  it('total dough weight is the same regardless of starter percent', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Record total with default 10% starter
+    const totalBefore = screen.getByText(/total dough weight/i).textContent
+
+    // Change to 20% starter
+    const starterInput = screen.getByRole('spinbutton', {
+      name: /starter \(%\)/i,
+    })
+    await user.clear(starterInput)
+    await user.type(starterInput, '20')
+
+    const totalAfter = screen.getByText(/total dough weight/i).textContent
+    expect(totalAfter).toBe(totalBefore)
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })

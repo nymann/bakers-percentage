@@ -204,6 +204,36 @@ describe('useRecipeCalculator', () => {
     expect(result.current.leavingType).toBe('yeast')
   })
 
+  it('calculates sourdough recipe with split flour and water', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.selectLeavening('sourdough'))
+    act(() => result.current.changeStarterPercent(0.2))
+
+    const byName = (name: string) =>
+      result.current.recipe.ingredients.find((i) => i.name === name)!
+
+    expect(byName('Base flour').grams).toBe(416)
+    expect(byName('Base flour').percentage).toBeCloseTo(0.8)
+    expect(byName('Water').grams).toBe(286)
+    expect(byName('Water').percentage).toBeCloseTo(0.75)
+    expect(byName('Salt').grams).toBe(10)
+    expect(byName('Starter').grams).toBe(208)
+    expect(byName('Starter').percentage).toBeCloseTo(0.2)
+  })
+
+  it('sourdough total dough weight is unchanged by starter percent', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.selectLeavening('sourdough'))
+    const totalWith10 = result.current.recipe.totalDoughWeight
+
+    act(() => result.current.changeStarterPercent(0.2))
+    const totalWith20 = result.current.recipe.totalDoughWeight
+
+    expect(totalWith20).toBe(totalWith10)
+  })
+
   it('recalculates when finished weight changes', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 

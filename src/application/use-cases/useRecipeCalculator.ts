@@ -4,7 +4,10 @@ import {
   yeastPercentage,
   type YeastType,
 } from '../../domain/Recipe'
-import type { LeavingType } from '../../domain/SourdoughRecipe'
+import {
+  calculateSourdoughRecipe,
+  type LeavingType,
+} from '../../domain/SourdoughRecipe'
 import {
   hydrationPercentage,
   type HydrationPresetName,
@@ -71,17 +74,29 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
   const [doughTemperature, setDoughTemperature] = useState(DEFAULTS.doughTemperature)
   const [clampNotes, setClampNotes] = useState<ClampNotes>(INITIAL_CLAMP_NOTES)
 
+  const hydration = hydrationPercentage(hydrationSelection)
+
   const recipe = useMemo(
     () =>
-      calculateRecipe({
-        finishedWeight,
-        loaves,
-        salt,
-        bakeOffLoss,
-        hydration: hydrationPercentage(hydrationSelection),
-        yeast: yeastPercentage(yeastType),
-      }),
-    [finishedWeight, loaves, salt, bakeOffLoss, hydrationSelection, yeastType],
+      leavingType === 'sourdough'
+        ? calculateSourdoughRecipe({
+            finishedWeight,
+            loaves,
+            salt,
+            bakeOffLoss,
+            hydration,
+            starterPercent,
+            starterHydration,
+          })
+        : calculateRecipe({
+            finishedWeight,
+            loaves,
+            salt,
+            bakeOffLoss,
+            hydration,
+            yeast: yeastPercentage(yeastType),
+          }),
+    [finishedWeight, loaves, salt, bakeOffLoss, hydration, yeastType, leavingType, starterPercent, starterHydration],
   )
 
   const changeFinishedWeight = useCallback(
@@ -156,12 +171,12 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const changeStarterPercent = useCallback(
     (percentage: number) => {
-      const range = starterPercentRange(hydrationPercentage(hydrationSelection), starterHydration)
+      const range = starterPercentRange(hydration, starterHydration)
       const result = clampToRange(percentage, range)
       setStarterPercent(result.value)
       setClampNotes((prev) => ({ ...prev, starterPercent: result }))
     },
-    [hydrationSelection, starterHydration],
+    [hydration, starterHydration],
   )
 
   const changeStarterHydration = useCallback(
