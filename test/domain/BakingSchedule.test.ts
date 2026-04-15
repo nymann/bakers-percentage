@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateSchedule, type ScheduleConfig } from './BakingSchedule'
+import { generateSchedule, type ScheduleConfig } from '../../src/domain/BakingSchedule'
 
 describe('generateSchedule: same-day at 24C', () => {
   const bakeTime = new Date('2026-04-16T18:00:00')

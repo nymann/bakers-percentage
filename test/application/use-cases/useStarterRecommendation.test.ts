@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useStarterRecommendation } from './useStarterRecommendation'
+import { useStarterRecommendation } from '../../../src/application/use-cases/useStarterRecommendation'
 
 describe('Scenario 05: override starter percent', () => {
   it('auto-recommends starter % for a given window', () => {

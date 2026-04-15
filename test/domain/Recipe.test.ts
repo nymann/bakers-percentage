@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateRecipe, yeastPercentage } from './Recipe'
+import { calculateRecipe, yeastPercentage } from '../../src/domain/Recipe'
 
 describe('calculateRecipe', () => {
   const defaults = {

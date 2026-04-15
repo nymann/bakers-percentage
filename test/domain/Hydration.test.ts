@@ -3,7 +3,7 @@ import {
   hydrationPercentage,
   HYDRATION_PRESETS,
   type HydrationSelection,
-} from './Hydration'
+} from '../../src/domain/Hydration'
 
 describe('hydrationPercentage', () => {
   it('returns 68% for Classic preset', () => {

@@ -3,7 +3,7 @@ import {
   hasColdPhase,
   recommendStarterPercent,
   type FermentationWindow,
-} from './StarterRecommendation'
+} from '../../src/domain/StarterRecommendation'
 
 describe('Scenario 01: same-day adapter selected for no cold phase', () => {
   it('selects same-day when window has no cold phase', () => {

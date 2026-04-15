@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useFermentationZone } from './useFermentationZone'
+import { useFermentationZone } from '../../../src/application/use-cases/useFermentationZone'
 
 describe('useFermentationZone', () => {
   it('defaults to 14h duration with green zone at 24°C/75%', () => {

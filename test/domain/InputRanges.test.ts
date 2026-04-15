@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clampToRange, LOAVES_RANGE } from './InputRanges'
+import { clampToRange, LOAVES_RANGE } from '../../src/domain/InputRanges'
 
 describe('clampToRange', () => {
   it('returns value unchanged when within range', () => {

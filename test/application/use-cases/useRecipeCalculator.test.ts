@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useRecipeCalculator } from './useRecipeCalculator'
+import { useRecipeCalculator } from '../../../src/application/use-cases/useRecipeCalculator'
 
 describe('useRecipeCalculator', () => {
   it('returns default recipe on initial render', () => {

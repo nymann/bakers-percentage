@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { determineFermentationZone } from './FermentationZone'
+import { determineFermentationZone } from '../../src/domain/FermentationZone'
 
 describe('determineFermentationZone at reference conditions (24°C, 75%)', () => {
   it.each([6, 10, 14, 20, 24])(

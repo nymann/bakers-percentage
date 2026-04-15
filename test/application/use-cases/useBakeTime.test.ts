@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useBakeTime } from './useBakeTime'
+import { useBakeTime } from '../../../src/application/use-cases/useBakeTime'
 
 describe('useBakeTime', () => {
   function frozenNow(isoString: string) {
