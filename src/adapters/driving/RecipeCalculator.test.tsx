@@ -534,6 +534,38 @@ describe('Scenario 04 (story 03): clamp salt to valid range', () => {
   })
 })
 
+describe('Scenario 05 (story 03): clamp bake-off loss to valid range', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'validate-basic-inputs': true,
+  }
+
+  it.each([
+    { input: '2', result: 5 },
+    { input: '30', result: 25 },
+  ])(
+    'clamps bake-off loss $input to $result and shows range note',
+    async ({ input, result }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const advanced = screen.getByRole('group', { name: /advanced/i })
+      const bakeOffInput = within(advanced).getByRole('spinbutton', {
+        name: /bake-off loss/i,
+      })
+      await user.clear(bakeOffInput)
+      await user.type(bakeOffInput, input)
+
+      expect(
+        screen.getByText(/valid range.*5.*25/i),
+      ).toBeInTheDocument()
+
+      await user.tab()
+      expect(bakeOffInput).toHaveValue(result)
+    },
+  )
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })
