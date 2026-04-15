@@ -9,6 +9,13 @@ import {
   type HydrationPresetName,
   type HydrationSelection,
 } from '../../domain/Hydration'
+import {
+  clampToRange,
+  LOAVES_RANGE,
+  FINISHED_WEIGHT_RANGE,
+  HYDRATION_RANGE,
+  type ClampResult,
+} from '../../domain/InputRanges'
 
 const DEFAULTS = {
   finishedWeight: 800,
@@ -17,12 +24,25 @@ const DEFAULTS = {
   bakeOffLoss: 0.13,
 }
 
+type ClampNotes = {
+  loaves: ClampResult
+  finishedWeight: ClampResult
+  hydration: ClampResult
+}
+
+const INITIAL_CLAMP_NOTES: ClampNotes = {
+  loaves: { value: DEFAULTS.loaves, clamped: false, range: LOAVES_RANGE },
+  finishedWeight: { value: DEFAULTS.finishedWeight, clamped: false, range: FINISHED_WEIGHT_RANGE },
+  hydration: { value: 0.75, clamped: false, range: HYDRATION_RANGE },
+}
+
 export function useRecipeCalculator() {
   const [finishedWeight, setFinishedWeight] = useState(DEFAULTS.finishedWeight)
   const [loaves, setLoaves] = useState(DEFAULTS.loaves)
   const [yeastType, setYeastType] = useState<YeastType>('instant')
   const [hydrationSelection, setHydrationSelection] =
     useState<HydrationSelection>({ mode: 'preset', preset: 'Open crumb' })
+  const [clampNotes, setClampNotes] = useState<ClampNotes>(INITIAL_CLAMP_NOTES)
 
   const recipe = useMemo(
     () =>
@@ -37,12 +57,20 @@ export function useRecipeCalculator() {
   )
 
   const changeFinishedWeight = useCallback(
-    (grams: number) => setFinishedWeight(grams),
+    (grams: number) => {
+      const result = clampToRange(grams, FINISHED_WEIGHT_RANGE)
+      setFinishedWeight(result.value)
+      setClampNotes((prev) => ({ ...prev, finishedWeight: result }))
+    },
     [],
   )
 
   const changeLoafCount = useCallback(
-    (count: number) => setLoaves(count),
+    (count: number) => {
+      const result = clampToRange(count, LOAVES_RANGE)
+      setLoaves(result.value)
+      setClampNotes((prev) => ({ ...prev, loaves: result }))
+    },
     [],
   )
 
@@ -58,8 +86,11 @@ export function useRecipeCalculator() {
   )
 
   const enterCustomHydration = useCallback(
-    (percentage: number) =>
-      setHydrationSelection({ mode: 'custom', percentage }),
+    (percentage: number) => {
+      const result = clampToRange(percentage, HYDRATION_RANGE)
+      setHydrationSelection({ mode: 'custom', percentage: result.value })
+      setClampNotes((prev) => ({ ...prev, hydration: result }))
+    },
     [],
   )
 
@@ -77,6 +108,7 @@ export function useRecipeCalculator() {
     loaves,
     yeastType,
     hydrationSelection,
+    clampNotes,
     changeFinishedWeight,
     changeLoafCount,
     selectYeastType,

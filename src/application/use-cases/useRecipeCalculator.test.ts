@@ -133,6 +133,33 @@ describe('useRecipeCalculator', () => {
     })
   })
 
+  it('clamps loaf count below minimum to 1', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeLoafCount(0))
+
+    expect(result.current.loaves).toBe(1)
+    expect(result.current.clampNotes.loaves.clamped).toBe(true)
+  })
+
+  it('clamps loaf count above maximum to 20', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeLoafCount(25))
+
+    expect(result.current.loaves).toBe(20)
+    expect(result.current.clampNotes.loaves.clamped).toBe(true)
+  })
+
+  it('does not flag clamping for valid loaf count', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeLoafCount(5))
+
+    expect(result.current.loaves).toBe(5)
+    expect(result.current.clampNotes.loaves.clamped).toBe(false)
+  })
+
   it('recalculates when finished weight changes', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 

@@ -371,6 +371,54 @@ describe('Scenario 04 (story 02): returning to preset from custom hydration', ()
   })
 })
 
+describe('Scenario 01 (story 03): clamp loaves to valid range', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'validate-basic-inputs': true,
+  }
+
+  it.each([
+    { input: '0', result: 1 },
+    { input: '-1', result: 1 },
+    { input: '25', result: 20 },
+  ])(
+    'clamps loaf count $input to $result and shows range note',
+    async ({ input, result }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const loafInput = screen.getByRole('spinbutton', {
+        name: /loaf count/i,
+      })
+      await user.clear(loafInput)
+      await user.type(loafInput, input)
+
+      expect(screen.getByText(/valid range.*1.*20/i)).toBeInTheDocument()
+
+      await user.tab()
+      expect(loafInput).toHaveValue(result)
+    },
+  )
+
+  it('hides range note when validate-basic-inputs flag is off', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'validate-basic-inputs': false,
+    })
+
+    const loafInput = screen.getByRole('spinbutton', {
+      name: /loaf count/i,
+    })
+    await user.clear(loafInput)
+    await user.type(loafInput, '25')
+
+    expect(
+      screen.queryByText(/valid range.*1.*20/i),
+    ).not.toBeInTheDocument()
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })

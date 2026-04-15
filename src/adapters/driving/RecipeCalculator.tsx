@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
 import type { YeastType } from '../../domain/Recipe'
 import { HYDRATION_PRESETS } from '../../domain/Hydration'
+import type { ClampResult } from '../../domain/InputRanges'
 import { useFeatureFlag } from '../../feature-flags'
 import {
   Table,
@@ -17,6 +18,24 @@ function formatPercentage(value: number): string {
   return `${Math.round(value * 100)}%`
 }
 
+function formatRangeValue(value: number, unit: string): string {
+  if (unit === '%') return String(Math.round(value * 100))
+  return String(value)
+}
+
+function ClampNote({ result }: { result: ClampResult }) {
+  if (!result.clamped) return null
+  const { range } = result
+  const min = formatRangeValue(range.min, range.unit)
+  const max = formatRangeValue(range.max, range.unit)
+  const suffix = range.unit
+  return (
+    <small style={{ color: tokens.colors.textMuted, marginLeft: tokens.spacing.sm }}>
+      Valid range: {min}–{max}{suffix}
+    </small>
+  )
+}
+
 export function RecipeCalculator() {
   const enabled = useFeatureFlag('yeast-recipe-calculator')
   if (!enabled) return null
@@ -28,11 +47,6 @@ function useNumberInput(value: number, onChange: (n: number) => void) {
   const [text, setText] = useState(String(value))
   const lastCommitted = useRef(value)
 
-  if (value !== lastCommitted.current) {
-    setText(String(value))
-    lastCommitted.current = value
-  }
-
   function handleChange(rawText: string) {
     setText(rawText)
     const n = Number(rawText)
@@ -42,7 +56,14 @@ function useNumberInput(value: number, onChange: (n: number) => void) {
     }
   }
 
-  return { value: text, onChange: handleChange }
+  function handleBlur() {
+    if (value !== lastCommitted.current) {
+      setText(String(value))
+      lastCommitted.current = value
+    }
+  }
+
+  return { value: text, onChange: handleChange, onBlur: handleBlur }
 }
 
 function CustomHydrationInput({
@@ -62,6 +83,7 @@ function CustomHydrationInput({
         type="number"
         value={input.value}
         onChange={(e) => input.onChange(e.target.value)}
+        onBlur={input.onBlur}
       />
     </label>
   )
@@ -73,6 +95,7 @@ function RecipeCalculatorView() {
     loaves,
     yeastType,
     hydrationSelection,
+    clampNotes,
     changeFinishedWeight,
     changeLoafCount,
     selectYeastType,
@@ -82,6 +105,7 @@ function RecipeCalculatorView() {
   } = useRecipeCalculator()
 
   const hydrationPresetEnabled = useFeatureFlag('hydration-preset')
+  const validationEnabled = useFeatureFlag('validate-basic-inputs')
 
   const weightInput = useNumberInput(
     recipe.finishedWeightPerLoaf,
@@ -103,8 +127,10 @@ function RecipeCalculatorView() {
             type="number"
             value={weightInput.value}
             onChange={(e) => weightInput.onChange(e.target.value)}
+            onBlur={weightInput.onBlur}
           />
         </label>
+        {validationEnabled && <ClampNote result={clampNotes.finishedWeight} />}
       </div>
 
       <div style={{ marginBottom: tokens.spacing.md }}>
@@ -129,8 +155,10 @@ function RecipeCalculatorView() {
             type="number"
             value={loafInput.value}
             onChange={(e) => loafInput.onChange(e.target.value)}
+            onBlur={loafInput.onBlur}
           />
         </label>
+        {validationEnabled && <ClampNote result={clampNotes.loaves} />}
       </div>
 
       {hydrationPresetEnabled && (
