@@ -1,30 +1,32 @@
-export type InputRange = {
-  readonly min: number
-  readonly max: number
-  readonly unit: string
-}
-
 export type ClampResult = {
   value: number
   clamped: boolean
   range: InputRange
 }
 
-export const LOAVES_RANGE: InputRange = { min: 1, max: 20, unit: '' }
-export const FINISHED_WEIGHT_RANGE: InputRange = { min: 100, max: 5000, unit: 'g' }
-export const HYDRATION_RANGE: InputRange = { min: 0.5, max: 1.0, unit: '%' }
-export const SALT_RANGE: InputRange = { min: 0, max: 0.05, unit: '%' }
-export const BAKE_OFF_LOSS_RANGE: InputRange = { min: 0.05, max: 0.25, unit: '%' }
+export class InputRange {
+  constructor(
+    readonly min: number,
+    readonly max: number,
+    readonly unit: string,
+  ) {}
 
-export const STARTER_HYDRATION_RANGE: InputRange = { min: 0.5, max: 2.0, unit: '%' }
-export const DOUGH_TEMPERATURE_RANGE: InputRange = { min: 15, max: 35, unit: '°C' }
-export const FERMENTATION_DURATION_RANGE: InputRange = { min: 1, max: 72, unit: 'h' }
-
-export function starterPercentRange(hydration: number, starterHydration: number): InputRange {
-  return { min: 0.01, max: Math.min(0.99, hydration / starterHydration), unit: '%' }
+  clamp(value: number): ClampResult {
+    const clamped = Math.min(Math.max(value, this.min), this.max)
+    return { value: clamped, clamped: clamped !== value, range: this }
+  }
 }
 
-export function clampToRange(value: number, range: InputRange): ClampResult {
-  const clamped = Math.min(Math.max(value, range.min), range.max)
-  return { value: clamped, clamped: clamped !== value, range }
+export const LOAVES_RANGE = new InputRange(1, 20, '')
+export const FINISHED_WEIGHT_RANGE = new InputRange(100, 5000, 'g')
+export const HYDRATION_RANGE = new InputRange(0.5, 1.0, '%')
+export const SALT_RANGE = new InputRange(0, 0.05, '%')
+export const BAKE_OFF_LOSS_RANGE = new InputRange(0.05, 0.25, '%')
+
+export const STARTER_HYDRATION_RANGE = new InputRange(0.5, 2.0, '%')
+export const DOUGH_TEMPERATURE_RANGE = new InputRange(15, 35, '°C')
+export const FERMENTATION_DURATION_RANGE = new InputRange(1, 72, 'h')
+
+export function starterPercentRange(hydration: number, starterHydration: number): InputRange {
+  return new InputRange(0.01, Math.min(0.99, hydration / starterHydration), '%')
 }

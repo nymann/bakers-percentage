@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { determineFermentationZone } from '../../domain/FermentationZone'
 import {
-  clampToRange,
   FERMENTATION_DURATION_RANGE,
   type ClampResult,
 } from '../../domain/InputRanges'
@@ -24,7 +23,7 @@ export function useFermentationZone(tempC: number, hydration: number) {
   )
 
   const changeFermentationDuration = useCallback((hours: number) => {
-    const result = clampToRange(hours, FERMENTATION_DURATION_RANGE)
+    const result = FERMENTATION_DURATION_RANGE.clamp(hours)
     setDuration(result.value)
     setClampNote(result)
   }, [])

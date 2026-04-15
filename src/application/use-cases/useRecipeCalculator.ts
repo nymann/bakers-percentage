@@ -14,7 +14,6 @@ import {
   type HydrationSelection,
 } from '../../domain/Hydration'
 import {
-  clampToRange,
   starterPercentRange,
   LOAVES_RANGE,
   FINISHED_WEIGHT_RANGE,
@@ -101,7 +100,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const changeFinishedWeight = useCallback(
     (grams: number) => {
-      const result = clampToRange(grams, FINISHED_WEIGHT_RANGE)
+      const result = FINISHED_WEIGHT_RANGE.clamp(grams)
       setFinishedWeight(result.value)
       setClampNotes((prev) => ({ ...prev, finishedWeight: result }))
     },
@@ -110,7 +109,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const changeLoafCount = useCallback(
     (count: number) => {
-      const result = clampToRange(count, LOAVES_RANGE)
+      const result = LOAVES_RANGE.clamp(count)
       setLoaves(result.value)
       setClampNotes((prev) => ({ ...prev, loaves: result }))
     },
@@ -130,7 +129,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const enterCustomHydration = useCallback(
     (percentage: number) => {
-      const result = clampToRange(percentage, HYDRATION_RANGE)
+      const result = HYDRATION_RANGE.clamp(percentage)
       setHydrationSelection({ mode: 'custom', percentage: result.value })
       setClampNotes((prev) => ({ ...prev, hydration: result }))
     },
@@ -148,7 +147,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const changeSalt = useCallback(
     (percentage: number) => {
-      const result = clampToRange(percentage, SALT_RANGE)
+      const result = SALT_RANGE.clamp(percentage)
       setSalt(result.value)
       setClampNotes((prev) => ({ ...prev, salt: result }))
     },
@@ -157,7 +156,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const changeBakeOffLoss = useCallback(
     (percentage: number) => {
-      const result = clampToRange(percentage, BAKE_OFF_LOSS_RANGE)
+      const result = BAKE_OFF_LOSS_RANGE.clamp(percentage)
       setBakeOffLoss(result.value)
       setClampNotes((prev) => ({ ...prev, bakeOffLoss: result }))
     },
@@ -185,7 +184,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
   const changeStarterPercent = useCallback(
     (percentage: number) => {
       const range = starterPercentRange(hydration, starterHydration)
-      const result = clampToRange(percentage, range)
+      const result = range.clamp(percentage)
       setStarterPercent(result.value)
       setClampNotes((prev) => ({ ...prev, starterPercent: result }))
     },
@@ -194,7 +193,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const changeStarterHydration = useCallback(
     (percentage: number) => {
-      const result = clampToRange(percentage, STARTER_HYDRATION_RANGE)
+      const result = STARTER_HYDRATION_RANGE.clamp(percentage)
       setStarterHydration(result.value)
       setClampNotes((prev) => ({ ...prev, starterHydration: result }))
     },
@@ -203,7 +202,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const changeDoughTemperature = useCallback(
     (temp: number) => {
-      const result = clampToRange(temp, DOUGH_TEMPERATURE_RANGE)
+      const result = DOUGH_TEMPERATURE_RANGE.clamp(temp)
       setDoughTemperature(result.value)
       setClampNotes((prev) => ({ ...prev, doughTemperature: result }))
     },
