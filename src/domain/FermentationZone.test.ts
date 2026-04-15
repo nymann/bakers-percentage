@@ -21,4 +21,30 @@ describe('determineFermentationZone at reference conditions (24°C, 75%)', () =>
       })
     },
   )
+
+  it.each([
+    { hours: 2, warning: 'Not feasible for sourdough' },
+    { hours: 3, warning: 'Not feasible for sourdough' },
+  ])(
+    'returns red with "$warning" for $hours h (too short)',
+    ({ hours, warning }) => {
+      expect(determineFermentationZone(hours, 24, 0.75)).toEqual({
+        zone: 'red',
+        warning,
+      })
+    },
+  )
+
+  it.each([
+    { hours: 40, warning: 'Over-fermentation risk' },
+    { hours: 48, warning: 'Over-fermentation risk' },
+  ])(
+    'returns red with "$warning" for $hours h (too long)',
+    ({ hours, warning }) => {
+      expect(determineFermentationZone(hours, 24, 0.75)).toEqual({
+        zone: 'red',
+        warning,
+      })
+    },
+  )
 })

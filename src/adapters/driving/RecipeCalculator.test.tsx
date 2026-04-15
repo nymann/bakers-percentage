@@ -1124,7 +1124,7 @@ describe('Scenario 01 (story 05): green zone for ideal window', () => {
       await user.clear(durationInput)
       await user.type(durationInput, String(hours))
 
-      expect(screen.getByText(/green/i)).toBeInTheDocument()
+      expect(screen.getByRole('status')).toHaveTextContent(/green/i)
     },
   )
 })
@@ -1149,7 +1149,38 @@ describe('Scenario 02 (story 05): yellow zone for tight/very sour window', () =>
       await user.clear(durationInput)
       await user.type(durationInput, String(hours))
 
-      expect(screen.getByText(/yellow/i)).toBeInTheDocument()
+      expect(screen.getByRole('status')).toHaveTextContent(/yellow/i)
+    },
+  )
+})
+
+describe('Scenario 03 (story 05): red zone with warning', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+  }
+
+  it.each([
+    { hours: 2, risk: 'Not feasible for sourdough' },
+    { hours: 3, risk: 'Not feasible for sourdough' },
+    { hours: 40, risk: 'Over-fermentation risk' },
+    { hours: 48, risk: 'Over-fermentation risk' },
+  ])(
+    'shows red zone and "$risk" warning for $hours h',
+    async ({ hours, risk }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const durationInput = screen.getByRole('spinbutton', {
+        name: /fermentation duration/i,
+      })
+      await user.clear(durationInput)
+      await user.type(durationInput, String(hours))
+
+      expect(screen.getByRole('status')).toHaveTextContent(/red/i)
+      expect(screen.getByRole('alert')).toHaveTextContent(risk)
     },
   )
 })
