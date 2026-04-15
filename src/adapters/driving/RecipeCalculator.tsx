@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
 import type { YeastType } from '../../domain/Recipe'
+import {
+  HYDRATION_PRESETS,
+  hydrationPercentage,
+} from '../../domain/Hydration'
 import { useFeatureFlag } from '../../feature-flags'
 import {
   Table,
@@ -37,15 +41,43 @@ function useNumberInput(initial: number, onChange: (n: number) => void) {
   return { value: text, onChange: handleChange }
 }
 
+function CustomHydrationInput({
+  percentage,
+  onChange,
+}: {
+  percentage: number
+  onChange: (n: number) => void
+}) {
+  const input = useNumberInput(Math.round(percentage * 100), (n) =>
+    onChange(n / 100),
+  )
+  return (
+    <label>
+      Custom hydration (%){' '}
+      <input
+        type="number"
+        value={input.value}
+        onChange={(e) => input.onChange(e.target.value)}
+      />
+    </label>
+  )
+}
+
 function RecipeCalculatorView() {
   const {
     recipe,
     loaves,
     yeastType,
+    hydrationSelection,
     changeFinishedWeight,
     changeLoafCount,
     selectYeastType,
+    selectHydrationPreset,
+    enterCustomHydration,
+    unlockCustomHydration,
   } = useRecipeCalculator()
+
+  const hydrationPresetEnabled = useFeatureFlag('hydration-preset')
 
   const weightInput = useNumberInput(
     recipe.finishedWeightPerLoaf,
@@ -96,6 +128,41 @@ function RecipeCalculatorView() {
           />
         </label>
       </div>
+
+      {hydrationPresetEnabled && (
+        <div
+          role="group"
+          aria-label="Hydration"
+          style={{ marginBottom: tokens.spacing.md }}
+        >
+          {HYDRATION_PRESETS.map((preset) => (
+            <button
+              key={preset.name}
+              aria-pressed={
+                hydrationSelection.mode === 'preset' &&
+                hydrationSelection.preset === preset.name
+              }
+              onClick={() => selectHydrationPreset(preset.name)}
+              style={{ marginRight: tokens.spacing.sm }}
+            >
+              {preset.name} ({Math.round(preset.percentage * 100)}%)
+            </button>
+          ))}
+          <button
+            aria-label="Hydration percentage"
+            onClick={unlockCustomHydration}
+            style={{ marginRight: tokens.spacing.sm }}
+          >
+            {Math.round(hydrationPercentage(hydrationSelection) * 100)}%
+          </button>
+          {hydrationSelection.mode === 'custom' && (
+            <CustomHydrationInput
+              percentage={hydrationSelection.percentage}
+              onChange={enterCustomHydration}
+            />
+          )}
+        </div>
+      )}
 
       <Table>
         <TableHead>

@@ -163,6 +163,214 @@ describe('Scenario 05: multiple loaves shows per-loaf and total columns', () => 
   })
 })
 
+describe('Hydration preset feature flag', () => {
+  it('hides hydration controls when flag is off', () => {
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'hydration-preset': false,
+    })
+
+    expect(
+      screen.queryByRole('group', { name: /hydration/i }),
+    ).not.toBeInTheDocument()
+
+    // Calculator still works at default 75%
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const waterCells = within(rows[2])
+      .getAllByRole('cell')
+      .map((c) => c.textContent)
+    expect(waterCells).toContain('390')
+    expect(waterCells).toContain('75%')
+  })
+})
+
+describe('Scenario 01 (story 02): selecting Classic hydration preset recalculates recipe', () => {
+  it('updates hydration to 68% and recalculates ingredient grams', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'hydration-preset': true,
+    })
+
+    const hydrationGroup = screen.getByRole('group', { name: /hydration/i })
+    const classicButton = within(hydrationGroup).getByRole('button', {
+      name: /classic/i,
+    })
+
+    await user.click(classicButton)
+
+    expect(classicButton).toHaveAttribute('aria-pressed', 'true')
+
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    expect(cells).toEqual([
+      ['Flour', '541', '100%'],
+      ['Water', '368', '68%'],
+      ['Salt', '11', '2%'],
+      ['Yeast', '5', '1%'],
+    ])
+  })
+})
+
+describe('Scenario 02 (story 02): selecting High hydration preset recalculates recipe', () => {
+  it('updates hydration to 82% and recalculates ingredient grams', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'hydration-preset': true,
+    })
+
+    const hydrationGroup = screen.getByRole('group', { name: /hydration/i })
+    const highButton = within(hydrationGroup).getByRole('button', {
+      name: /high hydration/i,
+    })
+
+    await user.click(highButton)
+
+    expect(highButton).toHaveAttribute('aria-pressed', 'true')
+
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    expect(cells).toEqual([
+      ['Flour', '500', '100%'],
+      ['Water', '410', '82%'],
+      ['Salt', '10', '2%'],
+      ['Yeast', '5', '1%'],
+    ])
+  })
+})
+
+describe('Scenario 03 (story 02): entering custom hydration overrides presets', () => {
+  it('shows custom input and recalculates with 70% hydration', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'hydration-preset': true,
+    })
+
+    const hydrationGroup = screen.getByRole('group', { name: /hydration/i })
+
+    // Open crumb is the default preset
+    const openCrumbButton = within(hydrationGroup).getByRole('button', {
+      name: /open crumb/i,
+    })
+    expect(openCrumbButton).toHaveAttribute('aria-pressed', 'true')
+
+    // Click the hydration percentage display to unlock custom input
+    const percentageButton = within(hydrationGroup).getByRole('button', {
+      name: /hydration percentage/i,
+    })
+    await user.click(percentageButton)
+
+    // Custom input should appear
+    const customInput = screen.getByRole('spinbutton', {
+      name: /custom hydration/i,
+    })
+    expect(customInput).toHaveValue(75)
+
+    // Enter custom value
+    await user.clear(customInput)
+    await user.type(customInput, '70')
+
+    // No preset should be active
+    const presetButtons = within(hydrationGroup)
+      .getAllByRole('button')
+      .filter((btn) => btn.getAttribute('aria-pressed') !== null)
+    for (const btn of presetButtons) {
+      expect(btn).toHaveAttribute('aria-pressed', 'false')
+    }
+
+    // Recipe recalculated with 70%
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    expect(cells).toEqual([
+      ['Flour', '535', '100%'],
+      ['Water', '374', '70%'],
+      ['Salt', '11', '2%'],
+      ['Yeast', '5', '1%'],
+    ])
+  })
+})
+
+describe('Scenario 04 (story 02): returning to preset from custom hydration', () => {
+  it('closes custom input and reactivates Classic preset', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'hydration-preset': true,
+    })
+
+    const hydrationGroup = screen.getByRole('group', { name: /hydration/i })
+
+    // Enter custom mode
+    const percentageButton = within(hydrationGroup).getByRole('button', {
+      name: /hydration percentage/i,
+    })
+    await user.click(percentageButton)
+
+    const customInput = screen.getByRole('spinbutton', {
+      name: /custom hydration/i,
+    })
+    await user.clear(customInput)
+    await user.type(customInput, '71')
+
+    // Verify custom mode: no preset active
+    expect(
+      within(hydrationGroup).getByRole('button', { name: /classic/i }),
+    ).toHaveAttribute('aria-pressed', 'false')
+
+    // Click Classic preset
+    await user.click(
+      within(hydrationGroup).getByRole('button', { name: /classic/i }),
+    )
+
+    // Custom input should be gone
+    expect(
+      screen.queryByRole('spinbutton', { name: /custom hydration/i }),
+    ).not.toBeInTheDocument()
+
+    // Classic is active
+    expect(
+      within(hydrationGroup).getByRole('button', { name: /classic/i }),
+    ).toHaveAttribute('aria-pressed', 'true')
+
+    // Recipe recalculated with 68%
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    expect(cells).toEqual([
+      ['Flour', '541', '100%'],
+      ['Water', '368', '68%'],
+      ['Salt', '11', '2%'],
+      ['Yeast', '5', '1%'],
+    ])
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })

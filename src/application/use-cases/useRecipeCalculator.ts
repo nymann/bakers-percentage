@@ -4,6 +4,11 @@ import {
   yeastPercentage,
   type YeastType,
 } from '../../domain/Recipe'
+import {
+  hydrationPercentage,
+  type HydrationPresetName,
+  type HydrationSelection,
+} from '../../domain/Hydration'
 
 const DEFAULTS = {
   finishedWeight: 800,
@@ -16,7 +21,8 @@ export function useRecipeCalculator() {
   const [finishedWeight, setFinishedWeight] = useState(DEFAULTS.finishedWeight)
   const [loaves, setLoaves] = useState(DEFAULTS.loaves)
   const [yeastType, setYeastType] = useState<YeastType>('instant')
-  const [hydration, setHydration] = useState(0.75)
+  const [hydrationSelection, setHydrationSelection] =
+    useState<HydrationSelection>({ mode: 'preset', preset: 'Open crumb' })
 
   const recipe = useMemo(
     () =>
@@ -24,10 +30,10 @@ export function useRecipeCalculator() {
         ...DEFAULTS,
         finishedWeight,
         loaves,
-        hydration,
+        hydration: hydrationPercentage(hydrationSelection),
         yeast: yeastPercentage(yeastType),
       }),
-    [finishedWeight, loaves, hydration, yeastType],
+    [finishedWeight, loaves, hydrationSelection, yeastType],
   )
 
   const changeFinishedWeight = useCallback(
@@ -45,12 +51,37 @@ export function useRecipeCalculator() {
     [],
   )
 
+  const selectHydrationPreset = useCallback(
+    (name: HydrationPresetName) =>
+      setHydrationSelection({ mode: 'preset', preset: name }),
+    [],
+  )
+
+  const enterCustomHydration = useCallback(
+    (percentage: number) =>
+      setHydrationSelection({ mode: 'custom', percentage }),
+    [],
+  )
+
+  const unlockCustomHydration = useCallback(
+    () =>
+      setHydrationSelection((current) => ({
+        mode: 'custom',
+        percentage: hydrationPercentage(current),
+      })),
+    [],
+  )
+
   return {
     recipe,
     loaves,
     yeastType,
+    hydrationSelection,
     changeFinishedWeight,
     changeLoafCount,
     selectYeastType,
+    selectHydrationPreset,
+    enterCustomHydration,
+    unlockCustomHydration,
   }
 }

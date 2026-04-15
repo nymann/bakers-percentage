@@ -43,6 +43,96 @@ describe('useRecipeCalculator', () => {
     expect(yeastAfter.percentage).toBe(0.03)
   })
 
+  it('switches hydration to 68% when Classic preset selected', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.selectHydrationPreset('Classic'))
+
+    const flour = result.current.recipe.ingredients.find(
+      (i) => i.name === 'Flour',
+    )!
+    const water = result.current.recipe.ingredients.find(
+      (i) => i.name === 'Water',
+    )!
+    expect(flour.grams).toBe(541)
+    expect(water.grams).toBe(368)
+    expect(result.current.hydrationSelection).toEqual({
+      mode: 'preset',
+      preset: 'Classic',
+    })
+  })
+
+  it('enters custom hydration and deactivates presets', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.enterCustomHydration(0.7))
+
+    const water = result.current.recipe.ingredients.find(
+      (i) => i.name === 'Water',
+    )!
+    expect(water.grams).toBe(374)
+    expect(result.current.hydrationSelection).toEqual({
+      mode: 'custom',
+      percentage: 0.7,
+    })
+  })
+
+  it('unlocks custom hydration keeping current value', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.unlockCustomHydration())
+
+    expect(result.current.hydrationSelection).toEqual({
+      mode: 'custom',
+      percentage: 0.75,
+    })
+    // Recipe unchanged since numeric value is the same
+    const water = result.current.recipe.ingredients.find(
+      (i) => i.name === 'Water',
+    )!
+    expect(water.grams).toBe(390)
+  })
+
+  it('returns to preset from custom mode', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.enterCustomHydration(0.71))
+    expect(result.current.hydrationSelection).toEqual({
+      mode: 'custom',
+      percentage: 0.71,
+    })
+
+    act(() => result.current.selectHydrationPreset('Classic'))
+
+    const water = result.current.recipe.ingredients.find(
+      (i) => i.name === 'Water',
+    )!
+    expect(water.grams).toBe(368)
+    expect(result.current.hydrationSelection).toEqual({
+      mode: 'preset',
+      preset: 'Classic',
+    })
+  })
+
+  it('switches hydration to 82% when High hydration preset selected', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.selectHydrationPreset('High hydration'))
+
+    const flour = result.current.recipe.ingredients.find(
+      (i) => i.name === 'Flour',
+    )!
+    const water = result.current.recipe.ingredients.find(
+      (i) => i.name === 'Water',
+    )!
+    expect(flour.grams).toBe(500)
+    expect(water.grams).toBe(410)
+    expect(result.current.hydrationSelection).toEqual({
+      mode: 'preset',
+      preset: 'High hydration',
+    })
+  })
+
   it('recalculates when finished weight changes', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 

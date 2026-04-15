@@ -4,6 +4,7 @@ import { RecipeCalculator } from './adapters/driving/RecipeCalculator'
 
 const featureFlags = createInMemoryFeatureFlags({
   'yeast-recipe-calculator': true,
+  'hydration-preset': true,
 })
 
 export function App() {
