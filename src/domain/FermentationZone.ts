@@ -1,10 +1,5 @@
 export type FermentationZone = 'green' | 'yellow' | 'red'
 
-export type FermentationResult = {
-  zone: FermentationZone
-  warning: string | null
-}
-
 const T_MIN = 5
 const T_REF = 24
 const REF_RATE = (T_REF - T_MIN) ** 2
@@ -26,30 +21,31 @@ function scaleBoundary(ref: number, factor: number): number {
   return Math.floor(ref / factor)
 }
 
-export function determineFermentationZone(
-  hours: number,
-  tempC: number,
-  hydration: number,
-): FermentationResult {
-  const factor = rateFactor(tempC) * hydrationFactor(hydration)
+export class FermentationAssessment {
+  constructor(
+    readonly hours: number,
+    readonly tempC: number,
+    readonly hydration: number,
+  ) {}
 
-  const yellowLow = scaleBoundary(REF_YELLOW_LOW, factor)
-  const greenLow = scaleBoundary(REF_GREEN_LOW, factor)
-  const greenHigh = scaleBoundary(REF_GREEN_HIGH, factor)
-  const yellowHigh = scaleBoundary(REF_YELLOW_HIGH, factor)
+  get zone(): FermentationZone {
+    const factor = rateFactor(this.tempC) * hydrationFactor(this.hydration)
+    const greenLow = scaleBoundary(REF_GREEN_LOW, factor)
+    const greenHigh = scaleBoundary(REF_GREEN_HIGH, factor)
+    const yellowLow = scaleBoundary(REF_YELLOW_LOW, factor)
+    const yellowHigh = scaleBoundary(REF_YELLOW_HIGH, factor)
 
-  if (hours >= greenLow && hours <= greenHigh) {
-    return { zone: 'green', warning: null }
+    if (this.hours >= greenLow && this.hours <= greenHigh) return 'green'
+    if (this.hours >= yellowLow && this.hours <= yellowHigh) return 'yellow'
+    return 'red'
   }
 
-  if (hours >= yellowLow && hours <= yellowHigh) {
-    return { zone: 'yellow', warning: null }
-  }
-
-  const warning =
-    hours < yellowLow
+  get warning(): string | null {
+    if (this.zone !== 'red') return null
+    const factor = rateFactor(this.tempC) * hydrationFactor(this.hydration)
+    const yellowLow = scaleBoundary(REF_YELLOW_LOW, factor)
+    return this.hours < yellowLow
       ? 'Not feasible for sourdough'
       : 'Over-fermentation risk'
-
-  return { zone: 'red', warning }
+  }
 }

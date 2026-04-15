@@ -1,24 +1,22 @@
 import { describe, it, expect } from 'vitest'
-import { determineFermentationZone } from '../../src/domain/FermentationZone'
+import { FermentationAssessment } from '../../src/domain/FermentationZone'
 
-describe('determineFermentationZone at reference conditions (24°C, 75%)', () => {
+describe('FermentationAssessment at reference conditions (24°C, 75%)', () => {
   it.each([6, 10, 14, 20, 24])(
     'returns green for %ih',
     (hours) => {
-      expect(determineFermentationZone(hours, 24, 0.75)).toEqual({
-        zone: 'green',
-        warning: null,
-      })
+      const assessment = new FermentationAssessment(hours, 24, 0.75)
+      expect(assessment.zone).toBe('green')
+      expect(assessment.warning).toBeNull()
     },
   )
 
   it.each([4, 5, 30, 36])(
     'returns yellow for %ih',
     (hours) => {
-      expect(determineFermentationZone(hours, 24, 0.75)).toEqual({
-        zone: 'yellow',
-        warning: null,
-      })
+      const assessment = new FermentationAssessment(hours, 24, 0.75)
+      expect(assessment.zone).toBe('yellow')
+      expect(assessment.warning).toBeNull()
     },
   )
 
@@ -28,10 +26,9 @@ describe('determineFermentationZone at reference conditions (24°C, 75%)', () =>
   ])(
     'returns red with "$warning" for $hours h (too short)',
     ({ hours, warning }) => {
-      expect(determineFermentationZone(hours, 24, 0.75)).toEqual({
-        zone: 'red',
-        warning,
-      })
+      const assessment = new FermentationAssessment(hours, 24, 0.75)
+      expect(assessment.zone).toBe('red')
+      expect(assessment.warning).toBe(warning)
     },
   )
 
@@ -41,10 +38,9 @@ describe('determineFermentationZone at reference conditions (24°C, 75%)', () =>
   ])(
     'returns red with "$warning" for $hours h (too long)',
     ({ hours, warning }) => {
-      expect(determineFermentationZone(hours, 24, 0.75)).toEqual({
-        zone: 'red',
-        warning,
-      })
+      const assessment = new FermentationAssessment(hours, 24, 0.75)
+      expect(assessment.zone).toBe('red')
+      expect(assessment.warning).toBe(warning)
     },
   )
 })
@@ -58,7 +54,7 @@ describe('zone boundaries scale with dough temperature', () => {
   ])(
     'at $temp°C, $hours h is $zone',
     ({ temp, hours, zone }) => {
-      expect(determineFermentationZone(hours, temp, 0.75).zone).toBe(zone)
+      expect(new FermentationAssessment(hours, temp, 0.75).zone).toBe(zone)
     },
   )
 })
