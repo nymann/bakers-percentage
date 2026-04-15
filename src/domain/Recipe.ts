@@ -1,3 +1,14 @@
+export type YeastType = 'instant' | 'fresh'
+
+const YEAST_PERCENTAGES: Record<YeastType, number> = {
+  instant: 0.01,
+  fresh: 0.03,
+}
+
+export function yeastPercentage(type: YeastType): number {
+  return YEAST_PERCENTAGES[type]
+}
+
 export type RecipeInput = {
   finishedWeight: number
   loaves: number

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { RecipeCalculator } from './RecipeCalculator'
 import { FeatureFlagProvider } from '../../feature-flags'
 import { createInMemoryFeatureFlags } from '../driven/InMemoryFeatureFlags'
@@ -56,5 +57,159 @@ describe('RecipeCalculator: defaults produce a recipe on load', () => {
     })
 
     expect(container).toBeEmptyDOMElement()
+  })
+})
+
+describe('Scenario 02: changing finished weight recalculates ingredients', () => {
+  it('increases ingredient grams when finished weight increases', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({ 'yeast-recipe-calculator': true })
+
+    const weightInput = screen.getByRole('spinbutton', {
+      name: /finished weight/i,
+    })
+    expect(weightInput).toHaveValue(800)
+
+    await user.clear(weightInput)
+    await user.type(weightInput, '1000')
+
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    // Grams increase but percentages stay the same
+    expect(cells).toEqual([
+      ['Flour', '649', '100%'],
+      ['Water', '487', '75%'],
+      ['Salt', '13', '2%'],
+      ['Yeast', '6', '1%'],
+    ])
+  })
+})
+
+describe('Scenario 01: changing loaf count updates total but not per-loaf', () => {
+  it('doubles total dough weight when loaf count changes to 2', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({ 'yeast-recipe-calculator': true })
+
+    const loafInput = screen.getByRole('spinbutton', {
+      name: /loaf count/i,
+    })
+    expect(loafInput).toHaveValue(1)
+
+    await user.clear(loafInput)
+    await user.type(loafInput, '2')
+
+    // Per-loaf grams unchanged
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+    expect(cells[0][0]).toBe('Flour')
+    expect(cells[0][1]).toBe('520')
+
+    // Total dough weight doubled
+    const totalText = screen.getByText(/total dough weight/i)
+    expect(totalText).toHaveTextContent(/1849g/)
+
+    // Finished weight per loaf unchanged
+    expect(screen.getByText(/800g/)).toBeInTheDocument()
+  })
+})
+
+describe('Scenario 05: multiple loaves shows per-loaf and total columns', () => {
+  it('shows per-loaf and total columns when loaf count is 3', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({ 'yeast-recipe-calculator': true })
+
+    const loafInput = screen.getByRole('spinbutton', {
+      name: /loaf count/i,
+    })
+    await user.clear(loafInput)
+    await user.type(loafInput, '3')
+
+    const table = screen.getByRole('table')
+    const headers = within(table)
+      .getAllByRole('columnheader')
+      .map((h) => h.textContent)
+    expect(headers).toContain('Per loaf')
+    expect(headers).toContain('Total')
+
+    const rows = within(table).getAllByRole('row')
+    const flourCells = within(rows[1])
+      .getAllByRole('cell')
+      .map((c) => c.textContent)
+
+    expect(flourCells).toEqual(['Flour', '520', '1560', '100%'])
+  })
+
+  it('shows single Grams column when loaf count is 1', () => {
+    renderWithFlags({ 'yeast-recipe-calculator': true })
+
+    const table = screen.getByRole('table')
+    const headers = within(table)
+      .getAllByRole('columnheader')
+      .map((h) => h.textContent)
+    expect(headers).toContain('Grams')
+    expect(headers).not.toContain('Per loaf')
+    expect(headers).not.toContain('Total')
+  })
+})
+
+describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
+  it('defaults to instant yeast with yeast at 1%', () => {
+    renderWithFlags({ 'yeast-recipe-calculator': true })
+
+    const yeastSelect = screen.getByRole('combobox', {
+      name: /yeast type/i,
+    })
+    expect(yeastSelect).toHaveValue('instant')
+
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const yeastRow = rows.find((row) => {
+      const cells = within(row).queryAllByRole('cell')
+      return cells.length > 0 && cells[0].textContent === 'Yeast'
+    })!
+    const yeastCells = within(yeastRow)
+      .getAllByRole('cell')
+      .map((c) => c.textContent)
+
+    expect(yeastCells).toContain('5')
+    expect(yeastCells).toContain('1%')
+  })
+})
+
+describe('Scenario 04: selecting fresh yeast shows 3% yeast', () => {
+  it('updates yeast to 3% when fresh yeast is selected', async () => {
+    const user = userEvent.setup()
+    renderWithFlags({ 'yeast-recipe-calculator': true })
+
+    const yeastSelect = screen.getByRole('combobox', {
+      name: /yeast type/i,
+    })
+    await user.selectOptions(yeastSelect, 'fresh')
+
+    expect(yeastSelect).toHaveValue('fresh')
+
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const yeastRow = rows.find((row) => {
+      const cells = within(row).queryAllByRole('cell')
+      return cells.length > 0 && cells[0].textContent === 'Yeast'
+    })!
+    const yeastCells = within(yeastRow)
+      .getAllByRole('cell')
+      .map((c) => c.textContent)
+
+    expect(yeastCells).toContain('16')
+    expect(yeastCells).toContain('3%')
   })
 })

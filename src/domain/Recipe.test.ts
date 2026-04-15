@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateRecipe } from './Recipe'
+import { calculateRecipe, yeastPercentage } from './Recipe'
 
 describe('calculateRecipe', () => {
   const defaults = {
@@ -32,5 +32,15 @@ describe('calculateRecipe', () => {
   it('reports finished weight per loaf', () => {
     const result = calculateRecipe(defaults)
     expect(result.finishedWeightPerLoaf).toBe(800)
+  })
+})
+
+describe('yeastPercentage', () => {
+  it('returns 1% for instant yeast', () => {
+    expect(yeastPercentage('instant')).toBe(0.01)
+  })
+
+  it('returns 3% for fresh yeast', () => {
+    expect(yeastPercentage('fresh')).toBe(0.03)
   })
 })
