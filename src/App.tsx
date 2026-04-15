@@ -6,6 +6,7 @@ const featureFlags = createInMemoryFeatureFlags({
   'yeast-recipe-calculator': true,
   'hydration-preset': true,
   'validate-basic-inputs': true,
+  'manual-starter-percent': true,
 })
 
 export function App() {

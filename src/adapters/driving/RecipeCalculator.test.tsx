@@ -566,6 +566,62 @@ describe('Scenario 05 (story 03): clamp bake-off loss to valid range', () => {
   )
 })
 
+describe('Scenario 01 (story 04): selecting sourdough reveals starter inputs', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+  }
+
+  it('shows starter % and starter hydration inputs when sourdough is selected', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const leaveningSelect = screen.getByRole('combobox', {
+      name: /leavening type/i,
+    })
+
+    // Start by selecting yeast to test switching to sourdough
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    // Starter inputs should not be visible with yeast
+    expect(
+      screen.queryByRole('spinbutton', { name: /starter \(%\)/i }),
+    ).not.toBeInTheDocument()
+
+    // Switch to sourdough
+    await user.selectOptions(leaveningSelect, 'sourdough')
+
+    // Starter % input should appear
+    expect(
+      screen.getByRole('spinbutton', { name: /starter \(%\)/i }),
+    ).toBeInTheDocument()
+
+    // Starter hydration input should appear with default 100%
+    const advanced = screen.getByRole('group', { name: /advanced/i })
+    const starterHydrationInput = within(advanced).getByRole('spinbutton', {
+      name: /starter hydration/i,
+    })
+    expect(starterHydrationInput).toHaveValue(100)
+  })
+
+  it('renders nothing sourdough-specific when flag is off', () => {
+    renderWithFlags({
+      'yeast-recipe-calculator': true,
+      'manual-starter-percent': false,
+    })
+
+    expect(
+      screen.queryByRole('combobox', { name: /leavening type/i }),
+    ).not.toBeInTheDocument()
+
+    // Old yeast type selector should still work
+    expect(
+      screen.getByRole('combobox', { name: /yeast type/i }),
+    ).toBeInTheDocument()
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })

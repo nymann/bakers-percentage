@@ -178,6 +178,32 @@ describe('useRecipeCalculator', () => {
     expect(result.current.clampNotes.salt.clamped).toBe(true)
   })
 
+  it('starts with yeast leavening by default', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    expect(result.current.leavingType).toBe('yeast')
+  })
+
+  it('switches to sourdough leavening and exposes starter defaults', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.selectLeavening('sourdough'))
+
+    expect(result.current.leavingType).toBe('sourdough')
+    expect(result.current.starterPercent).toBe(0.1)
+    expect(result.current.starterHydration).toBe(1.0)
+    expect(result.current.doughTemperature).toBe(24)
+  })
+
+  it('switches back to yeast from sourdough', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.selectLeavening('sourdough'))
+    act(() => result.current.selectLeavening('yeast'))
+
+    expect(result.current.leavingType).toBe('yeast')
+  })
+
   it('recalculates when finished weight changes', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 

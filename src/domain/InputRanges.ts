@@ -16,6 +16,13 @@ export const HYDRATION_RANGE: InputRange = { min: 0.5, max: 1.0, unit: '%' }
 export const SALT_RANGE: InputRange = { min: 0, max: 0.05, unit: '%' }
 export const BAKE_OFF_LOSS_RANGE: InputRange = { min: 0.05, max: 0.25, unit: '%' }
 
+export const STARTER_HYDRATION_RANGE: InputRange = { min: 0.5, max: 2.0, unit: '%' }
+export const DOUGH_TEMPERATURE_RANGE: InputRange = { min: 15, max: 35, unit: '°C' }
+
+export function starterPercentRange(hydration: number, starterHydration: number): InputRange {
+  return { min: 0.01, max: Math.min(0.99, hydration / starterHydration), unit: '%' }
+}
+
 export function clampToRange(value: number, range: InputRange): ClampResult {
   const clamped = Math.min(Math.max(value, range.min), range.max)
   return { value: clamped, clamped: clamped !== value, range }

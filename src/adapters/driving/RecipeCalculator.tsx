@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
 import type { YeastType } from '../../domain/Recipe'
+import type { LeavingType } from '../../domain/SourdoughRecipe'
 import { HYDRATION_PRESETS } from '../../domain/Hydration'
 import type { ClampResult } from '../../domain/InputRanges'
 import { useFeatureFlag } from '../../feature-flags'
@@ -89,13 +90,77 @@ function CustomHydrationInput({
   )
 }
 
+function LeaveningSelector({
+  leavingType,
+  yeastType,
+  onSelectLeavening,
+  onSelectYeastType,
+  starterPercentInput,
+}: {
+  leavingType: LeavingType
+  yeastType: YeastType
+  onSelectLeavening: (type: LeavingType) => void
+  onSelectYeastType: (type: YeastType) => void
+  starterPercentInput: { value: string; onChange: (s: string) => void; onBlur: () => void }
+}) {
+  const selectValue = leavingType === 'sourdough' ? 'sourdough' : `yeast-${yeastType}`
+
+  function handleChange(value: string) {
+    if (value === 'sourdough') {
+      onSelectLeavening('sourdough')
+    } else if (value === 'yeast-instant') {
+      onSelectLeavening('yeast')
+      onSelectYeastType('instant')
+    } else if (value === 'yeast-fresh') {
+      onSelectLeavening('yeast')
+      onSelectYeastType('fresh')
+    }
+  }
+
+  return (
+    <>
+      <div style={{ marginBottom: tokens.spacing.md }}>
+        <label>
+          Leavening type{' '}
+          <select
+            value={selectValue}
+            onChange={(e) => handleChange(e.target.value)}
+          >
+            <option value="sourdough">Sourdough</option>
+            <option value="yeast-instant">Instant yeast</option>
+            <option value="yeast-fresh">Fresh yeast</option>
+          </select>
+        </label>
+      </div>
+      {leavingType === 'sourdough' && (
+        <div style={{ marginBottom: tokens.spacing.md }}>
+          <label>
+            Starter (%){' '}
+            <input
+              type="number"
+              value={starterPercentInput.value}
+              onChange={(e) => starterPercentInput.onChange(e.target.value)}
+              onBlur={starterPercentInput.onBlur}
+            />
+          </label>
+        </div>
+      )}
+    </>
+  )
+}
+
 function RecipeCalculatorView() {
+  const manualStarterEnabled = useFeatureFlag('manual-starter-percent')
   const {
     recipe,
     loaves,
     salt,
     bakeOffLoss,
     yeastType,
+    leavingType,
+    starterPercent,
+    starterHydration,
+    doughTemperature,
     hydrationSelection,
     clampNotes,
     changeFinishedWeight,
@@ -106,7 +171,11 @@ function RecipeCalculatorView() {
     selectHydrationPreset,
     enterCustomHydration,
     unlockCustomHydration,
-  } = useRecipeCalculator()
+    selectLeavening,
+    changeStarterPercent,
+    changeStarterHydration,
+    changeDoughTemperature,
+  } = useRecipeCalculator(manualStarterEnabled ? 'sourdough' : 'yeast')
 
   const hydrationPresetEnabled = useFeatureFlag('hydration-preset')
   const validationEnabled = useFeatureFlag('validate-basic-inputs')
@@ -122,6 +191,13 @@ function RecipeCalculatorView() {
   const bakeOffLossInput = useNumberInput(Math.round(bakeOffLoss * 100), (n) =>
     changeBakeOffLoss(n / 100),
   )
+  const starterPercentInput = useNumberInput(Math.round(starterPercent * 100), (n) =>
+    changeStarterPercent(n / 100),
+  )
+  const starterHydrationInput = useNumberInput(Math.round(starterHydration * 100), (n) =>
+    changeStarterHydration(n / 100),
+  )
+  const doughTemperatureInput = useNumberInput(doughTemperature, changeDoughTemperature)
 
   return (
     <section
@@ -143,20 +219,30 @@ function RecipeCalculatorView() {
         {validationEnabled && <ClampNote result={clampNotes.finishedWeight} />}
       </div>
 
-      <div style={{ marginBottom: tokens.spacing.md }}>
-        <label>
-          Yeast type{' '}
-          <select
-            value={yeastType}
-            onChange={(e) =>
-              selectYeastType(e.target.value as YeastType)
-            }
-          >
-            <option value="instant">Instant</option>
-            <option value="fresh">Fresh</option>
-          </select>
-        </label>
-      </div>
+      {manualStarterEnabled ? (
+        <LeaveningSelector
+          leavingType={leavingType}
+          yeastType={yeastType}
+          onSelectLeavening={selectLeavening}
+          onSelectYeastType={selectYeastType}
+          starterPercentInput={starterPercentInput}
+        />
+      ) : (
+        <div style={{ marginBottom: tokens.spacing.md }}>
+          <label>
+            Yeast type{' '}
+            <select
+              value={yeastType}
+              onChange={(e) =>
+                selectYeastType(e.target.value as YeastType)
+              }
+            >
+              <option value="instant">Instant</option>
+              <option value="fresh">Fresh</option>
+            </select>
+          </label>
+        </div>
+      )}
 
       <div style={{ marginBottom: tokens.spacing.md }}>
         <label>
@@ -240,6 +326,34 @@ function RecipeCalculatorView() {
             </label>
             <ClampNote result={clampNotes.bakeOffLoss} />
           </div>
+          {manualStarterEnabled && leavingType === 'sourdough' && (
+            <>
+              <div style={{ marginBottom: tokens.spacing.sm }}>
+                <label>
+                  Starter hydration (%){' '}
+                  <input
+                    type="number"
+                    value={starterHydrationInput.value}
+                    onChange={(e) => starterHydrationInput.onChange(e.target.value)}
+                    onBlur={starterHydrationInput.onBlur}
+                  />
+                </label>
+                <ClampNote result={clampNotes.starterHydration} />
+              </div>
+              <div style={{ marginBottom: tokens.spacing.sm }}>
+                <label>
+                  Dough temperature (°C){' '}
+                  <input
+                    type="number"
+                    value={doughTemperatureInput.value}
+                    onChange={(e) => doughTemperatureInput.onChange(e.target.value)}
+                    onBlur={doughTemperatureInput.onBlur}
+                  />
+                </label>
+                <ClampNote result={clampNotes.doughTemperature} />
+              </div>
+            </>
+          )}
         </fieldset>
       )}
 
