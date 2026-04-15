@@ -165,7 +165,20 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
   )
 
   const selectLeavening = useCallback(
-    (type: LeavingType) => setLeavingType(type),
+    (type: LeavingType) => {
+      setLeavingType(type)
+      if (type === 'sourdough') {
+        setStarterPercent(DEFAULTS.starterPercent)
+        setStarterHydration(DEFAULTS.starterHydration)
+        setDoughTemperature(DEFAULTS.doughTemperature)
+        setClampNotes((prev) => ({
+          ...prev,
+          starterPercent: INITIAL_CLAMP_NOTES.starterPercent,
+          starterHydration: INITIAL_CLAMP_NOTES.starterHydration,
+          doughTemperature: INITIAL_CLAMP_NOTES.doughTemperature,
+        }))
+      }
+    },
     [],
   )
 

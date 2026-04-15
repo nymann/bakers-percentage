@@ -44,9 +44,16 @@ export function RecipeCalculator() {
   return <RecipeCalculatorView />
 }
 
-function useNumberInput(value: number, onChange: (n: number) => void) {
+function useNumberInput(value: number, onChange: (n: number) => void, resetKey?: unknown) {
   const [text, setText] = useState(String(value))
   const lastCommitted = useRef(value)
+  const prevResetKey = useRef(resetKey)
+
+  if (resetKey !== prevResetKey.current) {
+    prevResetKey.current = resetKey
+    setText(String(value))
+    lastCommitted.current = value
+  }
 
   function handleChange(rawText: string) {
     setText(rawText)
@@ -206,12 +213,12 @@ function RecipeCalculatorView() {
     changeBakeOffLoss(n / 100),
   )
   const starterPercentInput = useNumberInput(Math.round(starterPercent * 100), (n) =>
-    changeStarterPercent(n / 100),
+    changeStarterPercent(n / 100), leavingType,
   )
   const starterHydrationInput = useNumberInput(Math.round(starterHydration * 100), (n) =>
-    changeStarterHydration(n / 100),
+    changeStarterHydration(n / 100), leavingType,
   )
-  const doughTemperatureInput = useNumberInput(doughTemperature, changeDoughTemperature)
+  const doughTemperatureInput = useNumberInput(doughTemperature, changeDoughTemperature, leavingType)
 
   return (
     <section

@@ -824,6 +824,193 @@ describe('Scenario 06 (story 04): sourdough is default leavening', () => {
   })
 })
 
+describe('Scenario 01 (story 04a): switch sourdough to instant yeast', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'hydration-preset': true,
+  }
+
+  it('hides sourdough inputs and shows yeast recipe', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Default is sourdough — verify sourdough table rows
+    const table = screen.getByRole('table')
+    let rows = within(table).getAllByRole('row')
+    let ingredientNames = rows.slice(1).map((row) =>
+      within(row).getAllByRole('cell')[0].textContent,
+    )
+    expect(ingredientNames).toEqual(['Base flour', 'Water', 'Salt', 'Starter'])
+
+    // Switch to instant yeast
+    const leaveningSelect = screen.getByRole('combobox', {
+      name: /leavening type/i,
+    })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    // Starter %, starter hydration, dough temperature inputs hidden
+    expect(
+      screen.queryByRole('spinbutton', { name: /starter \(%\)/i }),
+    ).not.toBeInTheDocument()
+    const advanced = screen.getByRole('group', { name: /advanced/i })
+    expect(
+      within(advanced).queryByRole('spinbutton', { name: /starter hydration/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(advanced).queryByRole('spinbutton', { name: /dough temperature/i }),
+    ).not.toBeInTheDocument()
+
+    // Results table shows yeast recipe rows
+    rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    expect(cells[0][0]).toBe('Flour')
+    expect(cells[1][0]).toBe('Water')
+    expect(cells[2][0]).toBe('Salt')
+    expect(cells[3][0]).toBe('Yeast')
+
+    // Yeast amount is F × 1%
+    expect(cells[3][2]).toBe('1%')
+  })
+})
+
+describe('Scenario 02 (story 04a): switch yeast to sourdough', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'hydration-preset': true,
+  }
+
+  it('shows sourdough inputs with defaults and sourdough recipe', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Switch to yeast first
+    const leaveningSelect = screen.getByRole('combobox', {
+      name: /leavening type/i,
+    })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    // Switch back to sourdough
+    await user.selectOptions(leaveningSelect, 'sourdough')
+
+    // Starter % appears with default 10%
+    const starterInput = screen.getByRole('spinbutton', {
+      name: /starter \(%\)/i,
+    })
+    expect(starterInput).toHaveValue(10)
+
+    // Starter hydration appears with default 100%
+    const advanced = screen.getByRole('group', { name: /advanced/i })
+    expect(
+      within(advanced).getByRole('spinbutton', { name: /starter hydration/i }),
+    ).toHaveValue(100)
+
+    // Dough temperature appears with default 24°C
+    expect(
+      within(advanced).getByRole('spinbutton', { name: /dough temperature/i }),
+    ).toHaveValue(24)
+
+    // Results table shows sourdough rows
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const ingredientNames = rows.slice(1).map((row) =>
+      within(row).getAllByRole('cell')[0].textContent,
+    )
+    expect(ingredientNames).toEqual(['Base flour', 'Water', 'Salt', 'Starter'])
+  })
+
+  it('resets sourdough values to defaults when switching back', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Start sourdough, change starter to 30%
+    const starterInput = screen.getByRole('spinbutton', {
+      name: /starter \(%\)/i,
+    })
+    await user.clear(starterInput)
+    await user.type(starterInput, '30')
+
+    // Switch to yeast, then back to sourdough
+    const leaveningSelect = screen.getByRole('combobox', {
+      name: /leavening type/i,
+    })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+    await user.selectOptions(leaveningSelect, 'sourdough')
+
+    // Starter % should be reset to default 10%, not stale 30%
+    const resetStarterInput = screen.getByRole('spinbutton', {
+      name: /starter \(%\)/i,
+    })
+    expect(resetStarterInput).toHaveValue(10)
+  })
+})
+
+describe('Scenario 03 (story 04a): shared inputs preserved on switch', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'hydration-preset': true,
+  }
+
+  it('preserves loaves, weight, and hydration when switching to yeast', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Default is sourdough. Set 2 loaves, 900g, 70% hydration.
+    const loafInput = screen.getByRole('spinbutton', { name: /loaf count/i })
+    await user.clear(loafInput)
+    await user.type(loafInput, '2')
+
+    const weightInput = screen.getByRole('spinbutton', { name: /finished weight/i })
+    await user.clear(weightInput)
+    await user.type(weightInput, '900')
+
+    const hydrationGroup = screen.getByRole('group', { name: /hydration/i })
+    await user.click(
+      within(hydrationGroup).getByRole('button', { name: /custom hydration/i }),
+    )
+    const hydrationInput = screen.getByRole('spinbutton', { name: /custom hydration/i })
+    await user.clear(hydrationInput)
+    await user.type(hydrationInput, '70')
+
+    // Switch to instant yeast
+    const leaveningSelect = screen.getByRole('combobox', { name: /leavening type/i })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    // Shared inputs preserved
+    expect(loafInput).toHaveValue(2)
+    expect(weightInput).toHaveValue(900)
+    expect(
+      screen.getByRole('spinbutton', { name: /custom hydration/i }),
+    ).toHaveValue(70)
+
+    // Recipe recalculates with yeast leavening using those values
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const cells = rows.slice(1).map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    )
+
+    // Should show yeast rows, not sourdough rows
+    expect(cells[0][0]).toBe('Flour')
+    expect(cells[3][0]).toBe('Yeast')
+
+    // Water percentage should be 70%
+    expect(cells[1][3]).toBe('70%')
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })

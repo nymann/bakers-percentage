@@ -213,6 +213,26 @@ describe('useRecipeCalculator', () => {
     expect(result.current.leavingType).toBe('yeast')
   })
 
+  it('resets sourdough values to defaults when switching back to sourdough', () => {
+    const { result } = renderHook(() => useRecipeCalculator('sourdough'))
+
+    act(() => result.current.changeStarterPercent(0.3))
+    act(() => result.current.changeStarterHydration(0.8))
+    act(() => result.current.changeDoughTemperature(30))
+
+    expect(result.current.starterPercent).toBe(0.3)
+
+    act(() => result.current.selectLeavening('yeast'))
+    act(() => result.current.selectLeavening('sourdough'))
+
+    expect(result.current.starterPercent).toBe(0.1)
+    expect(result.current.starterHydration).toBe(1.0)
+    expect(result.current.doughTemperature).toBe(24)
+    expect(result.current.clampNotes.starterPercent.clamped).toBe(false)
+    expect(result.current.clampNotes.starterHydration.clamped).toBe(false)
+    expect(result.current.clampNotes.doughTemperature.clamped).toBe(false)
+  })
+
   it('calculates sourdough recipe with split flour and water', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 
