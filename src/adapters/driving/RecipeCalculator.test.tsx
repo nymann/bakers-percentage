@@ -1221,3 +1221,109 @@ describe('Scenario 05 (story 05): zone scales with dough temperature', () => {
     },
   )
 })
+
+describe('Scenario 05: override recommended starter percent', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+  }
+
+  it('shows recommendation note when auto-recommend is enabled', () => {
+    renderWithFlags(allFlags)
+
+    expect(screen.getByRole('note')).toHaveTextContent(
+      /starter % recommended for.*window at.*hydration/i,
+    )
+  })
+
+  it('renders nothing for auto-recommend when flag is off', () => {
+    renderWithFlags({ ...allFlags, 'auto-recommend-starter-percent': false })
+
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+
+  it('shows manual override note when user changes starter %', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const starterInput = screen.getByRole('spinbutton', { name: /starter \(%\)/i })
+    await user.clear(starterInput)
+    await user.type(starterInput, '15')
+
+    expect(screen.getByRole('note')).toHaveTextContent(/manual override/i)
+  })
+})
+
+describe('Scenario 06: override fermentation method', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+  }
+
+  it('shows method selector when auto-recommend is enabled', () => {
+    renderWithFlags(allFlags)
+
+    const methodSelect = screen.getByRole('combobox', { name: /fermentation method/i })
+    expect(methodSelect).toBeInTheDocument()
+  })
+
+  it('recalculates starter % when method is overridden', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const starterInput = screen.getByRole('spinbutton', { name: /starter \(%\)/i })
+    const initialValue = Number(starterInput.getAttribute('value'))
+
+    const methodSelect = screen.getByRole('combobox', { name: /fermentation method/i })
+    await user.selectOptions(methodSelect, 'same-day')
+
+    const newValue = Number(starterInput.getAttribute('value'))
+    expect(newValue).not.toBe(initialValue)
+  })
+})
+
+describe('Scenario 08: reset to recommended values', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+  }
+
+  it('shows "Use recommended" when starter % is overridden', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    expect(screen.queryByRole('button', { name: /use recommended/i })).not.toBeInTheDocument()
+
+    const starterInput = screen.getByRole('spinbutton', { name: /starter \(%\)/i })
+    await user.clear(starterInput)
+    await user.type(starterInput, '25')
+
+    expect(screen.getByRole('button', { name: /use recommended/i })).toBeInTheDocument()
+  })
+
+  it('restores recommended values when "Use recommended" is clicked', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const starterInput = screen.getByRole('spinbutton', { name: /starter \(%\)/i })
+    const recommendedValue = starterInput.getAttribute('value')
+
+    await user.clear(starterInput)
+    await user.type(starterInput, '25')
+
+    await user.click(screen.getByRole('button', { name: /use recommended/i }))
+
+    expect(starterInput).toHaveValue(Number(recommendedValue))
+    expect(screen.queryByRole('button', { name: /use recommended/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('note')).not.toHaveTextContent(/manual override/i)
+  })
+})

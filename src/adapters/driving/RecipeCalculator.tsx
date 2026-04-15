@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
 import { useFermentationZone } from '../../application/use-cases/useFermentationZone'
+import { useStarterRecommendation } from '../../application/use-cases/useStarterRecommendation'
 import type { YeastType } from '../../domain/Recipe'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
+import type { FermentationMethod } from '../../domain/StarterRecommendation'
 import { HYDRATION_PRESETS } from '../../domain/Hydration'
 import type { ClampResult } from '../../domain/InputRanges'
 import { useFeatureFlag } from '../../feature-flags'
@@ -203,8 +205,24 @@ function RecipeCalculatorView() {
   const hydrationPresetEnabled = useFeatureFlag('hydration-preset')
   const validationEnabled = useFeatureFlag('validate-basic-inputs')
   const fermentationZoneEnabled = useFeatureFlag('fermentation-zone-feedback')
+  const autoRecommendEnabled = useFeatureFlag('auto-recommend-starter-percent')
 
   const fermentation = useFermentationZone(doughTemperature, hydration)
+
+  const recommendation = useStarterRecommendation({
+    totalHours: fermentation.duration,
+    doughTempC: doughTemperature,
+    hydration,
+    starterHydration,
+  })
+
+  const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
+
+  useEffect(() => {
+    if (autoRecommendActive) {
+      changeStarterPercent(recommendation.effectivePercent)
+    }
+  }, [autoRecommendActive, recommendation.effectivePercent, changeStarterPercent])
 
   const weightInput = useNumberInput(
     recipe.finishedWeightPerLoaf,
@@ -217,9 +235,17 @@ function RecipeCalculatorView() {
   const bakeOffLossInput = useNumberInput(Math.round(bakeOffLoss * 100), (n) =>
     changeBakeOffLoss(n / 100),
   )
-  const starterPercentInput = useNumberInput(Math.round(starterPercent * 100), (n) =>
-    changeStarterPercent(n / 100), leavingType,
-  )
+  const handleStarterPercentChange = (n: number) => {
+    if (autoRecommendActive) {
+      recommendation.overrideStarterPercent(n / 100)
+    } else {
+      changeStarterPercent(n / 100)
+    }
+  }
+  const starterPercentResetKey = autoRecommendActive
+    ? `${leavingType}-${starterPercent}`
+    : leavingType
+  const starterPercentInput = useNumberInput(Math.round(starterPercent * 100), handleStarterPercentChange, starterPercentResetKey)
   const starterHydrationInput = useNumberInput(Math.round(starterHydration * 100), (n) =>
     changeStarterHydration(n / 100), leavingType,
   )
@@ -400,6 +426,35 @@ function RecipeCalculatorView() {
             </label>
             {validationEnabled && <ClampNote result={fermentation.clampNote} />}
           </div>
+          {autoRecommendActive && (
+            <>
+              <div style={{ marginBottom: tokens.spacing.sm }}>
+                <label>
+                  Fermentation method{' '}
+                  <select
+                    value={recommendation.effectiveMethod}
+                    onChange={(e) => recommendation.overrideMethod(e.target.value as FermentationMethod)}
+                  >
+                    <option value="same-day">Counter (same-day)</option>
+                    <option value="cold-retard">Fridge (cold retard)</option>
+                  </select>
+                </label>
+              </div>
+              <p role="note">
+                {recommendation.isOverridden
+                  ? `Manual override (recommended: ${Math.round(recommendation.recommendedPercent * 100)}%)`
+                  : `Starter % recommended for ${fermentation.duration}h window at ${doughTemperature}°C / ${Math.round(hydration * 100)}% hydration`}
+              </p>
+              {recommendation.hasAnyOverride && (
+                <button
+                  onClick={() => recommendation.useRecommended()}
+                  style={{ background: 'none', border: 'none', color: tokens.colors.textMuted, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                >
+                  Use recommended
+                </button>
+              )}
+            </>
+          )}
           <p role="status">
             Fermentation zone:{' '}
             <strong>{fermentation.zone.charAt(0).toUpperCase() + fermentation.zone.slice(1)}</strong>

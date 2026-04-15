@@ -8,6 +8,7 @@ const featureFlags = createInMemoryFeatureFlags({
   'validate-basic-inputs': true,
   'manual-starter-percent': true,
   'fermentation-zone-feedback': true,
+  'auto-recommend-starter-percent': true,
 })
 
 export function App() {
