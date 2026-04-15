@@ -149,11 +149,11 @@ function RecipeCalculatorView() {
             </button>
           ))}
           <button
-            aria-label="Hydration percentage"
+            aria-label="Custom hydration"
             onClick={unlockCustomHydration}
             style={{ marginRight: tokens.spacing.sm }}
           >
-            {Math.round(hydrationPercentage(hydrationSelection) * 100)}%
+            Custom
           </button>
           {hydrationSelection.mode === 'custom' && (
             <CustomHydrationInput

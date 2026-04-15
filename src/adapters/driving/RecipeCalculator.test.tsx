@@ -269,9 +269,9 @@ describe('Scenario 03 (story 02): entering custom hydration overrides presets', 
     })
     expect(openCrumbButton).toHaveAttribute('aria-pressed', 'true')
 
-    // Click the hydration percentage display to unlock custom input
+    // Click the Custom button to unlock custom input
     const percentageButton = within(hydrationGroup).getByRole('button', {
-      name: /hydration percentage/i,
+      name: /custom hydration/i,
     })
     await user.click(percentageButton)
 
@@ -323,7 +323,7 @@ describe('Scenario 04 (story 02): returning to preset from custom hydration', ()
 
     // Enter custom mode
     const percentageButton = within(hydrationGroup).getByRole('button', {
-      name: /hydration percentage/i,
+      name: /custom hydration/i,
     })
     await user.click(percentageButton)
 
