@@ -1,38 +1,27 @@
 import { describe, it, expect } from 'vitest'
 import {
-  hydrationPercentage,
+  PresetHydration,
+  CustomHydration,
   HYDRATION_PRESETS,
-  type HydrationSelection,
 } from '../../src/domain/Hydration'
 
-describe('hydrationPercentage', () => {
+describe('PresetHydration', () => {
   it('returns 68% for Classic preset', () => {
-    const selection: HydrationSelection = { mode: 'preset', preset: 'Classic' }
-    expect(hydrationPercentage(selection)).toBe(0.68)
+    expect(new PresetHydration('Classic').percentage).toBe(0.68)
   })
 
   it('returns 75% for Open crumb preset', () => {
-    const selection: HydrationSelection = {
-      mode: 'preset',
-      preset: 'Open crumb',
-    }
-    expect(hydrationPercentage(selection)).toBe(0.75)
+    expect(new PresetHydration('Open crumb').percentage).toBe(0.75)
   })
 
   it('returns 82% for High hydration preset', () => {
-    const selection: HydrationSelection = {
-      mode: 'preset',
-      preset: 'High hydration',
-    }
-    expect(hydrationPercentage(selection)).toBe(0.82)
+    expect(new PresetHydration('High hydration').percentage).toBe(0.82)
   })
+})
 
-  it('returns the given percentage for custom selection', () => {
-    const selection: HydrationSelection = {
-      mode: 'custom',
-      percentage: 0.7,
-    }
-    expect(hydrationPercentage(selection)).toBe(0.7)
+describe('CustomHydration', () => {
+  it('returns the given percentage', () => {
+    expect(new CustomHydration(0.7).percentage).toBe(0.7)
   })
 })
 

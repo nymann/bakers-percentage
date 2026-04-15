@@ -11,12 +11,18 @@ export const HYDRATION_PRESETS: readonly HydrationPreset[] = [
   { name: 'High hydration', percentage: 0.82 },
 ] as const
 
-export type HydrationSelection =
-  | { mode: 'preset'; preset: HydrationPresetName }
-  | { mode: 'custom'; percentage: number }
+export class PresetHydration {
+  readonly mode = 'preset' as const
+  constructor(readonly preset: HydrationPresetName) {}
 
-export function hydrationPercentage(selection: HydrationSelection): number {
-  if (selection.mode === 'custom') return selection.percentage
-  const preset = HYDRATION_PRESETS.find((p) => p.name === selection.preset)!
-  return preset.percentage
+  get percentage(): number {
+    return HYDRATION_PRESETS.find((p) => p.name === this.preset)!.percentage
+  }
 }
+
+export class CustomHydration {
+  readonly mode = 'custom' as const
+  constructor(readonly percentage: number) {}
+}
+
+export type HydrationSelection = PresetHydration | CustomHydration

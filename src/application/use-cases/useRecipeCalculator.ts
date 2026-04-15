@@ -9,7 +9,8 @@ import {
   type LeavingType,
 } from '../../domain/SourdoughRecipe'
 import {
-  hydrationPercentage,
+  PresetHydration,
+  CustomHydration,
   type HydrationPresetName,
   type HydrationSelection,
 } from '../../domain/Hydration'
@@ -67,13 +68,13 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
   const [bakeOffLoss, setBakeOffLoss] = useState(DEFAULTS.bakeOffLoss)
   const [yeastType, setYeastType] = useState<YeastType>('instant')
   const [hydrationSelection, setHydrationSelection] =
-    useState<HydrationSelection>({ mode: 'preset', preset: 'Open crumb' })
+    useState<HydrationSelection>(new PresetHydration('Open crumb'))
   const [starterPercent, setStarterPercent] = useState(DEFAULTS.starterPercent)
   const [starterHydration, setStarterHydration] = useState(DEFAULTS.starterHydration)
   const [doughTemperature, setDoughTemperature] = useState(DEFAULTS.doughTemperature)
   const [clampNotes, setClampNotes] = useState<ClampNotes>(INITIAL_CLAMP_NOTES)
 
-  const hydration = hydrationPercentage(hydrationSelection)
+  const hydration = hydrationSelection.percentage
 
   const recipe = useMemo(
     () =>
@@ -123,14 +124,14 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const selectHydrationPreset = useCallback(
     (name: HydrationPresetName) =>
-      setHydrationSelection({ mode: 'preset', preset: name }),
+      setHydrationSelection(new PresetHydration(name)),
     [],
   )
 
   const enterCustomHydration = useCallback(
     (percentage: number) => {
       const result = HYDRATION_RANGE.clamp(percentage)
-      setHydrationSelection({ mode: 'custom', percentage: result.value })
+      setHydrationSelection(new CustomHydration(result.value))
       setClampNotes((prev) => ({ ...prev, hydration: result }))
     },
     [],
@@ -138,10 +139,9 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
 
   const unlockCustomHydration = useCallback(
     () =>
-      setHydrationSelection((current) => ({
-        mode: 'custom',
-        percentage: hydrationPercentage(current),
-      })),
+      setHydrationSelection((current) =>
+        new CustomHydration(current.percentage),
+      ),
     [],
   )
 
