@@ -3,6 +3,7 @@ import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalcul
 import { useFermentationZone } from '../../application/use-cases/useFermentationZone'
 import { useStarterRecommendation } from '../../application/use-cases/useStarterRecommendation'
 import { useBakeTime } from '../../application/use-cases/useBakeTime'
+import { useBakingSchedule } from '../../application/use-cases/useBakingSchedule'
 import type { YeastType } from '../../domain/Recipe'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
 import type { FermentationMethod } from '../../domain/StarterRecommendation'
@@ -30,6 +31,13 @@ function formatDatetimeLocal(date: Date): string {
   const h = String(date.getHours()).padStart(2, '0')
   const min = String(date.getMinutes()).padStart(2, '0')
   return `${y}-${m}-${d}T${h}:${min}`
+}
+
+function formatScheduleTime(date: Date): string {
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const h = String(date.getHours()).padStart(2, '0')
+  const m = String(date.getMinutes()).padStart(2, '0')
+  return `${h}:${m} ${dayNames[date.getDay()]}`
 }
 
 function formatRangeValue(value: number, unit: string): string {
@@ -220,6 +228,8 @@ function RecipeCalculatorView() {
   const fermentation = useFermentationZone(doughTemperature, hydration)
   const bakeTime = useBakeTime(fermentation.duration)
 
+  const bakingScheduleEnabled = useFeatureFlag('baking-schedule')
+
   const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
   const effectiveDuration = autoRecommendActive ? bakeTime.duration : fermentation.duration
 
@@ -241,6 +251,14 @@ function RecipeCalculatorView() {
       changeStarterPercent(recommendation.effectivePercent)
     }
   }, [autoRecommendActive, recommendation.effectivePercent, changeStarterPercent])
+
+  const schedule = useBakingSchedule(
+    bakeTime.bakeTime,
+    leavingType,
+    doughTemperature,
+    recommendation.effectiveMethod,
+    effectiveDuration,
+  )
 
   const weightInput = useNumberInput(
     recipe.finishedWeightPerLoaf,
@@ -496,6 +514,19 @@ function RecipeCalculatorView() {
         </div>
       )}
 
+      {bakingScheduleEnabled && leavingType !== 'sourdough' && (
+        <div style={{ marginBottom: tokens.spacing.md }}>
+          <label>
+            Bake time{' '}
+            <input
+              type="datetime-local"
+              value={formatDatetimeLocal(bakeTime.bakeTime)}
+              onChange={(e) => bakeTime.changeBakeTime(new Date(e.target.value))}
+            />
+          </label>
+        </div>
+      )}
+
       <Table>
         <TableHead>
           <TableRow>
@@ -532,6 +563,28 @@ function RecipeCalculatorView() {
         Finished loaf weight:{' '}
         <strong>{recipe.finishedWeightPerLoaf}g</strong>
       </p>
+
+      {bakingScheduleEnabled && schedule.length > 0 && (
+        <section aria-label="Baking schedule" style={{ marginTop: tokens.spacing.lg }}>
+          <h2>Baking Schedule</h2>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Step</TableHeader>
+                <TableHeader>Time</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {schedule.map((event) => (
+                <TableRow key={event.name}>
+                  <TableCell>{event.name}</TableCell>
+                  <TableCell>{formatScheduleTime(event.time)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </section>
+      )}
     </section>
   )
 }

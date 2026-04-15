@@ -17,7 +17,7 @@ const REF_TEMP = 24
 const BULK_TEMP_SCALE = 3
 const SAME_DAY_MAX_HOURS = 12
 
-function bulkHours(tempC: number): number {
+export function bulkHours(tempC: number): number {
   return BULK_HOURS_AT_REF + (REF_TEMP - tempC) / BULK_TEMP_SCALE
 }
 

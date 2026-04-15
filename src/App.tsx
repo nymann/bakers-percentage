@@ -9,6 +9,7 @@ const featureFlags = createInMemoryFeatureFlags({
   'manual-starter-percent': true,
   'fermentation-zone-feedback': true,
   'auto-recommend-starter-percent': true,
+  'baking-schedule': true,
 })
 
 export function App() {

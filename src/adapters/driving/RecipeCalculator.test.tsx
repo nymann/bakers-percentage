@@ -1334,6 +1334,157 @@ describe('Scenario 07: bake time datetime picker', () => {
   })
 })
 
+describe('Scenario 01 (story 07): cold retard schedule', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+    'baking-schedule': true,
+  }
+
+  it('shows baking schedule with cold retard events', async () => {
+    renderWithFlags(allFlags)
+
+    // Default is sourdough with auto-recommend → bake time input visible
+    // Default duration is ~14h which triggers cold-retard method
+    const scheduleSection = screen.getByRole('region', { name: /baking schedule/i })
+    const table = within(scheduleSection).getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const eventNames = rows.slice(1).map((row) =>
+      within(row).getAllByRole('cell')[0].textContent,
+    )
+
+    expect(eventNames).toEqual([
+      'Feed your starter',
+      'Mix & bulk fermentation',
+      'Shape & refrigerate',
+      'Cold retard begins',
+      'Remove from fridge',
+      'Preheat oven',
+      'Bake',
+      'Out of oven',
+      'Ready to eat',
+    ])
+  })
+
+  it('renders nothing when baking-schedule flag is off', () => {
+    renderWithFlags({ ...allFlags, 'baking-schedule': false })
+
+    expect(
+      screen.queryByRole('region', { name: /baking schedule/i }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Scenario 02 (story 07): same-day schedule', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+    'baking-schedule': true,
+  }
+
+  it('shows same-day schedule without cold retard events when method is same-day', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Override method to same-day
+    const methodSelect = screen.getByRole('combobox', { name: /fermentation method/i })
+    await user.selectOptions(methodSelect, 'same-day')
+
+    const scheduleSection = screen.getByRole('region', { name: /baking schedule/i })
+    const table = within(scheduleSection).getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const eventNames = rows.slice(1).map((row) =>
+      within(row).getAllByRole('cell')[0].textContent,
+    )
+
+    expect(eventNames).toEqual([
+      'Feed your starter',
+      'Mix & bulk fermentation',
+      'Shape',
+      'Preheat oven',
+      'Bake',
+      'Out of oven',
+      'Ready to eat',
+    ])
+
+    // Verify no cold retard events
+    expect(eventNames).not.toContain('Shape & refrigerate')
+    expect(eventNames).not.toContain('Cold retard begins')
+    expect(eventNames).not.toContain('Remove from fridge')
+  })
+})
+
+describe('Scenario 04 (story 07): yeast schedule', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'baking-schedule': true,
+  }
+
+  it('shows yeast schedule events when yeast is selected', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Switch to instant yeast
+    const leaveningSelect = screen.getByRole('combobox', { name: /leavening type/i })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    const scheduleSection = screen.getByRole('region', { name: /baking schedule/i })
+    const table = within(scheduleSection).getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const eventNames = rows.slice(1).map((row) =>
+      within(row).getAllByRole('cell')[0].textContent,
+    )
+
+    expect(eventNames).toEqual([
+      'Mix dough',
+      'First rise',
+      'Shape',
+      'Second rise',
+      'Preheat oven',
+      'Bake',
+      'Out of oven',
+      'Ready to eat',
+    ])
+  })
+
+  it('has no starter feed or cold retard events for yeast', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const leaveningSelect = screen.getByRole('combobox', { name: /leavening type/i })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    const scheduleSection = screen.getByRole('region', { name: /baking schedule/i })
+    const table = within(scheduleSection).getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const eventNames = rows.slice(1).map((row) =>
+      within(row).getAllByRole('cell')[0].textContent,
+    )
+
+    expect(eventNames).not.toContain('Feed your starter')
+    expect(eventNames).not.toContain('Cold retard begins')
+    expect(eventNames).not.toContain('Remove from fridge')
+  })
+
+  it('shows bake time input for yeast when schedule flag is on', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const leaveningSelect = screen.getByRole('combobox', { name: /leavening type/i })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    expect(screen.getByLabelText(/bake time/i)).toBeInTheDocument()
+  })
+})
+
 describe('Scenario 08: reset to recommended values', () => {
   const allFlags = {
     'yeast-recipe-calculator': true,
