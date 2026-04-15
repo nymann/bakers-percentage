@@ -48,3 +48,17 @@ describe('determineFermentationZone at reference conditions (24°C, 75%)', () =>
     },
   )
 })
+
+describe('zone boundaries scale with dough temperature', () => {
+  it.each([
+    { temp: 27, hours: 4, zone: 'green' },
+    { temp: 27, hours: 3, zone: 'yellow' },
+    { temp: 21, hours: 6, zone: 'yellow' },
+    { temp: 21, hours: 8, zone: 'green' },
+  ])(
+    'at $temp°C, $hours h is $zone',
+    ({ temp, hours, zone }) => {
+      expect(determineFermentationZone(hours, temp, 0.75).zone).toBe(zone)
+    },
+  )
+})

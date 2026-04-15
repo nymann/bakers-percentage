@@ -1184,3 +1184,40 @@ describe('Scenario 03 (story 05): red zone with warning', () => {
     },
   )
 })
+
+describe('Scenario 05 (story 05): zone scales with dough temperature', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+  }
+
+  it.each([
+    { temp: 27, hours: 4, zone: /green/i },
+    { temp: 27, hours: 3, zone: /yellow/i },
+    { temp: 21, hours: 6, zone: /yellow/i },
+    { temp: 21, hours: 8, zone: /green/i },
+  ])(
+    'at $temp°C with $hours h shows $zone zone',
+    async ({ temp, hours, zone }) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const advanced = screen.getByRole('group', { name: /advanced/i })
+      const tempInput = within(advanced).getByRole('spinbutton', {
+        name: /dough temperature/i,
+      })
+      await user.clear(tempInput)
+      await user.type(tempInput, String(temp))
+
+      const durationInput = screen.getByRole('spinbutton', {
+        name: /fermentation duration/i,
+      })
+      await user.clear(durationInput)
+      await user.type(durationInput, String(hours))
+
+      expect(screen.getByRole('status')).toHaveTextContent(zone)
+    },
+  )
+})
