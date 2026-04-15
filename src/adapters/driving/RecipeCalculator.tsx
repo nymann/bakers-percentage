@@ -218,7 +218,7 @@ function RecipeCalculatorView() {
   const autoRecommendEnabled = useFeatureFlag('auto-recommend-starter-percent')
 
   const fermentation = useFermentationZone(doughTemperature, hydration)
-  const bakeTime = useBakeTime()
+  const bakeTime = useBakeTime(fermentation.duration)
 
   const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
   const effectiveDuration = autoRecommendActive ? bakeTime.duration : fermentation.duration

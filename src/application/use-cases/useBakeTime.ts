@@ -1,16 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import { FERMENTATION_DURATION_RANGE } from '../../domain/InputRanges'
 
-function defaultBakeTime(now: Date): Date {
-  const tomorrow = new Date(now)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  tomorrow.setHours(9, 0, 0, 0)
-  return tomorrow
+function initialBakeTime(now: Date, durationHours: number): Date {
+  return new Date(now.getTime() + durationHours * 60 * 60 * 1000)
 }
 
-export function useBakeTime(nowFn: () => Date = () => new Date()) {
+export function useBakeTime(initialDurationHours: number, nowFn: () => Date = () => new Date()) {
   const now = useMemo(nowFn, [])
-  const [bakeTime, setBakeTime] = useState(() => defaultBakeTime(now))
+  const [bakeTime, setBakeTime] = useState(() => initialBakeTime(now, initialDurationHours))
 
   const duration = useMemo(() => {
     const hours = (bakeTime.getTime() - now.getTime()) / (1000 * 60 * 60)
