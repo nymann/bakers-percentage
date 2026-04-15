@@ -15,7 +15,7 @@ const DEFAULTS = {
   loaves: 1,
   salt: 0.02,
   bakeOffLoss: 0.13,
-} as const
+}
 
 export function useRecipeCalculator() {
   const [finishedWeight, setFinishedWeight] = useState(DEFAULTS.finishedWeight)

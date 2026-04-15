@@ -1,10 +1,7 @@
 import { useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
 import type { YeastType } from '../../domain/Recipe'
-import {
-  HYDRATION_PRESETS,
-  hydrationPercentage,
-} from '../../domain/Hydration'
+import { HYDRATION_PRESETS } from '../../domain/Hydration'
 import { useFeatureFlag } from '../../feature-flags'
 import {
   Table,
