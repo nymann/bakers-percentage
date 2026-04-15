@@ -676,6 +676,47 @@ describe('Scenario 02 (story 04): recipe splits flour and water for starter', ()
   })
 })
 
+describe('Scenario 03 (story 04): clamp starter % for positive base flour', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'hydration-preset': true,
+  }
+
+  it('clamps starter % to max safe value and shows note', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    // Default sourdough with 75% hydration, 100% starter hydration
+    // Max safe = min(0.99, 0.75/1.0) = 75%
+    const starterInput = screen.getByRole('spinbutton', {
+      name: /starter \(%\)/i,
+    })
+    await user.clear(starterInput)
+    await user.type(starterInput, '100')
+
+    expect(
+      screen.getByText(/base flour must remain positive/i),
+    ).toBeInTheDocument()
+
+    await user.tab()
+    expect(starterInput).toHaveValue(75)
+
+    // Verify base flour is still positive
+    const table = screen.getByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const baseFlourRow = rows.find((row) => {
+      const cells = within(row).queryAllByRole('cell')
+      return cells.length > 0 && cells[0].textContent === 'Base flour'
+    })!
+    const baseFlourGrams = Number(
+      within(baseFlourRow).getAllByRole('cell')[1].textContent,
+    )
+    expect(baseFlourGrams).toBeGreaterThan(0)
+  })
+})
+
 describe('Scenario 03: selecting instant yeast shows 1% yeast', () => {
   it('defaults to instant yeast with yeast at 1%', () => {
     renderWithFlags({ 'yeast-recipe-calculator': true })

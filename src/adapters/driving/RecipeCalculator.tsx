@@ -90,18 +90,31 @@ function CustomHydrationInput({
   )
 }
 
+function StarterPercentClampNote({ result }: { result: ClampResult }) {
+  if (!result.clamped) return null
+  return (
+    <small style={{ color: tokens.colors.textMuted, marginLeft: tokens.spacing.sm }}>
+      Base flour must remain positive
+    </small>
+  )
+}
+
 function LeaveningSelector({
   leavingType,
   yeastType,
   onSelectLeavening,
   onSelectYeastType,
   starterPercentInput,
+  starterPercentClamp,
+  validationEnabled,
 }: {
   leavingType: LeavingType
   yeastType: YeastType
   onSelectLeavening: (type: LeavingType) => void
   onSelectYeastType: (type: YeastType) => void
   starterPercentInput: { value: string; onChange: (s: string) => void; onBlur: () => void }
+  starterPercentClamp: ClampResult
+  validationEnabled: boolean
 }) {
   const selectValue = leavingType === 'sourdough' ? 'sourdough' : `yeast-${yeastType}`
 
@@ -143,6 +156,7 @@ function LeaveningSelector({
               onBlur={starterPercentInput.onBlur}
             />
           </label>
+          {validationEnabled && <StarterPercentClampNote result={starterPercentClamp} />}
         </div>
       )}
     </>
@@ -226,6 +240,8 @@ function RecipeCalculatorView() {
           onSelectLeavening={selectLeavening}
           onSelectYeastType={selectYeastType}
           starterPercentInput={starterPercentInput}
+          starterPercentClamp={clampNotes.starterPercent}
+          validationEnabled={validationEnabled}
         />
       ) : (
         <div style={{ marginBottom: tokens.spacing.md }}>

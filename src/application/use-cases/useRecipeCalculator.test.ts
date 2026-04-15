@@ -234,6 +234,17 @@ describe('useRecipeCalculator', () => {
     expect(totalWith20).toBe(totalWith10)
   })
 
+  it('clamps starter percent to max safe value for positive base flour', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.selectLeavening('sourdough'))
+    // Default hydration 75%, starter hydration 100% → max = 0.75
+    act(() => result.current.changeStarterPercent(1.0))
+
+    expect(result.current.starterPercent).toBe(0.75)
+    expect(result.current.clampNotes.starterPercent.clamped).toBe(true)
+  })
+
   it('recalculates when finished weight changes', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 
