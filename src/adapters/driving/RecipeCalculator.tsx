@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
 import type { YeastType } from '../../domain/Recipe'
 import { HYDRATION_PRESETS } from '../../domain/Hydration'
@@ -24,13 +24,20 @@ export function RecipeCalculator() {
   return <RecipeCalculatorView />
 }
 
-function useNumberInput(initial: number, onChange: (n: number) => void) {
-  const [text, setText] = useState(String(initial))
+function useNumberInput(value: number, onChange: (n: number) => void) {
+  const [text, setText] = useState(String(value))
+  const lastCommitted = useRef(value)
 
-  function handleChange(value: string) {
-    setText(value)
-    const n = Number(value)
-    if (value !== '' && !Number.isNaN(n)) {
+  if (value !== lastCommitted.current) {
+    setText(String(value))
+    lastCommitted.current = value
+  }
+
+  function handleChange(rawText: string) {
+    setText(rawText)
+    const n = Number(rawText)
+    if (rawText !== '' && !Number.isNaN(n)) {
+      lastCommitted.current = n
       onChange(n)
     }
   }
