@@ -8,7 +8,6 @@ import {
 const DEFAULTS = {
   finishedWeight: 800,
   loaves: 1,
-  hydration: 0.75,
   salt: 0.02,
   bakeOffLoss: 0.13,
 } as const
@@ -17,6 +16,7 @@ export function useRecipeCalculator() {
   const [finishedWeight, setFinishedWeight] = useState(DEFAULTS.finishedWeight)
   const [loaves, setLoaves] = useState(DEFAULTS.loaves)
   const [yeastType, setYeastType] = useState<YeastType>('instant')
+  const [hydration, setHydration] = useState(0.75)
 
   const recipe = useMemo(
     () =>
@@ -24,9 +24,10 @@ export function useRecipeCalculator() {
         ...DEFAULTS,
         finishedWeight,
         loaves,
+        hydration,
         yeast: yeastPercentage(yeastType),
       }),
-    [finishedWeight, loaves, yeastType],
+    [finishedWeight, loaves, hydration, yeastType],
   )
 
   const changeFinishedWeight = useCallback(
