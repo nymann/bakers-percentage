@@ -1103,3 +1103,28 @@ describe('Scenario 04 (story 05): default fermentation duration', () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe('Scenario 01 (story 05): green zone for ideal window', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+  }
+
+  it.each([6, 10, 14, 20, 24])(
+    'shows green zone for %ih at 24°C/75%%',
+    async (hours) => {
+      const user = userEvent.setup()
+      renderWithFlags(allFlags)
+
+      const durationInput = screen.getByRole('spinbutton', {
+        name: /fermentation duration/i,
+      })
+      await user.clear(durationInput)
+      await user.type(durationInput, String(hours))
+
+      expect(screen.getByText(/green/i)).toBeInTheDocument()
+    },
+  )
+})
