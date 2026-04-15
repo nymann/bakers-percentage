@@ -245,6 +245,24 @@ describe('useRecipeCalculator', () => {
     expect(result.current.clampNotes.starterPercent.clamped).toBe(true)
   })
 
+  it('clamps starter hydration below minimum to 50%', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeStarterHydration(0.3))
+
+    expect(result.current.starterHydration).toBe(0.5)
+    expect(result.current.clampNotes.starterHydration.clamped).toBe(true)
+  })
+
+  it('clamps starter hydration above maximum to 200%', () => {
+    const { result } = renderHook(() => useRecipeCalculator())
+
+    act(() => result.current.changeStarterHydration(2.5))
+
+    expect(result.current.starterHydration).toBe(2.0)
+    expect(result.current.clampNotes.starterHydration.clamped).toBe(true)
+  })
+
   it('clamps dough temperature below minimum to 15', () => {
     const { result } = renderHook(() => useRecipeCalculator())
 
