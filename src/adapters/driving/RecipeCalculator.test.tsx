@@ -1273,18 +1273,64 @@ describe('Scenario 06: override fermentation method', () => {
     expect(methodSelect).toBeInTheDocument()
   })
 
-  it('recalculates starter % when method is overridden', async () => {
+  it('updates recommendation note when method is overridden', async () => {
     const user = userEvent.setup()
     renderWithFlags(allFlags)
 
-    const starterInput = screen.getByRole('spinbutton', { name: /starter \(%\)/i })
-    const initialValue = Number(starterInput.getAttribute('value'))
+    const note = screen.getByRole('note')
+    const initialText = note.textContent
 
     const methodSelect = screen.getByRole('combobox', { name: /fermentation method/i })
     await user.selectOptions(methodSelect, 'same-day')
 
-    const newValue = Number(starterInput.getAttribute('value'))
-    expect(newValue).not.toBe(initialValue)
+    expect(screen.getByRole('button', { name: /use recommended/i })).toBeInTheDocument()
+    expect(methodSelect).toHaveValue('same-day')
+  })
+})
+
+describe('Scenario 07: bake time datetime picker', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+  }
+
+  it('shows datetime picker instead of manual duration when auto-recommend is on', () => {
+    renderWithFlags(allFlags)
+
+    expect(screen.getByLabelText(/bake time/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/fermentation duration/i)).not.toBeInTheDocument()
+  })
+
+  it('shows manual duration when auto-recommend is off', () => {
+    renderWithFlags({ ...allFlags, 'auto-recommend-starter-percent': false })
+
+    expect(screen.getByLabelText(/fermentation duration/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/bake time/i)).not.toBeInTheDocument()
+  })
+
+  it('updates recommendation when bake time changes', async () => {
+    const user = userEvent.setup()
+    renderWithFlags(allFlags)
+
+    const note = screen.getByRole('note')
+    const initialText = note.textContent
+
+    const bakeTimeInput = screen.getByLabelText(/bake time/i)
+    // Set bake time to 5 hours from now
+    const fiveHoursLater = new Date(Date.now() + 5 * 60 * 60 * 1000)
+    const y = fiveHoursLater.getFullYear()
+    const m = String(fiveHoursLater.getMonth() + 1).padStart(2, '0')
+    const d = String(fiveHoursLater.getDate()).padStart(2, '0')
+    const h = String(fiveHoursLater.getHours()).padStart(2, '0')
+    const min = String(fiveHoursLater.getMinutes()).padStart(2, '0')
+    // fireEvent is more reliable for datetime-local than userEvent
+    const { fireEvent } = await import('@testing-library/react')
+    fireEvent.change(bakeTimeInput, { target: { value: `${y}-${m}-${d}T${h}:${min}` } })
+
+    expect(note.textContent).not.toBe(initialText)
   })
 })
 

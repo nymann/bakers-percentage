@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRecipeCalculator } from '../../application/use-cases/useRecipeCalculator'
 import { useFermentationZone } from '../../application/use-cases/useFermentationZone'
 import { useStarterRecommendation } from '../../application/use-cases/useStarterRecommendation'
+import { useBakeTime } from '../../application/use-cases/useBakeTime'
 import type { YeastType } from '../../domain/Recipe'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
 import type { FermentationMethod } from '../../domain/StarterRecommendation'
@@ -20,6 +21,15 @@ import { tokens } from '../../design-system/tokens'
 
 function formatPercentage(value: number): string {
   return `${Math.round(value * 100)}%`
+}
+
+function formatDatetimeLocal(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  const h = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  return `${y}-${m}-${d}T${h}:${min}`
 }
 
 function formatRangeValue(value: number, unit: string): string {
@@ -208,15 +218,23 @@ function RecipeCalculatorView() {
   const autoRecommendEnabled = useFeatureFlag('auto-recommend-starter-percent')
 
   const fermentation = useFermentationZone(doughTemperature, hydration)
+  const bakeTime = useBakeTime()
+
+  const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
+  const effectiveDuration = autoRecommendActive ? bakeTime.duration : fermentation.duration
+
+  useEffect(() => {
+    if (autoRecommendActive) {
+      fermentation.changeFermentationDuration(bakeTime.duration)
+    }
+  }, [autoRecommendActive, bakeTime.duration, fermentation.changeFermentationDuration])
 
   const recommendation = useStarterRecommendation({
-    totalHours: fermentation.duration,
+    totalHours: effectiveDuration,
     doughTempC: doughTemperature,
     hydration,
     starterHydration,
   })
-
-  const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
 
   useEffect(() => {
     if (autoRecommendActive) {
@@ -414,18 +432,31 @@ function RecipeCalculatorView() {
 
       {fermentationZoneEnabled && leavingType === 'sourdough' && (
         <div style={{ marginBottom: tokens.spacing.md }}>
-          <div style={{ marginBottom: tokens.spacing.sm }}>
-            <label>
-              Fermentation duration (h){' '}
-              <input
-                type="number"
-                value={fermentationDurationInput.value}
-                onChange={(e) => fermentationDurationInput.onChange(e.target.value)}
-                onBlur={fermentationDurationInput.onBlur}
-              />
-            </label>
-            {validationEnabled && <ClampNote result={fermentation.clampNote} />}
-          </div>
+          {autoRecommendActive ? (
+            <div style={{ marginBottom: tokens.spacing.sm }}>
+              <label>
+                Bake time{' '}
+                <input
+                  type="datetime-local"
+                  value={formatDatetimeLocal(bakeTime.bakeTime)}
+                  onChange={(e) => bakeTime.changeBakeTime(new Date(e.target.value))}
+                />
+              </label>
+            </div>
+          ) : (
+            <div style={{ marginBottom: tokens.spacing.sm }}>
+              <label>
+                Fermentation duration (h){' '}
+                <input
+                  type="number"
+                  value={fermentationDurationInput.value}
+                  onChange={(e) => fermentationDurationInput.onChange(e.target.value)}
+                  onBlur={fermentationDurationInput.onBlur}
+                />
+              </label>
+              {validationEnabled && <ClampNote result={fermentation.clampNote} />}
+            </div>
+          )}
           {autoRecommendActive && (
             <>
               <div style={{ marginBottom: tokens.spacing.sm }}>
@@ -443,7 +474,7 @@ function RecipeCalculatorView() {
               <p role="note">
                 {recommendation.isOverridden
                   ? `Manual override (recommended: ${Math.round(recommendation.recommendedPercent * 100)}%)`
-                  : `Starter % recommended for ${fermentation.duration}h window at ${doughTemperature}°C / ${Math.round(hydration * 100)}% hydration`}
+                  : `Starter % recommended for ${effectiveDuration}h window at ${doughTemperature}°C / ${Math.round(hydration * 100)}% hydration`}
               </p>
               {recommendation.hasAnyOverride && (
                 <button
