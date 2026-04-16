@@ -1,5 +1,5 @@
 import type { ClampResult } from '../../../../domain/InputRanges'
-import { useNumberInput } from '../../../../design-system/headless/useNumberInput'
+import { PercentField } from '../../../../design-system/molecules/PercentField'
 import { ClampNote } from '../ClampNote'
 
 export function StarterHydrationField({
@@ -13,18 +13,15 @@ export function StarterHydrationField({
   clampNote: ClampResult
   resetKey?: unknown
 }) {
-  const input = useNumberInput({
-    value: Math.round(starterHydration * 100),
-    onChange: (n) => onChange(n / 100),
-    resetKey,
-  })
-
   return (
-    <div className="mb-2">
-      <label>
-        Starter hydration (%) <input {...input.getInputProps()} />
-      </label>
+    <PercentField
+      label="Starter hydration"
+      helperText="Water-to-flour ratio in your active starter. 100% means equal parts."
+      percent={starterHydration}
+      onChange={onChange}
+      resetKey={resetKey}
+    >
       <ClampNote result={clampNote} />
-    </div>
+    </PercentField>
   )
 }

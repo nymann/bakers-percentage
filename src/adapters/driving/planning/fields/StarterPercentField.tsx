@@ -1,5 +1,5 @@
 import type { ClampResult } from '../../../../domain/InputRanges'
-import { useNumberInput } from '../../../../design-system/headless/useNumberInput'
+import { PercentField } from '../../../../design-system/molecules/PercentField'
 import { StarterPercentClampNote } from '../ClampNote'
 
 export function StarterPercentField({
@@ -13,18 +13,15 @@ export function StarterPercentField({
   clampNote: ClampResult
   resetKey?: unknown
 }) {
-  const input = useNumberInput({
-    value: Math.round(percent * 100),
-    onChange: (n) => onChange(n / 100),
-    resetKey,
-  })
-
   return (
-    <div className="mb-4">
-      <label>
-        Starter (%) <input {...input.getInputProps()} />
-      </label>
+    <PercentField
+      label="Starter"
+      helperText="Starter mass relative to total flour. Higher ferments faster."
+      percent={percent}
+      onChange={onChange}
+      resetKey={resetKey}
+    >
       <StarterPercentClampNote result={clampNote} />
-    </div>
+    </PercentField>
   )
 }

@@ -1,5 +1,5 @@
 import type { ClampResult } from '../../../../domain/InputRanges'
-import { useNumberInput } from '../../../../design-system/headless/useNumberInput'
+import { PercentField } from '../../../../design-system/molecules/PercentField'
 import { ClampNote } from '../ClampNote'
 
 export function BakeOffLossField({
@@ -11,17 +11,14 @@ export function BakeOffLossField({
   onChange: (fraction: number) => void
   clampNote: ClampResult
 }) {
-  const input = useNumberInput({
-    value: Math.round(bakeOffLoss * 100),
-    onChange: (n) => onChange(n / 100),
-  })
-
   return (
-    <div className="mb-2">
-      <label>
-        Bake-off loss (%) <input {...input.getInputProps()} />
-      </label>
+    <PercentField
+      label="Bake-off loss"
+      helperText="Moisture that leaves the loaf in the oven. 12–15% is typical."
+      percent={bakeOffLoss}
+      onChange={onChange}
+    >
       <ClampNote result={clampNote} />
-    </div>
+    </PercentField>
   )
 }

@@ -29,6 +29,27 @@ export interface AdvancedSettingsDialogProps {
   onChangeStarterPercent: (fraction: number) => void
 }
 
+function Section({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="space-y-4">
+      <h3 className="font-label text-[0.65rem] uppercase tracking-widest text-on-surface-variant">
+        {title}
+      </h3>
+      <div className="space-y-4">{children}</div>
+    </section>
+  )
+}
+
+function SectionDivider() {
+  return <hr className="border-t border-outline-variant/10" />
+}
+
 export function AdvancedSettingsDialog(props: AdvancedSettingsDialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
@@ -76,32 +97,36 @@ export function AdvancedSettingsDialog(props: AdvancedSettingsDialogProps) {
           </span>
         </button>
       </header>
-      <div className="p-6 space-y-4">
-        <SaltField
-          saltPercent={props.salt}
-          onChange={props.onChangeSalt}
-          clampNote={props.saltClampNote}
-        />
-        <BakeOffLossField
-          bakeOffLoss={props.bakeOffLoss}
-          onChange={props.onChangeBakeOffLoss}
-          clampNote={props.bakeOffLossClampNote}
-        />
+      <div className="p-6 space-y-6">
+        <Section title="Recipe">
+          <SaltField
+            saltPercent={props.salt}
+            onChange={props.onChangeSalt}
+            clampNote={props.saltClampNote}
+          />
+          <SectionDivider />
+          <BakeOffLossField
+            bakeOffLoss={props.bakeOffLoss}
+            onChange={props.onChangeBakeOffLoss}
+            clampNote={props.bakeOffLossClampNote}
+          />
+        </Section>
         {props.showSourdoughFields && (
-          <>
+          <Section title="Starter">
             <StarterHydrationField
               starterHydration={props.starterHydration}
               onChange={props.onChangeStarterHydration}
               clampNote={props.starterHydrationClampNote}
               resetKey={props.leavingType}
             />
+            <SectionDivider />
             <StarterPercentField
               percent={props.starterPercent}
               onChange={props.onChangeStarterPercent}
               clampNote={props.starterPercentClampNote}
               resetKey={props.leavingType}
             />
-          </>
+          </Section>
         )}
       </div>
     </dialog>
