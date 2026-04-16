@@ -3,6 +3,10 @@ import {
   Fermentation,
   RatkowskyFermentation,
   RetardFermentation,
+  YeastFermentation,
+  YeastRetardFermentation,
+  createYeastFermentation,
+  yeastFermentationBoundaries,
   FRIDGE_TEMP,
   COLD_THRESHOLD,
 } from '../../src/domain/Fermentation'
@@ -141,5 +145,96 @@ describe('FermentationStrategy schedule delegation', () => {
     const names = events.map(e => e.name)
     expect(names).toContain('Refrigerate')
     expect(names).toContain('Remove from fridge')
+  })
+})
+
+describe('YeastFermentation Q10 inoculum recommendation', () => {
+  it('halving duration roughly doubles recommended yeast %', () => {
+    const fourHour = new YeastFermentation(4, 24, 'instant')
+    const eightHour = new YeastFermentation(8, 24, 'instant')
+    expect(fourHour.inoculumPercent / eightHour.inoculumPercent).toBeCloseTo(2, 1)
+  })
+
+  it('matches reference point: 1% IDY at 24°C, 4h, 1.8% salt', () => {
+    const reference = new YeastFermentation(4, 24, 'instant', 0.018)
+    expect(reference.inoculumPercent).toBeCloseTo(0.01, 3)
+  })
+
+  it('cooler dough requires more yeast for the same duration (Q10)', () => {
+    const warm = new YeastFermentation(6, 24, 'instant')
+    const cool = new YeastFermentation(6, 14, 'instant')
+    expect(cool.inoculumPercent).toBeGreaterThan(warm.inoculumPercent)
+    // Q10 = 2.2 → 10°C drop ≈ 2.2× more yeast
+    expect(cool.inoculumPercent / warm.inoculumPercent).toBeCloseTo(2.2, 1)
+  })
+
+  it('fresh yeast is 3× the instant recommendation by mass', () => {
+    const instant = new YeastFermentation(6, 24, 'instant')
+    const fresh = new YeastFermentation(6, 24, 'fresh')
+    expect(fresh.inoculumPercent / instant.inoculumPercent).toBeCloseTo(3, 2)
+  })
+
+  it('higher salt scales recommendation upward to compensate for inhibition', () => {
+    const lowSalt = new YeastFermentation(6, 24, 'instant', 0.010)
+    const highSalt = new YeastFermentation(6, 24, 'instant', 0.025)
+    expect(highSalt.inoculumPercent).toBeGreaterThan(lowSalt.inoculumPercent)
+  })
+})
+
+describe('YeastFermentation zone assessment', () => {
+  it.each([2, 4, 6])(
+    'returns green for %ih at 24°C',
+    (hours) => {
+      const strategy = new YeastFermentation(hours, 24, 'instant')
+      expect(strategy.zone).toBe('green')
+      expect(strategy.warning).toBeNull()
+    },
+  )
+
+  it('returns red with "Too fast" warning when duration is below the yellow lower bound', () => {
+    const strategy = new YeastFermentation(0.1, 24, 'instant')
+    expect(strategy.zone).toBe('red')
+    expect(strategy.warning).toMatch(/too fast|flat/i)
+  })
+
+  it('returns red with "Over-proof" warning when duration exceeds the yellow upper bound', () => {
+    const strategy = new YeastFermentation(20, 24, 'instant')
+    expect(strategy.zone).toBe('red')
+    expect(strategy.warning).toMatch(/over-proof/i)
+  })
+
+  it('zone boundaries widen as temperature drops (Q10)', () => {
+    const warm = yeastFermentationBoundaries(24)
+    const cool = yeastFermentationBoundaries(14)
+    expect(cool.greenHigh).toBeGreaterThan(warm.greenHigh)
+    expect(cool.greenLow).toBeGreaterThan(warm.greenLow)
+  })
+})
+
+describe('YeastRetardFermentation handles fridge temperatures', () => {
+  it('returns yeast above zero at 4°C — yeast keeps fermenting in the cold', () => {
+    const strategy = new YeastRetardFermentation(12, 4, 'instant')
+    expect(strategy.inoculumPercent).toBeGreaterThan(0)
+  })
+
+  it('produces a cold-retard schedule with refrigeration step', () => {
+    const strategy = new YeastRetardFermentation(12, 4, 'instant')
+    const events = strategy.schedule(new Date('2026-04-17T09:00:00'))
+    const names = events.map(e => e.name)
+    expect(names).toContain('Refrigerate')
+  })
+})
+
+describe('createYeastFermentation factory dispatches by temperature', () => {
+  it('picks YeastFermentation for warm temperatures', () => {
+    const strategy = createYeastFermentation(6, 24, 'instant', 0.018)
+    expect(strategy).toBeInstanceOf(YeastFermentation)
+    expect(strategy.method).toBe('yeast')
+  })
+
+  it('picks YeastRetardFermentation below the cold threshold', () => {
+    const strategy = createYeastFermentation(12, FRIDGE_TEMP, 'instant', 0.018)
+    expect(strategy).toBeInstanceOf(YeastRetardFermentation)
+    expect(strategy.method).toBe('yeast-retard')
   })
 })

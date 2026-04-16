@@ -93,6 +93,7 @@ export function useRecipeCalculator(
   const [salt, setSalt] = useState(initialPrefs.salt)
   const [bakeOffLoss, setBakeOffLoss] = useState(initialPrefs.bakeOffLoss)
   const [yeastType, setYeastType] = useState<YeastType>(initialPrefs.yeastType)
+  const [yeastPercent, setYeastPercent] = useState<number>(yeastPercentage(initialPrefs.yeastType))
   const [hydrationSelection, setHydrationSelection] =
     useState<HydrationSelection>(() => materializeHydration(initialPrefs.hydrationSelection))
   const [starterPercent, setStarterPercent] = useState(initialPrefs.starterPercent)
@@ -106,8 +107,8 @@ export function useRecipeCalculator(
     () =>
       leavingType === 'sourdough'
         ? new SourdoughRecipe(finishedWeight, loaves, hydration, salt, bakeOffLoss, starterPercent, starterHydration).calculate()
-        : new YeastRecipe(finishedWeight, loaves, hydration, salt, yeastPercentage(yeastType), bakeOffLoss).calculate(),
-    [finishedWeight, loaves, salt, bakeOffLoss, hydration, yeastType, leavingType, starterPercent, starterHydration],
+        : new YeastRecipe(finishedWeight, loaves, hydration, salt, yeastPercent, bakeOffLoss).calculate(),
+    [finishedWeight, loaves, salt, bakeOffLoss, hydration, yeastPercent, leavingType, starterPercent, starterHydration],
   )
 
   const changeFinishedWeight = useCallback(
@@ -129,7 +130,15 @@ export function useRecipeCalculator(
   )
 
   const selectYeastType = useCallback(
-    (type: YeastType) => setYeastType(type),
+    (type: YeastType) => {
+      setYeastType(type)
+      setYeastPercent(yeastPercentage(type))
+    },
+    [],
+  )
+
+  const changeYeastPercent = useCallback(
+    (fraction: number) => setYeastPercent(fraction),
     [],
   )
 
@@ -187,9 +196,13 @@ export function useRecipeCalculator(
           starterHydration: clampNotesFor(DEFAULT_PLANNING_PREFERENCES).starterHydration,
           doughTemperature: clampNotesFor(DEFAULT_PLANNING_PREFERENCES).doughTemperature,
         }))
+      } else {
+        setYeastPercent((current) =>
+          current > 0 ? current : yeastPercentage(yeastType),
+        )
       }
     },
-    [],
+    [yeastType],
   )
 
   const changeStarterPercent = useCallback(
@@ -223,6 +236,7 @@ export function useRecipeCalculator(
   const applyPreferences = useCallback((prefs: PlanningPreferences) => {
     setLeavingType(prefs.leavingType)
     setYeastType(prefs.yeastType)
+    setYeastPercent(yeastPercentage(prefs.yeastType))
     setFinishedWeight(prefs.finishedWeight)
     setLoaves(prefs.loaves)
     setHydrationSelection(materializeHydration(prefs.hydrationSelection))
@@ -272,6 +286,7 @@ export function useRecipeCalculator(
     salt,
     bakeOffLoss,
     yeastType,
+    yeastPercent,
     leavingType,
     starterPercent,
     starterHydration,
@@ -284,6 +299,7 @@ export function useRecipeCalculator(
     changeSalt,
     changeBakeOffLoss,
     selectYeastType,
+    changeYeastPercent,
     selectHydrationPreset,
     enterCustomHydration,
     unlockCustomHydration,

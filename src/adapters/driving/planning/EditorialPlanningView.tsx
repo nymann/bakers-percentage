@@ -1,6 +1,7 @@
 import { useEffect, useImperativeHandle, useMemo, useState, type ReactElement, type Ref } from 'react'
 import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCalculator'
 import { useFermentationZone } from '../../../application/use-cases/useFermentationZone'
+import { createYeastFermentation } from '../../../domain/Fermentation'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
@@ -172,6 +173,7 @@ export function EditorialPlanningView({
     changeStarterHydration,
     changeDoughTemperature,
     applyPreferences,
+    changeYeastPercent,
   } = useRecipeCalculator('sourdough', {
     initial: storedPreferences,
     onPreferencesChange: savePreferences,
@@ -202,6 +204,24 @@ export function EditorialPlanningView({
       changeStarterPercent(recommendation.effectivePercent)
     }
   }, [autoRecommendActive, recommendation.effectivePercent, changeStarterPercent])
+
+  useEffect(() => {
+    if (leavingType !== 'yeast') return
+    const strategy = createYeastFermentation(
+      effectiveDuration,
+      doughTemperature,
+      yeastType,
+      salt,
+    )
+    changeYeastPercent(strategy.inoculumPercent)
+  }, [
+    leavingType,
+    effectiveDuration,
+    doughTemperature,
+    yeastType,
+    salt,
+    changeYeastPercent,
+  ])
 
   const schedule = useBakingSchedule(
     effectiveBakeTime,

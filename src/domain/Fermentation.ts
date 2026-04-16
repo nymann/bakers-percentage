@@ -1,7 +1,8 @@
 import { SameDaySchedule, ColdRetardSchedule, type ScheduleEvent } from './BakingSchedule'
+import type { YeastType } from './Recipe'
 
 export type FermentationZone = 'green' | 'yellow' | 'red'
-export type FermentationMethod = 'same-day' | 'cold-retard'
+export type FermentationMethod = 'same-day' | 'cold-retard' | 'yeast' | 'yeast-retard'
 
 export interface FermentationStrategy {
   readonly method: FermentationMethod
@@ -147,4 +148,132 @@ export class Fermentation {
     }
     return new RatkowskyFermentation(totalHours, fermentationTempC, hydration)
   }
+}
+
+// Yeast (Saccharomyces cerevisiae) Q10 model — first-pass heuristic.
+// Reference: 1% IDY at 24 °C, 4 h prebake, 1.8 % salt. Q10 ≈ 2.2 (rate
+// roughly doubles per 10 °C in the 15–35 °C range). See inbox.md for
+// the full-model gaps that need empirical replacement.
+const YEAST_T_REF = 24
+const YEAST_TIME_REF = 4
+const YEAST_PCT_REF = 0.01
+const YEAST_Q10 = 2.2
+const FRESH_TO_IDY_RATIO = 3
+const SALT_REF = 0.018
+const SALT_INHIBITION_PER_PERCENT = 0.10
+
+const YEAST_GREEN_REF = { low: 2, high: 6 }
+const YEAST_YELLOW_REF = { low: 1, high: 12 }
+
+function yeastTempFactor(tempC: number): number {
+  return Math.pow(YEAST_Q10, (YEAST_T_REF - tempC) / 10)
+}
+
+function yeastSaltFactor(salt: number): number {
+  return 1 + SALT_INHIBITION_PER_PERCENT * ((salt - SALT_REF) * 100)
+}
+
+export function yeastFermentationBoundaries(tempC: number): FermentationBoundaries {
+  const factor = yeastTempFactor(tempC)
+  return {
+    greenLow:   Math.max(0.5,  YEAST_GREEN_REF.low  * factor),
+    greenHigh:  YEAST_GREEN_REF.high  * factor,
+    yellowLow:  Math.max(0.25, YEAST_YELLOW_REF.low * factor),
+    yellowHigh: YEAST_YELLOW_REF.high * factor,
+  }
+}
+
+function assessYeastZone(hours: number, tempC: number): { zone: FermentationZone; warning: string | null } {
+  const { greenLow, greenHigh, yellowLow, yellowHigh } = yeastFermentationBoundaries(tempC)
+  if (hours >= greenLow  && hours <= greenHigh)  return { zone: 'green',  warning: null }
+  if (hours >= yellowLow && hours <= yellowHigh) return { zone: 'yellow', warning: null }
+  return {
+    zone: 'red',
+    warning: hours < yellowLow ? 'Too fast — flavor will be flat' : 'Over-proof risk',
+  }
+}
+
+export class YeastFermentation implements FermentationStrategy {
+  readonly method = 'yeast' as const
+  readonly totalHours: number
+  readonly tempC: number
+  readonly yeastType: YeastType
+  readonly salt: number
+
+  constructor(totalHours: number, tempC: number, yeastType: YeastType, salt: number = SALT_REF) {
+    this.totalHours = totalHours
+    this.tempC = tempC
+    this.yeastType = yeastType
+    this.salt = salt
+  }
+
+  get inoculumPercent(): number {
+    const tempFactor = yeastTempFactor(this.tempC)
+    const saltFactor = yeastSaltFactor(this.salt)
+    const idy = YEAST_PCT_REF * (YEAST_TIME_REF / this.totalHours) * tempFactor * saltFactor
+    return this.yeastType === 'fresh' ? idy * FRESH_TO_IDY_RATIO : idy
+  }
+
+  get zone(): FermentationZone {
+    return assessYeastZone(this.totalHours, this.tempC).zone
+  }
+
+  get warning(): string | null {
+    return assessYeastZone(this.totalHours, this.tempC).warning
+  }
+
+  schedule(bakeTime: Date): ScheduleEvent[] {
+    // ~65/35 bulk/proof split — placeholder until split-stage modeling.
+    return new SameDaySchedule(bakeTime, this.totalHours * 0.65).events
+  }
+}
+
+// Cold-retard yeast: at fridge temperatures yeast keeps fermenting (unlike
+// LAB-only retard). Uses the same Q10 model extended to ~4 °C — yeast
+// doesn't stop, just slows ~8×. No bloom step in the schedule.
+export class YeastRetardFermentation implements FermentationStrategy {
+  readonly method = 'yeast-retard' as const
+  readonly totalHours: number
+  readonly tempC: number
+  readonly yeastType: YeastType
+  readonly salt: number
+
+  constructor(totalHours: number, tempC: number, yeastType: YeastType, salt: number = SALT_REF) {
+    this.totalHours = totalHours
+    this.tempC = tempC
+    this.yeastType = yeastType
+    this.salt = salt
+  }
+
+  get inoculumPercent(): number {
+    const tempFactor = yeastTempFactor(this.tempC)
+    const saltFactor = yeastSaltFactor(this.salt)
+    const idy = YEAST_PCT_REF * (YEAST_TIME_REF / this.totalHours) * tempFactor * saltFactor
+    return this.yeastType === 'fresh' ? idy * FRESH_TO_IDY_RATIO : idy
+  }
+
+  get zone(): FermentationZone {
+    return assessYeastZone(this.totalHours, this.tempC).zone
+  }
+
+  get warning(): string | null {
+    return assessYeastZone(this.totalHours, this.tempC).warning
+  }
+
+  schedule(bakeTime: Date): ScheduleEvent[] {
+    // Reuse ColdRetardSchedule shape; bulk happens at ambient before fridge.
+    return new ColdRetardSchedule(bakeTime, 1.5, this.totalHours).events
+  }
+}
+
+export function createYeastFermentation(
+  totalHours: number,
+  tempC: number,
+  yeastType: YeastType,
+  salt: number,
+): FermentationStrategy {
+  if (tempC < COLD_THRESHOLD) {
+    return new YeastRetardFermentation(totalHours, tempC, yeastType, salt)
+  }
+  return new YeastFermentation(totalHours, tempC, yeastType, salt)
 }

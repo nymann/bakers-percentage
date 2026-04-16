@@ -610,3 +610,55 @@ function starterRowGrams(table: HTMLElement): string {
   const cells = within(starter).getAllByRole('cell')
   return cells[1].textContent ?? ''
 }
+
+function yeastRowGramsNumber(table: HTMLElement): number {
+  const rows = within(table).getAllByRole('row')
+  const yeast = rows.find(
+    (r) => within(r).queryAllByRole('cell')[0]?.textContent === 'Yeast',
+  )
+  if (!yeast) throw new Error('Yeast row not found')
+  const cells = within(yeast).getAllByRole('cell')
+  const text = cells[1].textContent ?? ''
+  const match = text.match(/(\d+(?:\.\d+)?)/)
+  if (!match) throw new Error(`Yeast grams not parseable: "${text}"`)
+  return Number(match[1])
+}
+
+describe('Scenario 15-02: duration drives recommended yeast percent', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('halving the duration roughly doubles the yeast row grams', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    const table = within(ledger).getByRole('table')
+
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+
+    // duration = 8h
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 480) } })
+    const yeastAt8h = yeastRowGramsNumber(table)
+
+    // duration = 4h
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 240) } })
+    const yeastAt4h = yeastRowGramsNumber(table)
+
+    expect(yeastAt4h).toBeGreaterThan(yeastAt8h)
+    const ratio = yeastAt4h / yeastAt8h
+    expect(ratio).toBeGreaterThanOrEqual(1.5)
+    expect(ratio).toBeLessThanOrEqual(3.0)
+  })
+})
