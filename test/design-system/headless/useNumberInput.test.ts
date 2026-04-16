@@ -15,6 +15,7 @@ describe('useNumberInput', () => {
       type: 'number',
       value: '800',
       onChange: expect.any(Function),
+      onFocus: expect.any(Function),
       onBlur: expect.any(Function),
     })
   })
@@ -56,6 +57,52 @@ describe('useNumberInput', () => {
     act(() => result.current.getInputProps().onBlur())
 
     expect(result.current.getInputProps().value).toBe('5000')
+  })
+
+  it('syncs text to the value prop when upstream updates it and the field is unfocused', () => {
+    // Regression: when the starter % is driven by the timeline slider, upstream
+    // updates must be reflected in the input even without a blur or resetKey.
+    const onChange = vi.fn()
+    const { result, rerender } = renderHook(
+      ({ value }) => useNumberInput({ value, onChange }),
+      { initialProps: { value: 10 } },
+    )
+
+    expect(result.current.getInputProps().value).toBe('10')
+
+    rerender({ value: 18 })
+
+    expect(result.current.getInputProps().value).toBe('18')
+  })
+
+  it('does not sync when the incoming value is NaN', () => {
+    // Upstream domain math can transiently produce NaN; the input must not
+    // display "NaN" nor re-render forever (NaN !== NaN).
+    const onChange = vi.fn()
+    const { result, rerender } = renderHook(
+      ({ value }) => useNumberInput({ value, onChange }),
+      { initialProps: { value: 10 } },
+    )
+
+    rerender({ value: Number.NaN })
+
+    expect(result.current.getInputProps().value).toBe('10')
+  })
+
+  it('does not overwrite the displayed text while the field is focused', () => {
+    // While the user is typing, upstream value changes must not clobber their input.
+    const onChange = vi.fn()
+    const { result, rerender } = renderHook(
+      ({ value }) => useNumberInput({ value, onChange }),
+      { initialProps: { value: 10 } },
+    )
+
+    act(() => result.current.getInputProps().onFocus())
+    act(() => result.current.getInputProps().onChange(fakeEvent('25')))
+
+    rerender({ value: 18 })
+
+    expect(result.current.getInputProps().value).toBe('25')
   })
 
   it('resyncs text when resetKey changes', () => {
