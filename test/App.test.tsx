@@ -131,3 +131,30 @@ describe('Scenario 06: side nav is the single navigation surface', () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe('Scenario 07: settings cogwheel in side nav opens the advanced dialog', () => {
+  it('exposes a settings button in the side nav', () => {
+    renderApp()
+
+    expect(screen.getByRole('button', { name: /settings/i })).toBeInTheDocument()
+  })
+
+  it('advanced dialog is not present before the cogwheel is activated', () => {
+    renderApp()
+
+    expect(
+      screen.queryByRole('dialog', { name: /advanced settings/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('activating the cogwheel reveals the advanced dialog', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(screen.getByRole('button', { name: /settings/i }))
+
+    expect(
+      screen.getByRole('dialog', { name: /advanced settings/i }),
+    ).toBeInTheDocument()
+  })
+})

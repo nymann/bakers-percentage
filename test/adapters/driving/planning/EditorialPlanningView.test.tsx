@@ -5,11 +5,14 @@ import { RecipeCalculator } from '../../../../src/adapters/driving/planning/Reci
 import { FeatureFlagProvider } from '../../../../src/feature-flags'
 import { createInMemoryFeatureFlags } from '../../../../src/adapters/driven/InMemoryFeatureFlags'
 
-function renderEditorial() {
+function renderEditorial(opts: { settingsOpen?: boolean } = {}) {
   const flags = createInMemoryFeatureFlags({})
   return render(
     <FeatureFlagProvider service={flags}>
-      <RecipeCalculator />
+      <RecipeCalculator
+        settingsOpen={opts.settingsOpen ?? false}
+        onCloseSettings={() => {}}
+      />
     </FeatureFlagProvider>,
   )
 }
@@ -180,50 +183,59 @@ describe('Scenario 05: hydration segmented control', () => {
   })
 })
 
-describe('Scenario 06: advanced disclosure collapses', () => {
-  it('advanced trigger defaults to collapsed', () => {
-    renderEditorial()
-
-    const trigger = screen.getByRole('button', { name: /advanced/i })
-    expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    expect(trigger).toHaveAttribute('aria-controls')
-
-    const panelId = trigger.getAttribute('aria-controls')!
-    const panel = document.getElementById(panelId)
-    expect(panel).toHaveAttribute('hidden')
-  })
-
-  it('activating advanced trigger reveals the panel and its inputs', async () => {
-    const user = userEvent.setup()
-    renderEditorial()
-
-    const trigger = screen.getByRole('button', { name: /advanced/i })
-    await user.click(trigger)
-
-    expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    const panelId = trigger.getAttribute('aria-controls')!
-    const panel = document.getElementById(panelId)!
-    expect(panel).not.toHaveAttribute('hidden')
-
-    expect(within(panel).getByRole('spinbutton', { name: /salt/i })).toBeInTheDocument()
-    expect(within(panel).getByRole('spinbutton', { name: /bake-off loss/i })).toBeInTheDocument()
-    expect(
-      within(panel).getByRole('spinbutton', { name: /starter hydration/i }),
-    ).toBeInTheDocument()
-    expect(
-      within(panel).getByRole('spinbutton', { name: /dough temperature/i }),
-    ).toBeInTheDocument()
-    expect(
-      within(panel).getByRole('spinbutton', { name: /^starter \(%\)$/i }),
-    ).toBeInTheDocument()
-  })
-
-  it('hides starter (%) when advanced is collapsed', () => {
-    renderEditorial()
+describe('Scenario 06: advanced settings live behind a dialog', () => {
+  it('does not render advanced fields when the dialog is closed', () => {
+    renderEditorial({ settingsOpen: false })
 
     expect(
       screen.queryByRole('spinbutton', { name: /^starter \(%\)$/i }),
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('spinbutton', { name: /starter hydration/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('reveals advanced fields inside a dialog when open', () => {
+    renderEditorial({ settingsOpen: true })
+
+    const dialog = screen.getByRole('dialog', { name: /advanced settings/i })
+    expect(within(dialog).getByRole('spinbutton', { name: /salt/i })).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('spinbutton', { name: /bake-off loss/i }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('spinbutton', { name: /starter hydration/i }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('spinbutton', { name: /^starter \(%\)$/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('closing the dialog hides its advanced fields', () => {
+    const { rerender } = renderEditorial({ settingsOpen: true })
+
+    expect(
+      screen.getByRole('spinbutton', { name: /^starter \(%\)$/i }),
+    ).toBeInTheDocument()
+
+    const flags = createInMemoryFeatureFlags({})
+    rerender(
+      <FeatureFlagProvider service={flags}>
+        <RecipeCalculator settingsOpen={false} onCloseSettings={() => {}} />
+      </FeatureFlagProvider>,
+    )
+
+    expect(
+      screen.queryByRole('spinbutton', { name: /^starter \(%\)$/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('room temperature sits on the main view, not inside the dialog', () => {
+    renderEditorial()
+
+    const input = screen.getByRole('spinbutton', { name: /room temperature/i })
+    expect(input).toBeInTheDocument()
+    expect(input).toHaveValue(24)
   })
 })
 

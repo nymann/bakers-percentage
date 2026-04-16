@@ -5,19 +5,14 @@ import { useStarterRecommendation } from '../../../application/use-cases/useStar
 import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
-import { Disclosure } from '../../../design-system/atoms/Disclosure'
 import { Ledger, type LedgerRow } from '../../../design-system/molecules/Ledger'
 import { ArcPreview, type ArcStep } from '../../../design-system/molecules/ArcPreview'
 import { useSegmented } from '../../../design-system/headless/useSegmented'
 import { useNumberInput } from '../../../design-system/headless/useNumberInput'
 import { FinishedWeightField } from './fields/FinishedWeightField'
 import { LoafCountField } from './fields/LoafCountField'
-import { SaltField } from './fields/SaltField'
-import { BakeOffLossField } from './fields/BakeOffLossField'
-import { StarterHydrationField } from './fields/StarterHydrationField'
-import { DoughTemperatureField } from './fields/DoughTemperatureField'
-import { StarterPercentField } from './fields/StarterPercentField'
 import { BakeTimeField } from './fields/BakeTimeField'
+import { AdvancedSettingsDialog } from './AdvancedSettingsDialog'
 import { formatPercentage, formatScheduleTime } from './format'
 import { HYDRATION_PRESETS, type HydrationPresetName } from '../../../domain/Hydration'
 
@@ -129,7 +124,15 @@ function deriveFermentChoice(
   return yeastType === 'fresh' ? 'fresh-yeast' : 'dry-yeast'
 }
 
-export function EditorialPlanningView() {
+export interface EditorialPlanningViewProps {
+  settingsOpen: boolean
+  onCloseSettings: () => void
+}
+
+export function EditorialPlanningView({
+  settingsOpen,
+  onCloseSettings,
+}: EditorialPlanningViewProps) {
   const {
     recipe,
     hydration,
@@ -271,6 +274,8 @@ export function EditorialPlanningView() {
               zone={fermentation.zone}
               warning={fermentation.warning}
               boundaries={fermentation.boundaries}
+              roomTemperature={doughTemperature}
+              onChangeRoomTemperature={changeDoughTemperature}
             />
           )}
 
@@ -280,43 +285,6 @@ export function EditorialPlanningView() {
               onChange={bakeTime.changeBakeTime}
             />
           )}
-        </div>
-
-        <div style={{ gridArea: 'advanced' }} className="min-w-0">
-          <Disclosure label="Advanced">
-            <SaltField
-              saltPercent={salt}
-              onChange={changeSalt}
-              clampNote={clampNotes.salt}
-            />
-            <BakeOffLossField
-              bakeOffLoss={bakeOffLoss}
-              onChange={changeBakeOffLoss}
-              clampNote={clampNotes.bakeOffLoss}
-            />
-            {showSourdoughAdvanced && (
-              <>
-                <StarterHydrationField
-                  starterHydration={starterHydration}
-                  onChange={changeStarterHydration}
-                  clampNote={clampNotes.starterHydration}
-                  resetKey={leavingType}
-                />
-                <DoughTemperatureField
-                  doughTemperature={doughTemperature}
-                  onChange={changeDoughTemperature}
-                  clampNote={clampNotes.doughTemperature}
-                  resetKey={leavingType}
-                />
-                <StarterPercentField
-                  percent={starterPercent}
-                  onChange={handleStarterPercentChange}
-                  clampNote={clampNotes.starterPercent}
-                  resetKey={leavingType}
-                />
-              </>
-            )}
-          </Disclosure>
         </div>
 
         <aside
@@ -333,6 +301,25 @@ export function EditorialPlanningView() {
           {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
         </aside>
       </div>
+
+      <AdvancedSettingsDialog
+        isOpen={settingsOpen}
+        onClose={onCloseSettings}
+        salt={salt}
+        saltClampNote={clampNotes.salt}
+        onChangeSalt={changeSalt}
+        bakeOffLoss={bakeOffLoss}
+        bakeOffLossClampNote={clampNotes.bakeOffLoss}
+        onChangeBakeOffLoss={changeBakeOffLoss}
+        showSourdoughFields={showSourdoughAdvanced}
+        leavingType={leavingType}
+        starterHydration={starterHydration}
+        starterHydrationClampNote={clampNotes.starterHydration}
+        onChangeStarterHydration={changeStarterHydration}
+        starterPercent={starterPercent}
+        starterPercentClampNote={clampNotes.starterPercent}
+        onChangeStarterPercent={handleStarterPercentChange}
+      />
     </section>
   )
 }
@@ -343,7 +330,6 @@ const PLANNING_GRID_STYLE = {
   gridTemplateAreas: `
     "strip    formula"
     "timeline formula"
-    "advanced formula"
   `,
 } as const
 
@@ -707,6 +693,8 @@ function FermentationTimeline({
   zone,
   warning,
   boundaries,
+  roomTemperature,
+  onChangeRoomTemperature,
 }: {
   mixHandleProps: TimelineHandleProps
   bakeHandleProps: TimelineHandleProps
@@ -716,6 +704,8 @@ function FermentationTimeline({
   zone: 'green' | 'yellow' | 'red'
   warning: string | null
   boundaries: import('../../../domain/Fermentation').FermentationBoundaries
+  roomTemperature: number
+  onChangeRoomTemperature: (tempC: number) => void
 }) {
   const { greenLow, greenHigh, yellowLow, yellowHigh } = boundaries
   const pct = (hours: number) =>
@@ -727,13 +717,19 @@ function FermentationTimeline({
 
   return (
     <div className="space-y-4 p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/10">
-      <div>
-        <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-1">
-          Fermentation Timeline
-        </span>
-        <p className="text-xs font-body text-on-surface-variant italic">
-          Drag to schedule when to start the dough and when to bake.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-1">
+            Fermentation Timeline
+          </span>
+          <p className="text-xs font-body text-on-surface-variant italic">
+            Drag to schedule when to start the dough and when to bake.
+          </p>
+        </div>
+        <RoomTemperatureControl
+          tempC={roomTemperature}
+          onChange={onChangeRoomTemperature}
+        />
       </div>
 
       <TimelineHandle
@@ -824,6 +820,33 @@ function CustomHydrationInput({
   return (
     <label className="font-label text-xs text-on-surface-variant">
       Custom hydration (%) <input {...input.getInputProps()} className="ml-2 px-2 py-1 border border-outline-variant rounded" />
+    </label>
+  )
+}
+
+function RoomTemperatureControl({
+  tempC,
+  onChange,
+}: {
+  tempC: number
+  onChange: (tempC: number) => void
+}) {
+  const input = useNumberInput({ value: tempC, onChange })
+  return (
+    <label className="flex items-center gap-2 shrink-0">
+      <span className="font-label text-[0.65rem] uppercase tracking-widest text-on-surface-variant">
+        Room temperature
+      </span>
+      <span className="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-full bg-surface-container-low">
+        <input
+          {...input.getInputProps()}
+          aria-label="Room temperature"
+          className="w-10 bg-transparent text-right font-headline italic text-base text-on-surface tabular-nums focus:outline-none"
+        />
+        <span aria-hidden="true" className="font-label text-xs text-on-surface-variant">
+          °C
+        </span>
+      </span>
     </label>
   )
 }

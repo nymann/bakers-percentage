@@ -4,6 +4,7 @@ import { cn } from '../../../design-system/lib/utils'
 
 interface SideNavBarProps {
   view: UseActiveView
+  onOpenSettings: () => void
 }
 
 const VIEW_ICONS: Record<ViewId, string> = {
@@ -12,7 +13,7 @@ const VIEW_ICONS: Record<ViewId, string> = {
   history: 'history',
 }
 
-export function SideNavBar({ view }: SideNavBarProps) {
+export function SideNavBar({ view, onOpenSettings }: SideNavBarProps) {
   const [expanded, setExpanded] = useState(true)
   const toggle = () => setExpanded((prev) => !prev)
 
@@ -115,6 +116,29 @@ export function SideNavBar({ view }: SideNavBarProps) {
             })}
           </ul>
         </nav>
+      </div>
+
+      <div className={cn('mt-auto pb-6', expanded ? 'px-6 sm:px-8' : 'px-3')}>
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          aria-label={expanded ? undefined : 'Settings'}
+          title={expanded ? undefined : 'Settings'}
+          className={cn(
+            'w-full flex items-center font-label uppercase tracking-widest text-[0.75rem] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/50 transition-all',
+            expanded
+              ? 'gap-3 py-3 pl-5 rounded-r-xl'
+              : 'justify-center py-3 rounded-xl',
+          )}
+        >
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined !text-[20px] leading-none"
+          >
+            settings
+          </span>
+          {expanded && <span>Settings</span>}
+        </button>
       </div>
     </aside>
   )

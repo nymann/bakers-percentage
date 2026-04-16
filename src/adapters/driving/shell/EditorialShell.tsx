@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useActiveView } from '../../../application/use-cases/useActiveView'
 import { RecipeCalculator } from '../planning/RecipeCalculator'
 import { ExecutionView } from '../execution/ExecutionView'
@@ -12,6 +13,7 @@ const SHELL_STYLE = {
 
 export function EditorialShell() {
   const view = useActiveView()
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
     <div
@@ -19,11 +21,14 @@ export function EditorialShell() {
       className="min-h-screen bg-background text-on-surface font-body"
     >
       <div style={{ gridArea: 'nav' }}>
-        <SideNavBar view={view} />
+        <SideNavBar view={view} onOpenSettings={() => setSettingsOpen(true)} />
       </div>
       <main style={{ gridArea: 'main' }} className="min-w-0 px-6 md:px-10 py-8">
         <section {...view.getPanelProps('planning')}>
-          <RecipeCalculator />
+          <RecipeCalculator
+            settingsOpen={settingsOpen}
+            onCloseSettings={() => setSettingsOpen(false)}
+          />
         </section>
         <section {...view.getPanelProps('execution')}>
           <ExecutionView />
