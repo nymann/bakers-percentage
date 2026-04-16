@@ -232,6 +232,7 @@ export function EditorialPlanningView() {
             <FermentationTimeline
               mixHandleProps={timeline.getMixHandleProps()}
               bakeHandleProps={timeline.getBakeHandleProps()}
+              duration={timeline.duration}
               zone={fermentation.zone}
               warning={fermentation.warning}
               boundaries={fermentation.boundaries}
@@ -441,70 +442,107 @@ function HydrationSegmentedField({
 
 type TimelineHandleProps = ReturnType<ReturnType<typeof useTimeline>['getMixHandleProps']>
 
+const TIMELINE_SPAN = 48
+
+const ZONE_LABELS: Record<'green' | 'yellow' | 'red', string> = {
+  green: 'Ideal window',
+  yellow: 'Cautionary',
+  red: 'Out of range',
+}
+
+function formatHours(hours: number): string {
+  return `${Math.round(hours * 10) / 10}h`
+}
+
 function FermentationTimeline({
   mixHandleProps,
   bakeHandleProps,
+  duration,
   zone,
   warning,
   boundaries,
 }: {
   mixHandleProps: TimelineHandleProps
   bakeHandleProps: TimelineHandleProps
+  duration: number
   zone: 'green' | 'yellow' | 'red'
   warning: string | null
   boundaries: import('../../../domain/Fermentation').FermentationBoundaries
 }) {
   const { greenLow, greenHigh, yellowLow, yellowHigh } = boundaries
+  const pct = (hours: number) =>
+    `${Math.max(0, Math.min(100, (hours / TIMELINE_SPAN) * 100))}%`
+  const durationPct = pct(Math.max(0, Math.min(TIMELINE_SPAN, duration)))
+
+  const sliderClass =
+    'w-full accent-primary cursor-pointer h-1 bg-surface-container rounded-full'
+
   return (
-    <div className="mb-4">
-      <label className="block mb-2">
-        <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-2">
+    <div className="mb-4 space-y-4">
+      <label className="block">
+        <span className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant block mb-2">
           Mix handle
         </span>
-        <input
-          {...mixHandleProps}
-          aria-label="Mix handle"
-          className="w-full"
-        />
+        <input {...mixHandleProps} aria-label="Mix handle" className={sliderClass} />
       </label>
-      <label className="block mb-2">
-        <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-2">
+      <label className="block">
+        <span className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant block mb-2">
           Bake handle
         </span>
-        <input
-          {...bakeHandleProps}
-          aria-label="Bake handle"
-          className="w-full"
-        />
+        <input {...bakeHandleProps} aria-label="Bake handle" className={sliderClass} />
       </label>
-      <div
-        role="presentation"
-        aria-label="Fermentation zones"
-        className="relative h-3 mb-2 rounded bg-surface-container-low overflow-hidden"
-      >
+
+      <div>
         <div
-          role="img"
-          aria-label={`Red zone – unsafe below ${yellowLow}h or above ${yellowHigh}h`}
-          className="absolute inset-0 bg-red-300/40"
-        />
+          role="presentation"
+          aria-label="Fermentation zones"
+          className="relative h-3 rounded-full overflow-hidden bg-surface-container-low border border-outline-variant/30"
+        >
+          <div
+            role="img"
+            aria-label={`Red zone – unsafe below ${yellowLow}h or above ${yellowHigh}h`}
+            className="absolute inset-0 bg-error-container/20"
+          />
+          <div
+            role="img"
+            aria-label={`Yellow zone – cautionary ${yellowLow}h to ${greenLow}h and ${greenHigh}h to ${yellowHigh}h`}
+            className="absolute inset-y-0 bg-tertiary-fixed/70"
+            style={{ left: pct(yellowLow), right: pct(TIMELINE_SPAN - yellowHigh) }}
+          />
+          <div
+            role="img"
+            aria-label={`Green zone – ideal ${greenLow}h to ${greenHigh}h`}
+            className="absolute inset-y-0 bg-[#c2d4ae]/60"
+            style={{ left: pct(greenLow), right: pct(TIMELINE_SPAN - greenHigh) }}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute top-[-4px] bottom-[-4px] w-[2px] bg-on-surface rounded-full"
+            style={{ left: durationPct, transform: 'translateX(-1px)' }}
+          />
+        </div>
         <div
-          role="img"
-          aria-label={`Yellow zone – cautionary ${yellowLow}h to ${greenLow}h and ${greenHigh}h to ${yellowHigh}h`}
-          className="absolute inset-y-0 bg-yellow-300/50"
-          style={{ left: `${(yellowLow / 48) * 100}%`, right: `${((48 - yellowHigh) / 48) * 100}%` }}
-        />
-        <div
-          role="img"
-          aria-label={`Green zone – ideal ${greenLow}h to ${greenHigh}h`}
-          className="absolute inset-y-0 bg-green-300/60"
-          style={{ left: `${(greenLow / 48) * 100}%`, right: `${((48 - greenHigh) / 48) * 100}%` }}
-        />
+          aria-hidden="true"
+          className="flex justify-between mt-1 font-label text-[0.65rem] uppercase tracking-widest text-on-surface-variant"
+        >
+          <span>0h</span>
+          <span>{TIMELINE_SPAN}h</span>
+        </div>
       </div>
-      <div role="status" className="font-label text-xs uppercase tracking-wider text-on-surface-variant">
-        {zone}
+
+      <div className="flex items-baseline gap-2">
+        <span className="font-headline text-2xl italic text-on-surface">
+          {formatHours(duration)}
+        </span>
+        <span
+          role="status"
+          className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant"
+        >
+          {ZONE_LABELS[zone]} · {zone}
+        </span>
       </div>
       {warning && (
-        <p className="text-xs text-error mt-1 font-body">{warning}</p>
+        <p className="text-xs text-error font-body">{warning}</p>
       )}
     </div>
   )
