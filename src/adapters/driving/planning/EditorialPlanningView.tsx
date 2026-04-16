@@ -260,10 +260,8 @@ export function EditorialPlanningView({
           onEnterCustomHydration={enterCustomHydration}
         />
 
-        <div style={PLANNING_GRID_STYLE} className="gap-4 items-start">
-          <div className="min-w-0 space-y-4">
-            {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
-
+        <div style={PLANNING_GRID_STYLE} className="gap-4 items-stretch">
+          <div className="min-w-0 flex flex-col">
             {showSourdoughAdvanced && (
               <FermentationTimeline
                 mixHandleProps={timeline.getMixHandleProps()}
@@ -287,7 +285,7 @@ export function EditorialPlanningView({
             )}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-4 min-w-0">
+          <aside className="min-w-0">
             <Ledger
               rows={ledgerRows}
               multiLoaf={loaves > 1}
@@ -297,6 +295,8 @@ export function EditorialPlanningView({
             />
           </aside>
         </div>
+
+        {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
       </div>
 
       <AdvancedSettingsDialog
@@ -711,7 +711,7 @@ function FermentationTimeline({
     'w-full accent-primary cursor-pointer h-1 bg-surface-container rounded-full'
 
   return (
-    <div className="space-y-3 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant/10">
+    <div className="h-full space-y-3 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant/10">
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-1">

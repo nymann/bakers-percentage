@@ -18,7 +18,7 @@ export function ArcPreview({ steps, title = 'Baking schedule' }: ArcPreviewProps
   const currentIndex = steps.findIndex((s) => !s.isPast)
   const nextStep = currentIndex >= 0 ? steps[currentIndex] : null
   const teaser = nextStep
-    ? `${nextStep.label} · ${nextStep.time}`
+    ? `Next: ${nextStep.label} · ${nextStep.time}`
     : `${steps.length} steps`
 
   return (
@@ -31,28 +31,28 @@ export function ArcPreview({ steps, title = 'Baking schedule' }: ArcPreviewProps
         aria-expanded={isOpen}
         aria-controls={listId}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full p-5 flex items-center justify-between gap-4 text-left hover:bg-surface-container transition-colors"
+        className="w-full p-4 flex items-center justify-between gap-4 text-left hover:bg-surface-container transition-colors"
       >
-        <span className="flex flex-col gap-1 min-w-0">
-          <span className="font-label text-[0.65rem] uppercase tracking-widest text-on-surface-variant">
+        <span className="flex items-baseline gap-3 min-w-0">
+          <span className="font-label text-[0.65rem] uppercase tracking-widest text-on-surface-variant shrink-0">
             {title}
           </span>
           <span className="font-body text-sm text-on-surface truncate">
-            {nextStep ? <>Next: {teaser}</> : teaser}
+            {teaser}
           </span>
         </span>
         <span
           aria-hidden="true"
-          className={[
-            'material-symbols-outlined !text-[20px] text-on-surface-variant transition-transform shrink-0',
-            isOpen ? 'rotate-180' : '',
-          ].join(' ')}
+          className="material-symbols-outlined !text-[20px] text-on-surface-variant shrink-0"
         >
-          expand_more
+          {isOpen ? 'expand_less' : 'expand_more'}
         </span>
       </button>
       {isOpen && (
-        <ol id={listId} className="space-y-2 relative px-5 pb-5">
+        <ol
+          id={listId}
+          className="space-y-2 px-5 pt-3 pb-5 border-t border-outline-variant/15"
+        >
           {steps.map((step, idx) => {
             const isCurrent = idx === currentIndex
             return (
