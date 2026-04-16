@@ -104,12 +104,11 @@ const WEIGHT_PRESETS: readonly {
   value: WeightPresetValue
   label: string
   grams: number
-  subtitle: string
   Icon: (props: { className?: string }) => JSX.Element
 }[] = [
-  { value: 'S', label: 'S', grams: 500, subtitle: '500g Boule', Icon: BouleIcon },
-  { value: 'M', label: 'M', grams: 900, subtitle: '900g Batard', Icon: BatardIcon },
-  { value: 'L', label: 'L', grams: 1200, subtitle: '1.2kg Miche', Icon: MicheIcon },
+  { value: 'S', label: 'S', grams: 500, Icon: BouleIcon },
+  { value: 'M', label: 'M', grams: 900, Icon: BatardIcon },
+  { value: 'L', label: 'L', grams: 1200, Icon: MicheIcon },
 ]
 
 type HydrationOptionValue = HydrationPresetName | 'Custom'
@@ -485,10 +484,6 @@ function SizeControl({
     label: 'Finished weight',
   })
 
-  const selectedSubtitle = !customMode
-    ? WEIGHT_PRESETS.find((p) => p.value === selectedPreset)?.subtitle
-    : undefined
-
   return (
     <div className="flex flex-col">
       <FieldKicker>Size</FieldKicker>
@@ -517,11 +512,6 @@ function SizeControl({
             resetKey="custom"
           />
         </div>
-      )}
-      {selectedSubtitle && (
-        <span className="font-label text-[0.6rem] uppercase tracking-widest text-on-surface-variant mt-2">
-          {selectedSubtitle}
-        </span>
       )}
     </div>
   )
