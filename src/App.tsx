@@ -1,6 +1,6 @@
 import { FeatureFlagProvider } from './feature-flags'
 import { createInMemoryFeatureFlags } from './adapters/driven/InMemoryFeatureFlags'
-import { RecipeCalculator } from './adapters/driving/RecipeCalculator'
+import { RecipeCalculator } from './adapters/driving/planning/RecipeCalculator'
 
 const featureFlags = createInMemoryFeatureFlags({
   'yeast-recipe-calculator': true,

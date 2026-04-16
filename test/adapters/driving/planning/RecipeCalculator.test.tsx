@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { RecipeCalculator } from '../../../src/adapters/driving/RecipeCalculator'
-import { FeatureFlagProvider } from '../../../src/feature-flags'
-import { createInMemoryFeatureFlags } from '../../../src/adapters/driven/InMemoryFeatureFlags'
+import { RecipeCalculator } from '../../../../src/adapters/driving/planning/RecipeCalculator'
+import { FeatureFlagProvider } from '../../../../src/feature-flags'
+import { createInMemoryFeatureFlags } from '../../../../src/adapters/driven/InMemoryFeatureFlags'
 
 function renderWithFlags(flags: Record<string, boolean>) {
   const service = createInMemoryFeatureFlags(flags)
