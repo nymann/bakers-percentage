@@ -894,6 +894,45 @@ describe('Scenario 16-02: long yeast duration stays in the green zone', () => {
   })
 })
 
+describe('Scenario 16-03: long yeast duration uses the cold-retard recommendation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('retard recommendation at 14h is less than same-day recommendation at 4h, and non-zero', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '22' } })
+    fireEvent.blur(tempInput)
+
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    const table = within(ledger).getByRole('table')
+
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 240) } })
+    const yeastSameDay = yeastRowGramsNumber(table)
+
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 840) } })
+    const yeastRetard = yeastRowGramsNumber(table)
+
+    expect(yeastRetard).toBeGreaterThan(0)
+    expect(yeastRetard).toBeLessThan(yeastSameDay)
+  })
+})
+
 describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
