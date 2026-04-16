@@ -288,8 +288,11 @@ describe('Scenario 07: ingredient ledger accessible', () => {
 })
 
 describe('Scenario 08: baking schedule arc preview', () => {
-  it('renders schedule as an ordered list of steps', () => {
+  it('renders schedule as an ordered list of steps once expanded', async () => {
+    const user = userEvent.setup()
     renderEditorial()
+
+    await expandSchedule(user)
 
     const arc = screen.getByRole('region', { name: /baking schedule/i })
     const list = within(arc).getByRole('list')
@@ -297,8 +300,11 @@ describe('Scenario 08: baking schedule arc preview', () => {
     expect(items.length).toBeGreaterThan(0)
   })
 
-  it('marks the first upcoming step with aria-current=step', () => {
+  it('marks the first upcoming step with aria-current=step', async () => {
+    const user = userEvent.setup()
     renderEditorial()
+
+    await expandSchedule(user)
 
     const arc = screen.getByRole('region', { name: /baking schedule/i })
     const current = within(arc).getAllByRole('listitem').find(
@@ -306,7 +312,30 @@ describe('Scenario 08: baking schedule arc preview', () => {
     )
     expect(current).toBeDefined()
   })
+
+  it('starts collapsed and reveals the list when clicked', async () => {
+    const user = userEvent.setup()
+    renderEditorial()
+
+    const arc = screen.getByRole('region', { name: /baking schedule/i })
+    const trigger = within(arc).getByRole('button', { name: /baking schedule/i })
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    expect(within(arc).queryByRole('list')).not.toBeInTheDocument()
+
+    await user.click(trigger)
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    expect(within(arc).getByRole('list')).toBeInTheDocument()
+  })
 })
+
+async function expandSchedule(user: ReturnType<typeof userEvent.setup>) {
+  const arc = screen.getByRole('region', { name: /baking schedule/i })
+  const trigger = within(arc).getByRole('button', { name: /baking schedule/i })
+  if (trigger.getAttribute('aria-expanded') !== 'true') {
+    await user.click(trigger)
+  }
+}
 
 describe('Scenario 14-01: timeline replaces bake time for sourdough', () => {
   it('renders a mix handle slider on the fermentation timeline', () => {
@@ -331,6 +360,14 @@ describe('Scenario 14-01: timeline replaces bake time for sourdough', () => {
     expect(screen.queryByLabelText(/bake time/i)).not.toBeInTheDocument()
   })
 })
+
+function fireEventExpandSchedule() {
+  const arc = screen.getByRole('region', { name: /baking schedule/i })
+  const trigger = within(arc).getByRole('button', { name: /baking schedule/i })
+  if (trigger.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(trigger)
+  }
+}
 
 function outOfOvenTimeText(): string {
   const arc = screen.getByRole('region', { name: /baking schedule/i })
@@ -358,6 +395,7 @@ function signedMinutesDelta(after: string, before: string): number {
 describe('Scenario 14-02: bake handle shifts out-of-oven time', () => {
   it('moving the bake handle 60 minutes later advances out-of-oven by 60 minutes', () => {
     renderEditorial()
+    fireEventExpandSchedule()
 
     const bakeSlider = screen.getByRole('slider', {
       name: /bake handle/i,

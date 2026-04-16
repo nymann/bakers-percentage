@@ -239,61 +239,64 @@ export function EditorialPlanningView({
       aria-label="Recipe calculator"
       className="bg-background text-on-surface font-body"
     >
-      <div style={PLANNING_GRID_STYLE} className="gap-6 items-start">
-        <div className="min-w-0 space-y-6">
-          <RecipeControlsStrip
-            selectedPreset={selectedWeightPreset}
-            weight={recipe.finishedWeightPerLoaf}
-            weightClampNote={clampNotes.finishedWeight}
-            onSelectPreset={(v) =>
-              changeFinishedWeight(WEIGHT_PRESETS.find((p) => p.value === v)!.grams)
-            }
-            onChangeWeight={changeFinishedWeight}
-            loaves={loaves}
-            loavesClampNote={clampNotes.loaves}
-            onChangeLoaves={changeLoafCount}
-            fermentChoice={fermentChoice}
-            onSelectFerment={selectFerment}
-            selectedHydration={selectedHydration}
-            hydrationPercent={hydration}
-            onSelectHydrationPreset={selectHydrationPreset}
-            onUnlockCustomHydration={unlockCustomHydration}
-            onEnterCustomHydration={enterCustomHydration}
-          />
+      <div className="space-y-4">
+        <RecipeControlsStrip
+          selectedPreset={selectedWeightPreset}
+          weight={recipe.finishedWeightPerLoaf}
+          weightClampNote={clampNotes.finishedWeight}
+          onSelectPreset={(v) =>
+            changeFinishedWeight(WEIGHT_PRESETS.find((p) => p.value === v)!.grams)
+          }
+          onChangeWeight={changeFinishedWeight}
+          loaves={loaves}
+          loavesClampNote={clampNotes.loaves}
+          onChangeLoaves={changeLoafCount}
+          fermentChoice={fermentChoice}
+          onSelectFerment={selectFerment}
+          selectedHydration={selectedHydration}
+          hydrationPercent={hydration}
+          onSelectHydrationPreset={selectHydrationPreset}
+          onUnlockCustomHydration={unlockCustomHydration}
+          onEnterCustomHydration={enterCustomHydration}
+        />
 
-          {showSourdoughAdvanced && (
-            <FermentationTimeline
-              mixHandleProps={timeline.getMixHandleProps()}
-              bakeHandleProps={timeline.getBakeHandleProps()}
-              mixTimeLabel={formatScheduleTime(timeline.mixTime)}
-              bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
-              duration={timeline.duration}
-              zone={fermentation.zone}
-              warning={fermentation.warning}
-              boundaries={fermentation.boundaries}
-              roomTemperature={doughTemperature}
-              onChangeRoomTemperature={changeDoughTemperature}
-            />
-          )}
+        <div style={PLANNING_GRID_STYLE} className="gap-4 items-start">
+          <div className="min-w-0 space-y-4">
+            {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
 
-          {leavingType === 'yeast' && (
-            <BakeTimeField
-              bakeTime={bakeTime.bakeTime}
-              onChange={bakeTime.changeBakeTime}
+            {showSourdoughAdvanced && (
+              <FermentationTimeline
+                mixHandleProps={timeline.getMixHandleProps()}
+                bakeHandleProps={timeline.getBakeHandleProps()}
+                mixTimeLabel={formatScheduleTime(timeline.mixTime)}
+                bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
+                duration={timeline.duration}
+                zone={fermentation.zone}
+                warning={fermentation.warning}
+                boundaries={fermentation.boundaries}
+                roomTemperature={doughTemperature}
+                onChangeRoomTemperature={changeDoughTemperature}
+              />
+            )}
+
+            {leavingType === 'yeast' && (
+              <BakeTimeField
+                bakeTime={bakeTime.bakeTime}
+                onChange={bakeTime.changeBakeTime}
+              />
+            )}
+          </div>
+
+          <aside className="space-y-4 lg:sticky lg:top-4 min-w-0">
+            <Ledger
+              rows={ledgerRows}
+              multiLoaf={loaves > 1}
+              totalDoughWeight={recipe.totalDoughWeight}
+              finishedLoafWeight={recipe.finishedWeightPerLoaf}
+              hydrationPercent={hydration}
             />
-          )}
+          </aside>
         </div>
-
-        <aside className="space-y-6 lg:sticky lg:top-4 min-w-0">
-          <Ledger
-            rows={ledgerRows}
-            multiLoaf={loaves > 1}
-            totalDoughWeight={recipe.totalDoughWeight}
-            finishedLoafWeight={recipe.finishedWeightPerLoaf}
-            hydrationPercent={hydration}
-          />
-          {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
-        </aside>
       </div>
 
       <AdvancedSettingsDialog
@@ -357,7 +360,7 @@ function RecipeControlsStrip({
   onEnterCustomHydration: (fraction: number) => void
 }) {
   return (
-    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 md:p-5 space-y-5">
+    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 space-y-4">
       <div className="flex flex-wrap md:flex-nowrap items-start md:items-stretch justify-between gap-x-8 gap-y-4">
         <SizeControl
           selectedPreset={selectedPreset}
@@ -378,7 +381,7 @@ function RecipeControlsStrip({
           onSelectFerment={onSelectFerment}
         />
       </div>
-      <div className="pt-4 border-t border-outline-variant/15">
+      <div className="pt-3 border-t border-outline-variant/15">
         <HydrationControl
           selectedOption={selectedHydration}
           customPercent={hydrationPercent}
@@ -708,7 +711,7 @@ function FermentationTimeline({
     'w-full accent-primary cursor-pointer h-1 bg-surface-container rounded-full'
 
   return (
-    <div className="space-y-4 p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/10">
+    <div className="space-y-3 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant/10">
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-1">
