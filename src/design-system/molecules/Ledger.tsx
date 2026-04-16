@@ -27,7 +27,7 @@ export function Ledger({
   return (
     <section
       aria-label="Ingredient ledger"
-      className="bg-surface-container-lowest p-6 md:p-8 rounded-2xl border border-outline-variant/10"
+      className="bg-surface-container-lowest p-4 sm:p-6 md:p-8 rounded-2xl border border-outline-variant/10"
     >
       <div className="flex justify-between items-end mb-4 border-b border-outline-variant/15 pb-3">
         <h2 className="font-headline text-xl italic">{title}</h2>

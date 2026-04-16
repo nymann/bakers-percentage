@@ -260,7 +260,7 @@ export function EditorialPlanningView({
           onEnterCustomHydration={enterCustomHydration}
         />
 
-        <div style={PLANNING_GRID_STYLE} className="gap-4 items-stretch">
+        <div className="grid gap-4 items-stretch grid-cols-1 md:[grid-template-columns:minmax(0,1fr)_minmax(22rem,28rem)]">
           <div className="min-w-0 flex flex-col">
             {showSourdoughAdvanced && (
               <FermentationTimeline
@@ -321,11 +321,6 @@ export function EditorialPlanningView({
   )
 }
 
-const PLANNING_GRID_STYLE = {
-  display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr) minmax(22rem, 28rem)',
-} as const
-
 function RecipeControlsStrip({
   selectedPreset,
   weight,
@@ -360,8 +355,8 @@ function RecipeControlsStrip({
   onEnterCustomHydration: (fraction: number) => void
 }) {
   return (
-    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 space-y-4">
-      <div className="flex flex-wrap md:flex-nowrap items-start md:items-stretch justify-between gap-x-8 gap-y-4">
+    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-3 sm:p-4 space-y-4">
+      <div className="flex flex-wrap md:flex-nowrap items-start md:items-stretch md:justify-between gap-x-6 md:gap-x-8 gap-y-4">
         <SizeControl
           selectedPreset={selectedPreset}
           weight={weight}
@@ -425,7 +420,7 @@ function ChipButton({
       {...rest}
       className={[
         'px-3 py-1.5 rounded-full text-xs font-label transition-all',
-        stretch ? 'flex-1' : '',
+        stretch ? 'flex-1' : 'whitespace-nowrap',
         isSelected
           ? 'bg-primary text-on-primary shadow-sm'
           : 'bg-transparent text-on-surface-variant hover:text-on-surface',
@@ -521,7 +516,7 @@ function LoavesControl({
   clampNote: import('../../../domain/InputRanges').ClampResult
 }) {
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="flex flex-col items-start md:items-center text-left md:text-center">
       <FieldKicker>Loaves</FieldKicker>
       <LoafCountField
         loaves={loaves}
@@ -552,7 +547,7 @@ function FermentControl({
   })
 
   return (
-    <div className="flex flex-col items-end text-right">
+    <div className="flex flex-col items-start md:items-end text-left md:text-right">
       <FieldKicker>Ferment</FieldKicker>
       <div {...segmented.getRootProps()} className={PILL_GROUP_CLASS}>
         {options.map((option) => {
@@ -712,7 +707,7 @@ function FermentationTimeline({
 
   return (
     <div className="h-full space-y-3 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant/10">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
         <div>
           <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-1">
             Fermentation Timeline

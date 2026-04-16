@@ -1,33 +1,32 @@
 import { useState } from 'react'
 import { useActiveView } from '../../../application/use-cases/useActiveView'
+import { useMediaQuery } from '../../../design-system/headless/useMediaQuery'
 import { RecipeCalculator } from '../planning/RecipeCalculator'
 import { ExecutionView } from '../execution/ExecutionView'
 import { HistoryView } from '../history/HistoryView'
 import { SideNavBar } from './SideNavBar'
-
-const SHELL_STYLE = {
-  display: 'grid',
-  gridTemplateColumns: 'auto minmax(0, 1fr)',
-  gridTemplateAreas: '"nav main"',
-} as const
+import { TopNavBar } from './TopNavBar'
 
 export function EditorialShell() {
   const view = useActiveView()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const isDesktop = useMediaQuery('(min-width: 768px)')
+
+  const openSettings = () => setSettingsOpen(true)
+  const closeSettings = () => setSettingsOpen(false)
 
   return (
-    <div
-      style={SHELL_STYLE}
-      className="min-h-screen bg-background text-on-surface font-body"
-    >
-      <div style={{ gridArea: 'nav' }}>
-        <SideNavBar view={view} onOpenSettings={() => setSettingsOpen(true)} />
-      </div>
-      <main style={{ gridArea: 'main' }} className="min-w-0 px-6 md:px-10 py-8">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background text-on-surface font-body">
+      {isDesktop ? (
+        <SideNavBar view={view} onOpenSettings={openSettings} />
+      ) : (
+        <TopNavBar view={view} onOpenSettings={openSettings} />
+      )}
+      <main className="flex-1 min-w-0 px-3 sm:px-6 md:px-10 py-4 md:py-8">
         <section {...view.getPanelProps('planning')}>
           <RecipeCalculator
             settingsOpen={settingsOpen}
-            onCloseSettings={() => setSettingsOpen(false)}
+            onCloseSettings={closeSettings}
           />
         </section>
         <section {...view.getPanelProps('execution')}>
