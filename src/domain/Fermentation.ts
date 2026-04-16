@@ -5,7 +5,7 @@ export type FermentationMethod = 'same-day' | 'cold-retard'
 
 export interface FermentationStrategy {
   readonly method: FermentationMethod
-  readonly starterPercent: number
+  readonly inoculumPercent: number
   readonly zone: FermentationZone
   readonly warning: string | null
   schedule(bakeTime: Date): ScheduleEvent[]
@@ -84,7 +84,7 @@ export class RatkowskyFermentation implements FermentationStrategy {
     this.hydration = hydration
   }
 
-  get starterPercent(): number {
+  get inoculumPercent(): number {
     const dt = this.tempC - T_REF
     const a = A0 + A1 * dt + A2 * dt * dt
     const b = B0 + B1 * dt + B2 * dt * dt
@@ -119,7 +119,7 @@ export class RetardFermentation implements FermentationStrategy {
     this.hydration = hydration
   }
 
-  get starterPercent(): number {
+  get inoculumPercent(): number {
     const coldHours = Math.max(1, this.totalHours - bulkHours(this.doughTempC))
     return COLD_COEFFICIENT * Math.pow(coldHours, -COLD_EXPONENT)
   }

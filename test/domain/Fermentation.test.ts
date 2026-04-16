@@ -47,7 +47,7 @@ describe('RatkowskyFermentation starter % matches empirical table', () => {
     ({ temp, hours, expected }) => {
       const strategy = new RatkowskyFermentation(hours, temp, 0.75)
       expect(strategy.method).toBe('same-day')
-      const error = Math.abs(strategy.starterPercent - expected) / expected
+      const error = Math.abs(strategy.inoculumPercent - expected) / expected
       expect(error).toBeLessThanOrEqual(0.15)
     },
   )
@@ -64,7 +64,7 @@ describe('RetardFermentation starter % matches empirical table', () => {
       const bulkAt24 = 3
       const strategy = new RetardFermentation(bulkAt24 + coldHours, 24, 0.75)
       expect(strategy.method).toBe('cold-retard')
-      const error = Math.abs(strategy.starterPercent - expected) / expected
+      const error = Math.abs(strategy.inoculumPercent - expected) / expected
       expect(error).toBeLessThanOrEqual(0.20)
     },
   )

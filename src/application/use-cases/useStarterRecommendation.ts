@@ -31,7 +31,7 @@ export function useStarterRecommendation(
     [effectiveFermentationTemp, doughTempC, hydration, totalHours],
   )
 
-  const recommendedPercent = effectiveStrategy.starterPercent
+  const recommendedPercent = effectiveStrategy.inoculumPercent
   const isOverridden = percentOverride !== null
   const isMethodOverridden = methodOverride !== null
   const hasAnyOverride = isOverridden || isMethodOverridden
