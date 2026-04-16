@@ -238,7 +238,7 @@ export function EditorialPlanningView() {
 
 const PLANNING_GRID_STYLE = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr) minmax(18rem, 22rem)',
+  gridTemplateColumns: 'minmax(0, 1fr) minmax(22rem, 28rem)',
   gridTemplateAreas: `
     "strip    formula"
     "timeline formula"

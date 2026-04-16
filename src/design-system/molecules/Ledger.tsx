@@ -35,27 +35,27 @@ export function Ledger({
           Hydration: {Math.round(hydrationPercent * 100)}%
         </span>
       </div>
-      <table aria-label="Ingredient ledger" className="w-full">
+      <table aria-label="Ingredient ledger" className="w-full tabular-nums">
         <thead>
           <tr>
-            <th scope="col" className="text-left font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2">
+            <th scope="col" className="text-left font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2 pr-3">
               Ingredient
             </th>
             {multiLoaf ? (
               <>
-                <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2">
+                <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2 pl-3">
                   Per loaf
                 </th>
-                <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2">
+                <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2 pl-3">
                   Total
                 </th>
               </>
             ) : (
-              <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2">
+              <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2 pl-3">
                 Grams
               </th>
             )}
-            <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2">
+            <th scope="col" className="text-right font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant pb-2 pl-3">
               Baker's %
             </th>
           </tr>
@@ -63,18 +63,18 @@ export function Ledger({
         <tbody>
           {rows.map((row) => (
             <tr key={row.name} className="group">
-              <td className="py-2 font-body text-on-surface-variant">{row.name}</td>
-              <td className="py-2 text-right font-headline text-xl">
+              <td className="py-2 pr-3 font-body text-on-surface-variant">{row.name}</td>
+              <td className="py-2 pl-3 text-right font-headline text-xl whitespace-nowrap">
                 {row.grams}
                 <span className="text-xs italic ml-1">g</span>
               </td>
               {multiLoaf && (
-                <td className="py-2 text-right font-headline text-xl">
+                <td className="py-2 pl-3 text-right font-headline text-xl whitespace-nowrap">
                   {row.total ?? row.grams}
                   <span className="text-xs italic ml-1">g</span>
                 </td>
               )}
-              <td className="py-2 text-right font-label text-xs text-on-surface-variant">
+              <td className="py-2 pl-3 text-right font-label text-xs text-on-surface-variant">
                 {row.percentage}
               </td>
             </tr>
