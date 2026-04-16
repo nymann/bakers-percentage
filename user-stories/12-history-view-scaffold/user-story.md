@@ -4,7 +4,9 @@
 6 — Editorial Design System
 
 ## Story
-As a baker, I want a History view scaffold, so that past bakes can be surfaced in a future iteration without reshuffling the shell.
+As a baker, I want a History view where I can revisit past bakes, so that I can repeat the ones that worked and learn from the ones that didn't.
+
+_This slice delivers the scaffold only — placeholder list, no live data. Real history surfaces in later stories._
 
 ## Acceptance Criteria
 - `history-view` flag: OFF → History nav tab is absent or disabled; ON → tab active, panel renders
