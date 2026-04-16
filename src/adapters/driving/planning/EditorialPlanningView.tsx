@@ -240,7 +240,7 @@ export function EditorialPlanningView({
       className="bg-background text-on-surface font-body"
     >
       <div style={PLANNING_GRID_STYLE} className="gap-6 items-start">
-        <div style={{ gridArea: 'strip' }} className="min-w-0">
+        <div className="min-w-0 space-y-6">
           <RecipeControlsStrip
             selectedPreset={selectedWeightPreset}
             weight={recipe.finishedWeightPerLoaf}
@@ -260,9 +260,7 @@ export function EditorialPlanningView({
             onUnlockCustomHydration={unlockCustomHydration}
             onEnterCustomHydration={enterCustomHydration}
           />
-        </div>
 
-        <div style={{ gridArea: 'timeline' }} className="min-w-0">
           {showSourdoughAdvanced && (
             <FermentationTimeline
               mixHandleProps={timeline.getMixHandleProps()}
@@ -286,10 +284,7 @@ export function EditorialPlanningView({
           )}
         </div>
 
-        <aside
-          style={{ gridArea: 'formula' }}
-          className="space-y-6 lg:sticky lg:top-4 min-w-0"
-        >
+        <aside className="space-y-6 lg:sticky lg:top-4 min-w-0">
           <Ledger
             rows={ledgerRows}
             multiLoaf={loaves > 1}
@@ -326,10 +321,6 @@ export function EditorialPlanningView({
 const PLANNING_GRID_STYLE = {
   display: 'grid',
   gridTemplateColumns: 'minmax(0, 1fr) minmax(22rem, 28rem)',
-  gridTemplateAreas: `
-    "strip    formula"
-    "timeline formula"
-  `,
 } as const
 
 function RecipeControlsStrip({
