@@ -381,6 +381,45 @@ describe('Scenario 14-03: mix handle adjusts fermentation duration', () => {
   })
 })
 
+describe('Scenario 14-05: status region announces active zone', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('announces "yellow" when mix handle moves into the yellow band', () => {
+    renderEditorial()
+    expect(screen.getByRole('status')).toHaveTextContent(/green/i)
+
+    const mixSlider = screen.getByRole('slider', {
+      name: /mix handle/i,
+    }) as HTMLInputElement
+    // bake at value 1380 (23h), mix at 1080 → duration 5h → yellow
+    fireEvent.change(mixSlider, { target: { value: '1080' } })
+
+    expect(screen.getByRole('status')).toHaveTextContent(/yellow/i)
+  })
+
+  it('announces "red" with warning when mix handle moves into the red band', () => {
+    renderEditorial()
+
+    const mixSlider = screen.getByRole('slider', {
+      name: /mix handle/i,
+    }) as HTMLInputElement
+    // mix at 1260 → duration 2h → red (too short)
+    fireEvent.change(mixSlider, { target: { value: '1260' } })
+
+    expect(screen.getByRole('status')).toHaveTextContent(/red/i)
+    expect(
+      screen.getByText(/not feasible for sourdough|over-fermentation risk/i),
+    ).toBeInTheDocument()
+  })
+})
+
 describe('Scenario 14-04: zone bands render on the track', () => {
   it('renders three fermentation zone bands with green, yellow, and red accessible names', () => {
     renderEditorial()

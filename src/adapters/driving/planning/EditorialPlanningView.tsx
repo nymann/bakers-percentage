@@ -233,6 +233,7 @@ export function EditorialPlanningView() {
               mixHandleProps={timeline.getMixHandleProps()}
               bakeHandleProps={timeline.getBakeHandleProps()}
               zone={fermentation.zone}
+              warning={fermentation.warning}
               boundaries={fermentation.boundaries}
             />
           )}
@@ -444,11 +445,13 @@ function FermentationTimeline({
   mixHandleProps,
   bakeHandleProps,
   zone,
+  warning,
   boundaries,
 }: {
   mixHandleProps: TimelineHandleProps
   bakeHandleProps: TimelineHandleProps
   zone: 'green' | 'yellow' | 'red'
+  warning: string | null
   boundaries: import('../../../domain/Fermentation').FermentationBoundaries
 }) {
   const { greenLow, greenHigh, yellowLow, yellowHigh } = boundaries
@@ -500,6 +503,9 @@ function FermentationTimeline({
       <div role="status" className="font-label text-xs uppercase tracking-wider text-on-surface-variant">
         {zone}
       </div>
+      {warning && (
+        <p className="text-xs text-error mt-1 font-body">{warning}</p>
+      )}
     </div>
   )
 }
