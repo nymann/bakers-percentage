@@ -368,7 +368,7 @@ function RecipeControlsStrip({
 }) {
   return (
     <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 md:p-5 space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
+      <div className="flex flex-wrap md:flex-nowrap items-start md:items-stretch justify-between gap-x-8 gap-y-4">
         <SizeControl
           selectedPreset={selectedPreset}
           weight={weight}
@@ -376,11 +376,13 @@ function RecipeControlsStrip({
           onChangeWeight={onChangeWeight}
           clampNote={weightClampNote}
         />
+        <StripDivider />
         <LoavesControl
           loaves={loaves}
           onChange={onChangeLoaves}
           clampNote={loavesClampNote}
         />
+        <StripDivider />
         <FermentControl
           fermentChoice={fermentChoice}
           onSelectFerment={onSelectFerment}
@@ -396,6 +398,15 @@ function RecipeControlsStrip({
         />
       </div>
     </div>
+  )
+}
+
+function StripDivider() {
+  return (
+    <div
+      aria-hidden="true"
+      className="hidden md:block self-stretch w-px bg-outline-variant/15"
+    />
   )
 }
 
