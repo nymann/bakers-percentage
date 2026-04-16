@@ -38,12 +38,25 @@ function scaleBoundary(ref: number, factor: number): number {
   return Math.floor(ref / factor)
 }
 
-function assessZone(hours: number, tempC: number, hydration: number): { zone: FermentationZone; warning: string | null } {
+export type FermentationBoundaries = {
+  readonly greenLow: number
+  readonly greenHigh: number
+  readonly yellowLow: number
+  readonly yellowHigh: number
+}
+
+export function fermentationBoundaries(tempC: number, hydration: number): FermentationBoundaries {
   const factor = rateFactor(tempC) * hydrationFactor(hydration)
-  const greenLow = scaleBoundary(REF_GREEN_LOW, factor)
-  const greenHigh = scaleBoundary(REF_GREEN_HIGH, factor)
-  const yellowLow = scaleBoundary(REF_YELLOW_LOW, factor)
-  const yellowHigh = scaleBoundary(REF_YELLOW_HIGH, factor)
+  return {
+    greenLow: scaleBoundary(REF_GREEN_LOW, factor),
+    greenHigh: scaleBoundary(REF_GREEN_HIGH, factor),
+    yellowLow: scaleBoundary(REF_YELLOW_LOW, factor),
+    yellowHigh: scaleBoundary(REF_YELLOW_HIGH, factor),
+  }
+}
+
+function assessZone(hours: number, tempC: number, hydration: number): { zone: FermentationZone; warning: string | null } {
+  const { greenLow, greenHigh, yellowLow, yellowHigh } = fermentationBoundaries(tempC, hydration)
 
   if (hours >= greenLow && hours <= greenHigh) return { zone: 'green', warning: null }
   if (hours >= yellowLow && hours <= yellowHigh) return { zone: 'yellow', warning: null }
