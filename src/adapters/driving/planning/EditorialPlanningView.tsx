@@ -232,6 +232,8 @@ export function EditorialPlanningView() {
             <FermentationTimeline
               mixHandleProps={timeline.getMixHandleProps()}
               bakeHandleProps={timeline.getBakeHandleProps()}
+              mixTimeLabel={formatScheduleTime(timeline.mixTime)}
+              bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
               duration={timeline.duration}
               zone={fermentation.zone}
               warning={fermentation.warning}
@@ -442,6 +444,35 @@ function HydrationSegmentedField({
 
 type TimelineHandleProps = ReturnType<ReturnType<typeof useTimeline>['getMixHandleProps']>
 
+function TimelineHandle({
+  handleProps,
+  ariaLabel,
+  headline,
+  caption,
+  timeLabel,
+  sliderClass,
+}: {
+  handleProps: TimelineHandleProps
+  ariaLabel: string
+  headline: string
+  caption: string
+  timeLabel: string
+  sliderClass: string
+}) {
+  return (
+    <label className="block">
+      <span className="flex items-baseline justify-between mb-1">
+        <span className="font-label text-[0.8rem] text-on-surface">{headline}</span>
+        <span className="font-headline italic text-lg text-on-surface">{timeLabel}</span>
+      </span>
+      <span className="block text-xs text-on-surface-variant font-body mb-2">
+        {caption}
+      </span>
+      <input {...handleProps} aria-label={ariaLabel} className={sliderClass} />
+    </label>
+  )
+}
+
 const TIMELINE_SPAN = 48
 
 const ZONE_LABELS: Record<'green' | 'yellow' | 'red', string> = {
@@ -457,6 +488,8 @@ function formatHours(hours: number): string {
 function FermentationTimeline({
   mixHandleProps,
   bakeHandleProps,
+  mixTimeLabel,
+  bakeTimeLabel,
   duration,
   zone,
   warning,
@@ -464,6 +497,8 @@ function FermentationTimeline({
 }: {
   mixHandleProps: TimelineHandleProps
   bakeHandleProps: TimelineHandleProps
+  mixTimeLabel: string
+  bakeTimeLabel: string
   duration: number
   zone: 'green' | 'yellow' | 'red'
   warning: string | null
@@ -479,18 +514,32 @@ function FermentationTimeline({
 
   return (
     <div className="mb-4 space-y-4">
-      <label className="block">
-        <span className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant block mb-2">
-          Mix handle
+      <div>
+        <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-1">
+          Fermentation Timeline
         </span>
-        <input {...mixHandleProps} aria-label="Mix handle" className={sliderClass} />
-      </label>
-      <label className="block">
-        <span className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant block mb-2">
-          Bake handle
-        </span>
-        <input {...bakeHandleProps} aria-label="Bake handle" className={sliderClass} />
-      </label>
+        <p className="text-xs font-body text-on-surface-variant italic">
+          Drag to schedule when to start the dough and when to bake.
+        </p>
+      </div>
+
+      <TimelineHandle
+        handleProps={mixHandleProps}
+        ariaLabel="Mix handle"
+        headline="Start mixing"
+        caption="Dough comes together — fermentation begins."
+        timeLabel={mixTimeLabel}
+        sliderClass={sliderClass}
+      />
+
+      <TimelineHandle
+        handleProps={bakeHandleProps}
+        ariaLabel="Bake handle"
+        headline="Into the oven"
+        caption="End of ferment — loaf goes to bake."
+        timeLabel={bakeTimeLabel}
+        sliderClass={sliderClass}
+      />
 
       <div>
         <div
