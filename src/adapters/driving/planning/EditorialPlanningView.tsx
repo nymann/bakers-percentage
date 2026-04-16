@@ -208,18 +208,15 @@ export function EditorialPlanningView() {
                   clampNote={clampNotes.doughTemperature}
                   resetKey={leavingType}
                 />
+                <StarterPercentField
+                  percent={starterPercent}
+                  onChange={handleStarterPercentChange}
+                  clampNote={clampNotes.starterPercent}
+                  resetKey={leavingType}
+                />
               </>
             )}
           </Disclosure>
-
-          {showSourdoughAdvanced && (
-            <StarterPercentField
-              percent={starterPercent}
-              onChange={handleStarterPercentChange}
-              clampNote={clampNotes.starterPercent}
-              resetKey={leavingType}
-            />
-          )}
 
           {leavingType === 'yeast' && (
             <BakeTimeField

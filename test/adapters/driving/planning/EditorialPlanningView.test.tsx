@@ -201,6 +201,17 @@ describe('Scenario 06: advanced disclosure collapses', () => {
     expect(
       within(panel).getByRole('spinbutton', { name: /dough temperature/i }),
     ).toBeInTheDocument()
+    expect(
+      within(panel).getByRole('spinbutton', { name: /^starter \(%\)$/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('hides starter (%) when advanced is collapsed', () => {
+    renderEditorial()
+
+    expect(
+      screen.queryByRole('spinbutton', { name: /^starter \(%\)$/i }),
+    ).not.toBeInTheDocument()
   })
 })
 
