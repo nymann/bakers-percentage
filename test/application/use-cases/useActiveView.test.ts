@@ -7,17 +7,46 @@ describe('useActiveView: default state', () => {
     const { result } = renderHook(() => useActiveView())
     expect(result.current.activeView).toBe('planning')
   })
+
+  it('lists all three views so they remain discoverable', () => {
+    const { result } = renderHook(() => useActiveView())
+
+    expect(result.current.views.map((v) => v.id)).toEqual([
+      'planning',
+      'execution',
+      'history',
+    ])
+  })
+
+  it('marks execution and history as disabled by default', () => {
+    const { result } = renderHook(() => useActiveView())
+
+    const byId = Object.fromEntries(result.current.views.map((v) => [v.id, v.disabled]))
+    expect(byId).toEqual({ planning: false, execution: true, history: true })
+  })
 })
 
 describe('useActiveView: switchTo', () => {
-  it('switches to the requested view', () => {
-    const { result } = renderHook(() => useActiveView())
+  it('switches to a requested enabled view', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'execution'] }),
+    )
 
     act(() => {
       result.current.switchTo('execution')
     })
 
     expect(result.current.activeView).toBe('execution')
+  })
+
+  it('ignores switchTo for a disabled view', () => {
+    const { result } = renderHook(() => useActiveView())
+
+    act(() => {
+      result.current.switchTo('execution')
+    })
+
+    expect(result.current.activeView).toBe('planning')
   })
 })
 
@@ -30,23 +59,28 @@ describe('useActiveView: getTabProps', () => {
     expect(planningProps['aria-selected']).toBe(true)
   })
 
-  it('gives inactive tabs aria-selected="false"', () => {
+  it('marks disabled tabs with aria-disabled="true"', () => {
     const { result } = renderHook(() => useActiveView())
 
-    const executionProps = result.current.getTabProps('execution')
-    expect(executionProps['aria-selected']).toBe(false)
+    expect(result.current.getTabProps('execution')['aria-disabled']).toBe(true)
+    expect(result.current.getTabProps('history')['aria-disabled']).toBe(true)
+    expect(result.current.getTabProps('planning')['aria-disabled']).toBe(false)
   })
 
-  it('gives active tab tabIndex 0 and inactive tabs -1', () => {
+  it('clicking a disabled tab does not change the active view', () => {
     const { result } = renderHook(() => useActiveView())
 
-    expect(result.current.getTabProps('planning').tabIndex).toBe(0)
-    expect(result.current.getTabProps('execution').tabIndex).toBe(-1)
-    expect(result.current.getTabProps('history').tabIndex).toBe(-1)
+    act(() => {
+      result.current.getTabProps('history').onClick()
+    })
+
+    expect(result.current.activeView).toBe('planning')
   })
 
-  it('onClick activates the tab', () => {
-    const { result } = renderHook(() => useActiveView())
+  it('onClick activates an enabled tab', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'history'] }),
+    )
 
     act(() => {
       result.current.getTabProps('history').onClick()
@@ -82,40 +116,41 @@ describe('useActiveView: getPanelProps', () => {
 })
 
 describe('useActiveView: arrow key navigation', () => {
-  it('ArrowRight moves from planning to execution', () => {
-    const { result } = renderHook(() => useActiveView())
+  it('arrow keys cycle only through enabled views', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'execution', 'history'] }),
+    )
 
     act(() => {
       result.current.getTabProps('planning').onKeyDown(makeKey('ArrowRight'))
     })
-
     expect(result.current.activeView).toBe('execution')
-  })
 
-  it('ArrowRight from execution moves to history', () => {
-    const { result } = renderHook(() => useActiveView())
-
-    act(() => result.current.switchTo('execution'))
     act(() => {
       result.current.getTabProps('execution').onKeyDown(makeKey('ArrowRight'))
     })
-
     expect(result.current.activeView).toBe('history')
-  })
 
-  it('ArrowRight from history wraps to planning', () => {
-    const { result } = renderHook(() => useActiveView())
-
-    act(() => result.current.switchTo('history'))
     act(() => {
       result.current.getTabProps('history').onKeyDown(makeKey('ArrowRight'))
+    })
+    expect(result.current.activeView).toBe('planning')
+  })
+
+  it('arrow keys on a disabled tab do nothing', () => {
+    const { result } = renderHook(() => useActiveView())
+
+    act(() => {
+      result.current.getTabProps('execution').onKeyDown(makeKey('ArrowRight'))
     })
 
     expect(result.current.activeView).toBe('planning')
   })
 
-  it('ArrowLeft from planning wraps to history', () => {
-    const { result } = renderHook(() => useActiveView())
+  it('ArrowLeft wraps among enabled views', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'execution', 'history'] }),
+    )
 
     act(() => {
       result.current.getTabProps('planning').onKeyDown(makeKey('ArrowLeft'))
@@ -126,14 +161,6 @@ describe('useActiveView: arrow key navigation', () => {
 })
 
 describe('useActiveView: enabledViews filtering', () => {
-  it('lists only enabled views', () => {
-    const { result } = renderHook(() =>
-      useActiveView({ enabledViews: ['planning', 'history'] }),
-    )
-
-    expect(result.current.views.map((v) => v.id)).toEqual(['planning', 'history'])
-  })
-
   it('ArrowRight cycles within enabled views (skips disabled execution)', () => {
     const { result } = renderHook(() =>
       useActiveView({ enabledViews: ['planning', 'history'] }),
@@ -166,8 +193,10 @@ describe('useActiveView: enabledViews filtering', () => {
 })
 
 describe('useActiveView: Home and End keys', () => {
-  it('Home jumps to planning (first)', () => {
-    const { result } = renderHook(() => useActiveView())
+  it('Home jumps to first enabled view', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'execution', 'history'] }),
+    )
 
     act(() => result.current.switchTo('execution'))
     act(() => {
@@ -177,8 +206,10 @@ describe('useActiveView: Home and End keys', () => {
     expect(result.current.activeView).toBe('planning')
   })
 
-  it('End jumps to history (last)', () => {
-    const { result } = renderHook(() => useActiveView())
+  it('End jumps to last enabled view', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'execution', 'history'] }),
+    )
 
     act(() => {
       result.current.getTabProps('planning').onKeyDown(makeKey('End'))

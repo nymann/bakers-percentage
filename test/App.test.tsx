@@ -36,9 +36,9 @@ describe('Scenario 02: editorial shell renders with Planning default', () => {
 
     const nav = screen.getByRole('navigation', { name: /primary views/i })
     expect(nav).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /^planning$/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /^execution$/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /^history$/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /planning/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /execution/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /history/i })).toBeInTheDocument()
   })
 
   it('marks Planning as the active tab by default', () => {
@@ -79,82 +79,38 @@ describe('Scenario 02: editorial shell renders with Planning default', () => {
   })
 })
 
-describe('Scenario 03: clicking a nav tab switches the view', () => {
-  it('activates the Execution tab and panel, deactivating Planning', async () => {
+describe('Scenario 03: Execution and History are marked as coming soon', () => {
+  it('marks the Execution tab as aria-disabled', () => {
+    renderApp()
+
+    expect(screen.getByRole('tab', { name: /execution/i })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+  })
+
+  it('marks the History tab as aria-disabled', () => {
+    renderApp()
+
+    expect(screen.getByRole('tab', { name: /history/i })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+  })
+
+  it('clicking a disabled tab does not switch the active panel', async () => {
     const user = userEvent.setup()
     renderApp()
 
-    const executionTab = screen.getByRole('tab', { name: /execution/i })
-    await user.click(executionTab)
+    await user.click(screen.getByRole('tab', { name: /execution/i }))
 
-    expect(screen.getByRole('tab', { name: /execution/i })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /planning/i })).toHaveAttribute(
       'aria-selected',
       'true',
     )
-    expect(screen.getByRole('tab', { name: /planning/i })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /execution/i })).toHaveAttribute(
       'aria-selected',
       'false',
-    )
-
-    const executionPanel = screen.getByRole('tabpanel', { name: /execution/i })
-    expect(executionPanel).toBeVisible()
-
-    const planningTab = screen.getByRole('tab', { name: /planning/i })
-    const planningPanel = document.getElementById(
-      planningTab.getAttribute('aria-controls') ?? '',
-    )
-    expect(planningPanel).toHaveAttribute('hidden')
-  })
-})
-
-describe('Scenario 04: arrow keys cycle tabs', () => {
-  it('ArrowRight moves focus and selection through tabs, wrapping at the end', async () => {
-    const user = userEvent.setup()
-    renderApp()
-
-    screen.getByRole('tab', { name: /planning/i }).focus()
-
-    await user.keyboard('{ArrowRight}')
-    expect(screen.getByRole('tab', { name: /execution/i })).toHaveFocus()
-    expect(screen.getByRole('tab', { name: /execution/i })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    )
-
-    await user.keyboard('{ArrowRight}')
-    expect(screen.getByRole('tab', { name: /history/i })).toHaveFocus()
-
-    await user.keyboard('{ArrowRight}')
-    expect(screen.getByRole('tab', { name: /planning/i })).toHaveFocus()
-  })
-})
-
-describe('Scenario 05: Home and End keys jump to edges', () => {
-  it('Home jumps from Execution to Planning', async () => {
-    const user = userEvent.setup()
-    renderApp()
-
-    screen.getByRole('tab', { name: /execution/i }).focus()
-    await user.keyboard('{Home}')
-
-    expect(screen.getByRole('tab', { name: /planning/i })).toHaveFocus()
-    expect(screen.getByRole('tab', { name: /planning/i })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    )
-  })
-
-  it('End jumps from any tab to History', async () => {
-    const user = userEvent.setup()
-    renderApp()
-
-    screen.getByRole('tab', { name: /execution/i }).focus()
-    await user.keyboard('{End}')
-
-    expect(screen.getByRole('tab', { name: /history/i })).toHaveFocus()
-    expect(screen.getByRole('tab', { name: /history/i })).toHaveAttribute(
-      'aria-selected',
-      'true',
     )
   })
 })

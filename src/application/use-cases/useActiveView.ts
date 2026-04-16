@@ -5,21 +5,28 @@ export type ViewId = 'planning' | 'execution' | 'history'
 export interface ViewDescriptor {
   id: ViewId
   label: string
+  disabled: boolean
 }
 
-export const VIEWS: readonly ViewDescriptor[] = [
+interface ViewMeta {
+  id: ViewId
+  label: string
+}
+
+const VIEW_META: readonly ViewMeta[] = [
   { id: 'planning', label: 'Planning' },
   { id: 'execution', label: 'Execution' },
   { id: 'history', label: 'History' },
 ] as const
 
-const ALL_VIEW_IDS: readonly ViewId[] = VIEWS.map((v) => v.id)
+const DEFAULT_ENABLED_VIEWS: readonly ViewId[] = ['planning']
 
 export interface TabProps {
   id: string
   role: 'tab'
   'aria-selected': boolean
   'aria-controls': string
+  'aria-disabled': boolean
   tabIndex: 0 | -1
   onClick: () => void
   onKeyDown: (event: KeyboardEvent) => void
@@ -46,34 +53,50 @@ export interface UseActiveViewOptions {
 }
 
 export function useActiveView(options: UseActiveViewOptions = {}): UseActiveView {
-  const enabledKey = (options.enabledViews ?? ALL_VIEW_IDS).join(',')
+  const enabledKey = (options.enabledViews ?? DEFAULT_ENABLED_VIEWS).join(',')
   const enabledViews = useMemo<readonly ViewId[]>(
     () => enabledKey.split(',').filter((id): id is ViewId => id.length > 0) as ViewId[],
     [enabledKey],
   )
 
-  const views = useMemo(
-    () => VIEWS.filter((view) => enabledViews.includes(view.id)),
+  const views = useMemo<readonly ViewDescriptor[]>(
+    () =>
+      VIEW_META.map((meta) => ({
+        ...meta,
+        disabled: !enabledViews.includes(meta.id),
+      })),
     [enabledViews],
   )
 
   const [activeView, setActiveView] = useState<ViewId>(() => enabledViews[0] ?? 'planning')
 
-  const switchTo = useCallback((view: ViewId) => {
-    setActiveView(view)
-  }, [])
+  const switchTo = useCallback(
+    (view: ViewId) => {
+      if (!enabledViews.includes(view)) return
+      setActiveView(view)
+    },
+    [enabledViews],
+  )
 
   const getTabProps = useCallback(
     (view: ViewId): TabProps => {
+      const isDisabled = !enabledViews.includes(view)
       const isActive = activeView === view
       return {
         id: tabId(view),
         role: 'tab',
         'aria-selected': isActive,
         'aria-controls': panelId(view),
+        'aria-disabled': isDisabled,
         tabIndex: isActive ? 0 : -1,
-        onClick: () => setActiveView(view),
-        onKeyDown: (event) => handleTabKeyDown(event, view, enabledViews, setActiveView),
+        onClick: () => {
+          if (isDisabled) return
+          setActiveView(view)
+        },
+        onKeyDown: (event) => {
+          if (isDisabled) return
+          handleTabKeyDown(event, view, enabledViews, setActiveView)
+        },
       }
     },
     [activeView, enabledViews],

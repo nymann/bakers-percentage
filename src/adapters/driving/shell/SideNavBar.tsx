@@ -66,20 +66,27 @@ export function SideNavBar({ view }: SideNavBarProps) {
             {view.views.map((descriptor) => {
               const tabProps = view.getTabProps(descriptor.id)
               const isActive = tabProps['aria-selected']
+              const isDisabled = descriptor.disabled
               const icon = VIEW_ICONS[descriptor.id]
+              const fullLabel = isDisabled
+                ? `${descriptor.label} — coming soon`
+                : descriptor.label
+              const accessibleLabel = isDisabled || !expanded ? fullLabel : undefined
               return (
                 <li key={descriptor.id}>
                   <button
                     type="button"
                     {...tabProps}
-                    title={expanded ? undefined : descriptor.label}
-                    aria-label={expanded ? undefined : descriptor.label}
+                    title={expanded ? (isDisabled ? 'Coming soon' : undefined) : fullLabel}
+                    aria-label={accessibleLabel}
                     className={cn(
                       'w-full flex items-center font-label uppercase tracking-widest text-[0.75rem] transition-all',
                       expanded
                         ? 'gap-3 py-3 pl-5 rounded-r-xl'
                         : 'justify-center py-3 rounded-xl',
-                      isActive
+                      isDisabled
+                        ? 'text-on-surface-variant/40 cursor-not-allowed'
+                        : isActive
                         ? expanded
                           ? 'text-on-surface font-bold border-l-4 border-primary bg-surface-container-low/70'
                           : 'text-on-surface bg-surface-container-low/70 ring-1 ring-primary/40'
@@ -92,7 +99,16 @@ export function SideNavBar({ view }: SideNavBarProps) {
                     >
                       {icon}
                     </span>
-                    {expanded && <span>{descriptor.label}</span>}
+                    {expanded && (
+                      <span className="flex items-baseline gap-2">
+                        <span>{descriptor.label}</span>
+                        {isDisabled && (
+                          <span className="font-label text-[0.55rem] tracking-widest uppercase px-1.5 py-0.5 rounded-full bg-surface-container-low text-on-surface-variant/70">
+                            Soon
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </button>
                 </li>
               )
