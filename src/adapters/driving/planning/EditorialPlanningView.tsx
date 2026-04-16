@@ -4,7 +4,6 @@ import {
   useFermentationZone,
   asLeavingTypeContext,
 } from '../../../application/use-cases/useFermentationZone'
-import { createYeastFermentation } from '../../../domain/Fermentation'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
@@ -214,21 +213,8 @@ export function EditorialPlanningView({
 
   useEffect(() => {
     if (leavingType !== 'yeast') return
-    const strategy = createYeastFermentation(
-      effectiveDuration,
-      doughTemperature,
-      yeastType,
-      salt,
-    )
-    changeYeastPercent(strategy.inoculumPercent)
-  }, [
-    leavingType,
-    effectiveDuration,
-    doughTemperature,
-    yeastType,
-    salt,
-    changeYeastPercent,
-  ])
+    changeYeastPercent(fermentation.strategy.inoculumPercent)
+  }, [leavingType, fermentation.strategy, changeYeastPercent])
 
   const schedule = useBakingSchedule(
     effectiveBakeTime,

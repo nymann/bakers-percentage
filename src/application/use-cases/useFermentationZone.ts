@@ -71,7 +71,7 @@ export function useFermentationZone(
     setClampNote(result)
   }, [])
 
-  return { duration, zone, warning, boundaries, clampNote, changeFermentationDuration }
+  return { duration, zone, warning, boundaries, clampNote, strategy, changeFermentationDuration }
 }
 
 export function asLeavingTypeContext(

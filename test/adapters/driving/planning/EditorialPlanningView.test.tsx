@@ -836,6 +836,38 @@ describe('Scenario 15-07: under-proof yeast duration shows red zone warning', ()
   })
 })
 
+describe('Scenario 16-01: long yeast duration shows refrigerate event', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('14h duration on dry yeast at 22°C adds Refrigerate and Remove from fridge events', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '22' } })
+    fireEvent.blur(tempInput)
+
+    // Default timeline gives 14h duration; above the 8h same-day → retard threshold.
+    await expandSchedule(user)
+
+    const arc = screen.getByRole('region', { name: /baking schedule/i })
+    const labels = within(arc).getAllByRole('listitem').map((li) => li.textContent ?? '')
+
+    expect(labels.some((l) => /refrigerate/i.test(l))).toBe(true)
+    expect(labels.some((l) => /remove from fridge/i.test(l))).toBe(true)
+  })
+})
+
 describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
