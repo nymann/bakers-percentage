@@ -1,4 +1,4 @@
-import { SameDaySchedule, ColdRetardSchedule, type ScheduleEvent } from './BakingSchedule'
+import { SameDaySchedule, ColdRetardSchedule, YeastSchedule, type ScheduleEvent } from './BakingSchedule'
 import type { YeastType } from './Recipe'
 
 export type FermentationZone = 'green' | 'yellow' | 'red'
@@ -223,8 +223,7 @@ export class YeastFermentation implements FermentationStrategy {
   }
 
   schedule(bakeTime: Date): ScheduleEvent[] {
-    // ~65/35 bulk/proof split — placeholder until split-stage modeling.
-    return new SameDaySchedule(bakeTime, this.totalHours * 0.65).events
+    return new YeastSchedule(bakeTime).events
   }
 }
 

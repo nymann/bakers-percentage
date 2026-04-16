@@ -968,6 +968,45 @@ describe('Scenario 16-04: fresh yeast cold-retard scales 3× from instant', () =
   })
 })
 
+describe('Scenario 16-05: shortening duration returns to a same-day yeast schedule', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('dropping duration from 14h to 4h removes Refrigerate and restores Mix dough', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '22' } })
+    fireEvent.blur(tempInput)
+
+    await expandSchedule(user)
+
+    const arc = screen.getByRole('region', { name: /baking schedule/i })
+    const labelsRetard = within(arc).getAllByRole('listitem').map((li) => li.textContent ?? '')
+    expect(labelsRetard.some((l) => /refrigerate/i.test(l))).toBe(true)
+
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 240) } })
+
+    const labelsSameDay = within(arc).getAllByRole('listitem').map((li) => li.textContent ?? '')
+    expect(labelsSameDay.some((l) => /refrigerate/i.test(l))).toBe(false)
+    expect(labelsSameDay.some((l) => /remove from fridge/i.test(l))).toBe(false)
+    expect(labelsSameDay.some((l) => /mix dough/i.test(l))).toBe(true)
+  })
+})
+
 describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
