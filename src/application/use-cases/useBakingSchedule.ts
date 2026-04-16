@@ -9,9 +9,9 @@ export function useBakingSchedule(
   strategy: FermentationStrategy | null,
 ): ScheduleEvent[] {
   return useMemo(() => {
-    if (leavingType === 'yeast' || !strategy) {
-      return new YeastSchedule(bakeTime).events
+    if (strategy) {
+      return strategy.schedule(bakeTime)
     }
-    return strategy.schedule(bakeTime)
+    return new YeastSchedule(bakeTime).events
   }, [bakeTime, leavingType, strategy])
 }

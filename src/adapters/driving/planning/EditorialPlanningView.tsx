@@ -219,7 +219,7 @@ export function EditorialPlanningView({
   const schedule = useBakingSchedule(
     effectiveBakeTime,
     leavingType,
-    leavingType === 'sourdough' ? recommendation.effectiveStrategy : null,
+    leavingType === 'sourdough' ? recommendation.effectiveStrategy : fermentation.strategy,
   )
 
   const selectedWeightPreset: WeightPresetValue | null =

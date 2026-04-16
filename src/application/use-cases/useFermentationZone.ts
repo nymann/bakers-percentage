@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
   Fermentation,
+  FRIDGE_TEMP,
   createYeastFermentation,
   fermentationBoundaries,
   yeastFermentationBoundaries,
@@ -13,6 +14,7 @@ import {
 } from '../../domain/InputRanges'
 
 const DEFAULT_DURATION = 14
+const YEAST_SAME_DAY_MAX_HOURS = 8
 
 const INITIAL_CLAMP_NOTE: ClampResult = {
   value: DEFAULT_DURATION,
@@ -46,12 +48,15 @@ export function useFermentationZone(
   const yeastType: YeastType | null = isYeast ? context.yeastType : null
   const salt = isYeast ? context.salt : 0
 
+  const autoYeastTempC =
+    isYeast && duration > YEAST_SAME_DAY_MAX_HOURS ? FRIDGE_TEMP : tempC
+
   const strategy = useMemo(
     () =>
       isYeast && yeastType !== null
-        ? createYeastFermentation(duration, tempC, yeastType, salt)
+        ? createYeastFermentation(duration, autoYeastTempC, yeastType, salt)
         : Fermentation.create(tempC, tempC, hydration, duration),
-    [duration, tempC, hydration, isYeast, yeastType, salt],
+    [duration, tempC, autoYeastTempC, hydration, isYeast, yeastType, salt],
   )
 
   const zone = strategy.zone
@@ -60,9 +65,9 @@ export function useFermentationZone(
   const boundaries = useMemo(
     () =>
       isYeast
-        ? yeastFermentationBoundaries(tempC)
+        ? yeastFermentationBoundaries(autoYeastTempC)
         : fermentationBoundaries(tempC, hydration),
-    [tempC, hydration, isYeast],
+    [tempC, autoYeastTempC, hydration, isYeast],
   )
 
   const changeFermentationDuration = useCallback((hours: number) => {

@@ -878,18 +878,22 @@ describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () 
     vi.useRealTimers()
   })
 
-  it('setting duration to 24h on yeast at 24°C renders red status with over-proof warning', async () => {
+  it('setting duration to 7h on yeast at 32°C renders red status with over-proof warning', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderEditorial()
 
     const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
     await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
 
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '32' } })
+    fireEvent.blur(tempInput)
+
     const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
     const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
     const bakeMinutes = Number(bakeSlider.value)
-    // 24h at 24°C — well past yeast yellowHigh = 12h
-    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 1440) } })
+    // 7h at 32°C — past same-day yellowHigh (~5.76h), still under 8h retard threshold.
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 420) } })
 
     expect(screen.getByRole('status')).toHaveTextContent(/red/i)
     expect(screen.getByText(/over-proof/i)).toBeInTheDocument()

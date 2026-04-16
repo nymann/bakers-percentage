@@ -63,4 +63,35 @@ describe('useFermentationZone', () => {
     rerender({ temp: 30 })
     expect(result.current.boundaries).not.toEqual(at24)
   })
+
+  describe('yeast auto cold-retard above 8h duration', () => {
+    const yeastCtx = { leavingType: 'yeast' as const, yeastType: 'instant' as const, salt: 0.018 }
+
+    it('selects same-day yeast strategy below the 8h threshold', () => {
+      const { result } = renderHook(() => useFermentationZone(22, 0.75, yeastCtx))
+      act(() => result.current.changeFermentationDuration(4))
+      expect(result.current.strategy.method).toBe('yeast')
+    })
+
+    it('selects yeast-retard strategy above the 8h threshold', () => {
+      const { result } = renderHook(() => useFermentationZone(22, 0.75, yeastCtx))
+      act(() => result.current.changeFermentationDuration(14))
+      expect(result.current.strategy.method).toBe('yeast-retard')
+    })
+
+    it('widens the green zone when retard auto-selects', () => {
+      const { result } = renderHook(() => useFermentationZone(22, 0.75, yeastCtx))
+      act(() => result.current.changeFermentationDuration(4))
+      const greenHighSameDay = result.current.boundaries.greenHigh
+      act(() => result.current.changeFermentationDuration(14))
+      const greenHighRetard = result.current.boundaries.greenHigh
+      expect(greenHighRetard).toBeGreaterThan(greenHighSameDay)
+    })
+
+    it('14h retard at 22°C reads as green or yellow, not red', () => {
+      const { result } = renderHook(() => useFermentationZone(22, 0.75, yeastCtx))
+      act(() => result.current.changeFermentationDuration(14))
+      expect(result.current.zone).not.toBe('red')
+    })
+  })
 })
