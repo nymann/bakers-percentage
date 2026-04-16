@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { FermentationMethod } from '../../../../domain/Fermentation'
 import type { ClampResult } from '../../../../domain/InputRanges'
 import { tokens } from '../../../../design-system/tokens'
@@ -11,6 +12,7 @@ export function FermentationSection({
   autoRecommendActive,
   bakeTime,
   onChangeBakeTime,
+  timeField,
   duration,
   onChangeDuration,
   durationClamp,
@@ -31,6 +33,7 @@ export function FermentationSection({
   autoRecommendActive: boolean
   bakeTime: Date
   onChangeBakeTime: (time: Date) => void
+  timeField?: ReactNode
   duration: number
   onChangeDuration: (hours: number) => void
   durationClamp: ClampResult
@@ -51,7 +54,7 @@ export function FermentationSection({
   return (
     <div style={{ marginBottom: tokens.spacing.md }}>
       {autoRecommendActive ? (
-        <BakeTimeField bakeTime={bakeTime} onChange={onChangeBakeTime} />
+        timeField ?? <BakeTimeField bakeTime={bakeTime} onChange={onChangeBakeTime} />
       ) : (
         <FermentationDurationField
           hours={duration}

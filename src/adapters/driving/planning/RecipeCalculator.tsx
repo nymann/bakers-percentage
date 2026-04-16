@@ -4,6 +4,7 @@ import { useFermentationZone } from '../../../application/use-cases/useFermentat
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
 import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
+import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useFeatureFlag } from '../../../use-feature-flag'
 import { tokens } from '../../../design-system/tokens'
 import { FinishedWeightField } from './fields/FinishedWeightField'
@@ -19,6 +20,7 @@ import { StarterHydrationField } from './fields/StarterHydrationField'
 import { DoughTemperatureField } from './fields/DoughTemperatureField'
 import { FermentationSection } from './fields/FermentationSection'
 import { BakeTimeField } from './fields/BakeTimeField'
+import { TimelineField } from './fields/TimelineField'
 import { IngredientTable } from './fields/IngredientTable'
 import { BakingScheduleTable } from './fields/BakingScheduleTable'
 
@@ -36,6 +38,7 @@ function RecipeCalculatorView() {
   const fermentationZoneEnabled = useFeatureFlag('fermentation-zone-feedback')
   const autoRecommendEnabled = useFeatureFlag('auto-recommend-starter-percent')
   const bakingScheduleEnabled = useFeatureFlag('baking-schedule')
+  const visualTimelineEnabled = useFeatureFlag('visual-timeline')
 
   const {
     recipe,
@@ -67,15 +70,19 @@ function RecipeCalculatorView() {
   const fermentation = useFermentationZone(doughTemperature, hydration)
   const { changeFermentationDuration } = fermentation
   const bakeTime = useBakeTime(fermentation.duration)
+  const timeline = useTimeline()
 
   const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
-  const effectiveDuration = autoRecommendActive ? bakeTime.duration : fermentation.duration
+  const visualTimelineActive = visualTimelineEnabled && autoRecommendActive
+  const activeBakeTime = visualTimelineActive ? timeline.bakeTime : bakeTime.bakeTime
+  const activeBakeDuration = visualTimelineActive ? timeline.duration : bakeTime.duration
+  const effectiveDuration = autoRecommendActive ? activeBakeDuration : fermentation.duration
 
   useEffect(() => {
     if (autoRecommendActive) {
-      changeFermentationDuration(bakeTime.duration)
+      changeFermentationDuration(activeBakeDuration)
     }
-  }, [autoRecommendActive, bakeTime.duration, changeFermentationDuration])
+  }, [autoRecommendActive, activeBakeDuration, changeFermentationDuration])
 
   const recommendation = useStarterRecommendation(doughTemperature, hydration, effectiveDuration)
 
@@ -86,7 +93,7 @@ function RecipeCalculatorView() {
   }, [autoRecommendActive, recommendation.effectivePercent, changeStarterPercent])
 
   const schedule = useBakingSchedule(
-    bakeTime.bakeTime,
+    activeBakeTime,
     leavingType,
     leavingType === 'sourdough' ? recommendation.effectiveStrategy : null,
   )
@@ -197,6 +204,7 @@ function RecipeCalculatorView() {
           autoRecommendActive={autoRecommendActive}
           bakeTime={bakeTime.bakeTime}
           onChangeBakeTime={bakeTime.changeBakeTime}
+          timeField={visualTimelineActive ? <TimelineField timeline={timeline} /> : undefined}
           duration={fermentation.duration}
           onChangeDuration={fermentation.changeFermentationDuration}
           durationClamp={fermentation.clampNote}
@@ -220,9 +228,12 @@ function RecipeCalculatorView() {
         <BakeTimeField bakeTime={bakeTime.bakeTime} onChange={bakeTime.changeBakeTime} />
       )}
 
-      <IngredientTable recipe={recipe} loaves={loaves} />
-
-      {bakingScheduleEnabled && <BakingScheduleTable events={schedule} />}
+      {!(visualTimelineActive && timeline.isMixInRedZone) && (
+        <>
+          <IngredientTable recipe={recipe} loaves={loaves} />
+          {bakingScheduleEnabled && <BakingScheduleTable events={schedule} />}
+        </>
+      )}
     </section>
   )
 }

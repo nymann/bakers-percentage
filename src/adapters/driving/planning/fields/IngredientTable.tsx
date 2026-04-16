@@ -19,7 +19,7 @@ export function IngredientTable({
   const multiLoaf = loaves > 1
 
   return (
-    <>
+    <section aria-label="Ingredients">
       <Table>
         <TableHead>
           <TableRow>
@@ -53,6 +53,6 @@ export function IngredientTable({
       <p>
         Finished loaf weight: <strong>{recipe.finishedWeightPerLoaf}g</strong>
       </p>
-    </>
+    </section>
   )
 }

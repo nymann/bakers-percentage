@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { RecipeCalculator } from '../../../../src/adapters/driving/planning/RecipeCalculator'
 import { FeatureFlagProvider } from '../../../../src/feature-flags'
@@ -1519,4 +1519,249 @@ describe('Scenario 08: reset to recommended values', () => {
     expect(screen.queryByRole('button', { name: /use recommended/i })).not.toBeInTheDocument()
     expect(screen.getByRole('note')).not.toHaveTextContent(/manual override/i)
   })
+})
+
+describe('Scenario 01 (story 08): default handle positions on load', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+    'baking-schedule': true,
+    'visual-timeline': true,
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    // Wednesday 2026-04-15 at 14:00 local time
+    vi.setSystemTime(new Date(2026, 3, 15, 14, 0, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shows bake handle at tomorrow 09:00 and mix handle in green zone with 48h span', () => {
+    renderWithFlags(allFlags)
+
+    const timeline = screen.getByRole('group', { name: /timeline/i })
+    const bakeHandle = within(timeline).getByRole('slider', { name: /bake handle/i })
+    const mixHandle = within(timeline).getByRole('slider', { name: /mix handle/i })
+
+    // Bake handle: tomorrow at 09:00 — that's 19h after now (14:00 → 09:00 next day)
+    // Values are minutes-from-now, step=15
+    expect(bakeHandle).toHaveValue(String(19 * 60))
+    expect(bakeHandle).toHaveAttribute('aria-valuetext', expect.stringMatching(/09:00/))
+    expect(bakeHandle).toHaveAttribute('max', String(48 * 60))
+    expect(bakeHandle).toHaveAttribute('step', '15')
+
+    // Mix handle defaults to green-zone position (bake - 14h = 19-14 = 5h from now)
+    expect(mixHandle).toHaveValue(String(5 * 60))
+    expect(mixHandle).toHaveAttribute('max', String(48 * 60))
+    expect(mixHandle).toHaveAttribute('step', '15')
+
+    // Zone indicator shows green (default duration 14h at 24°C/75% = green)
+    expect(screen.getByRole('status')).toHaveTextContent(/green/i)
+  })
+
+  it('hides the datetime picker when visual-timeline flag is on', () => {
+    renderWithFlags(allFlags)
+
+    expect(screen.queryByLabelText(/bake time/i)).not.toBeInTheDocument()
+  })
+
+  it('shows the datetime picker when visual-timeline flag is off', () => {
+    renderWithFlags({ ...allFlags, 'visual-timeline': false })
+
+    expect(screen.getByLabelText(/bake time/i)).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: /timeline/i })).not.toBeInTheDocument()
+  })
+
+  it('hides timeline when yeast leavening is selected', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderWithFlags(allFlags)
+
+    const leaveningSelect = screen.getByRole('combobox', { name: /leavening type/i })
+    await user.selectOptions(leaveningSelect, 'yeast-instant')
+
+    expect(screen.queryByRole('group', { name: /timeline/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('Scenario 02 (story 08): dragging bake handle updates schedule', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+    'baking-schedule': true,
+    'visual-timeline': true,
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date(2026, 3, 15, 14, 0, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('recalculates schedule when bake handle moves', () => {
+    renderWithFlags(allFlags)
+
+    const scheduleSection = screen.getByRole('region', { name: /baking schedule/i })
+    const bakeRowBefore = within(scheduleSection)
+      .getAllByRole('row')
+      .find((r) => within(r).queryAllByRole('cell')[0]?.textContent === 'Bake')!
+    const bakeTimeBefore = within(bakeRowBefore).getAllByRole('cell')[1].textContent
+
+    const bakeHandle = screen.getByRole('slider', { name: /bake handle/i })
+    // Move bake handle: now + 24h (= tomorrow 14:00)
+    fireEvent.change(bakeHandle, { target: { value: String(24 * 60) } })
+
+    const bakeRowAfter = within(scheduleSection)
+      .getAllByRole('row')
+      .find((r) => within(r).queryAllByRole('cell')[0]?.textContent === 'Bake')!
+    const bakeTimeAfter = within(bakeRowAfter).getAllByRole('cell')[1].textContent
+
+    expect(bakeTimeAfter).not.toBe(bakeTimeBefore)
+  })
+
+  it('updates starter recommendation when bake handle moves', () => {
+    renderWithFlags(allFlags)
+
+    const noteBefore = screen.getByRole('note').textContent
+
+    const bakeHandle = screen.getByRole('slider', { name: /bake handle/i })
+    // Large move that changes duration significantly
+    fireEvent.change(bakeHandle, { target: { value: String(40 * 60) } })
+
+    const noteAfter = screen.getByRole('note').textContent
+    expect(noteAfter).not.toBe(noteBefore)
+  })
+
+  it('snaps bake handle value to 15-minute increments', () => {
+    renderWithFlags(allFlags)
+
+    const bakeHandle = screen.getByRole('slider', { name: /bake handle/i })
+    // Value 9:07 (minutes-from-now with odd value)
+    fireEvent.change(bakeHandle, { target: { value: '427' } })
+
+    // Step is 15; should snap via the hook. aria-valuetext reflects actual snapped time.
+    const valueText = bakeHandle.getAttribute('aria-valuetext')!
+    const match = valueText.match(/\d{2}:(\d{2})/)!
+    const minutes = Number(match[1])
+    expect(minutes % 15).toBe(0)
+  })
+})
+
+describe('Scenario 03 (story 08): drag mix handle into red zone', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+    'baking-schedule': true,
+    'visual-timeline': true,
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date(2026, 3, 15, 14, 0, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shows warning and hides recipe output when mix handle is within 4h of bake', () => {
+    renderWithFlags(allFlags)
+
+    // Ingredient table visible by default
+    expect(screen.getByRole('region', { name: /ingredients/i })).toBeInTheDocument()
+
+    const timeline = screen.getByRole('group', { name: /timeline/i })
+    const mixHandle = within(timeline).getByRole('slider', { name: /mix handle/i })
+    // Bake at 19h. Move mix to 17h from now → 2h before bake → red zone.
+    fireEvent.change(mixHandle, { target: { value: String(17 * 60) } })
+
+    // Warning displayed (timeline-specific alert)
+    expect(within(timeline).getByRole('alert')).toHaveTextContent(/mix.*too close|red zone/i)
+
+    // Recipe output disabled: ingredient table and baking schedule hidden
+    expect(screen.queryByRole('region', { name: /ingredients/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: /baking schedule/i })).not.toBeInTheDocument()
+  })
+
+  it('restores recipe output when mix handle moves back out of red zone', () => {
+    renderWithFlags(allFlags)
+
+    const mixHandle = screen.getByRole('slider', { name: /mix handle/i })
+    fireEvent.change(mixHandle, { target: { value: String(17 * 60) } })
+    expect(screen.queryByRole('region', { name: /ingredients/i })).not.toBeInTheDocument()
+
+    // Move back to 5h from now → 14h before bake → green zone
+    fireEvent.change(mixHandle, { target: { value: String(5 * 60) } })
+
+    expect(screen.getByRole('region', { name: /ingredients/i })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /baking schedule/i })).toBeInTheDocument()
+  })
+})
+
+describe('Scenario 04 (story 08): handles snap to 15-minute increments', () => {
+  const allFlags = {
+    'yeast-recipe-calculator': true,
+    'manual-starter-percent': true,
+    'validate-basic-inputs': true,
+    'fermentation-zone-feedback': true,
+    'auto-recommend-starter-percent': true,
+    'baking-schedule': true,
+    'visual-timeline': true,
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    // Pick an even 15-minute-aligned base time so that offsets from "now" snap cleanly
+    vi.setSystemTime(new Date(2026, 3, 15, 14, 0, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // Now is 14:00. Adding 19h→9:00 tomorrow = 1140 min. 9:07 = 1147, 9:08 = 1148.
+  // After snap, 1147 → 9:00, 1148 → 9:15.
+  it.each([
+    { minutesFromNow: 1147, expectedTime: '09:00' },
+    { minutesFromNow: 1148, expectedTime: '09:15' },
+  ])(
+    'snaps bake handle at $minutesFromNow min to $expectedTime',
+    ({ minutesFromNow, expectedTime }) => {
+      renderWithFlags(allFlags)
+
+      const bakeHandle = screen.getByRole('slider', { name: /bake handle/i })
+      fireEvent.change(bakeHandle, { target: { value: String(minutesFromNow) } })
+
+      expect(bakeHandle).toHaveAttribute('aria-valuetext', expectedTime)
+    },
+  )
+
+  it.each([
+    { minutesFromNow: 1147, expectedTime: '09:00' },
+    { minutesFromNow: 1148, expectedTime: '09:15' },
+  ])(
+    'snaps mix handle at $minutesFromNow min to $expectedTime',
+    ({ minutesFromNow, expectedTime }) => {
+      renderWithFlags(allFlags)
+
+      const mixHandle = screen.getByRole('slider', { name: /mix handle/i })
+      fireEvent.change(mixHandle, { target: { value: String(minutesFromNow) } })
+
+      expect(mixHandle).toHaveAttribute('aria-valuetext', expectedTime)
+    },
+  )
 })
