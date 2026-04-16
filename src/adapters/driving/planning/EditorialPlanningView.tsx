@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCalculator'
 import { useFermentationZone } from '../../../application/use-cases/useFermentationZone'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
@@ -23,18 +23,111 @@ import { HYDRATION_PRESETS, type HydrationPresetName } from '../../../domain/Hyd
 
 type WeightPresetValue = 'S' | 'M' | 'L'
 
+function BouleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle
+        cx="10"
+        cy="10"
+        r="4.5"
+        fill="currentColor"
+        fillOpacity="0.2"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M 7.8 8.6 L 11.4 12.2"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function BatardIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <ellipse
+        cx="10"
+        cy="10"
+        rx="7.5"
+        ry="3.5"
+        fill="currentColor"
+        fillOpacity="0.2"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M 6 9 L 7.5 11 M 9 9 L 10.5 11 M 12 9 L 13.5 11"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function MicheIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle
+        cx="10"
+        cy="10"
+        r="7.5"
+        fill="currentColor"
+        fillOpacity="0.2"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M 5.5 8 L 14.5 12 M 5.5 12 L 14.5 8"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 const WEIGHT_PRESETS: readonly {
   value: WeightPresetValue
   label: string
   grams: number
   subtitle: string
+  Icon: (props: { className?: string }) => JSX.Element
 }[] = [
-  { value: 'S', label: 'S', grams: 500, subtitle: '500g Boule' },
-  { value: 'M', label: 'M', grams: 900, subtitle: '900g Batard' },
-  { value: 'L', label: 'L', grams: 1200, subtitle: '1.2kg Miche' },
+  { value: 'S', label: 'S', grams: 500, subtitle: '500g Boule', Icon: BouleIcon },
+  { value: 'M', label: 'M', grams: 900, subtitle: '900g Batard', Icon: BatardIcon },
+  { value: 'L', label: 'L', grams: 1200, subtitle: '1.2kg Miche', Icon: MicheIcon },
 ]
 
 type HydrationOptionValue = HydrationPresetName | 'Custom'
+
+type FermentChoice = 'sourdough' | 'fresh-yeast' | 'dry-yeast'
+
+function deriveFermentChoice(
+  leavingType: 'sourdough' | 'yeast',
+  yeastType: 'instant' | 'fresh',
+): FermentChoice {
+  if (leavingType === 'sourdough') return 'sourdough'
+  return yeastType === 'fresh' ? 'fresh-yeast' : 'dry-yeast'
+}
 
 export function EditorialPlanningView() {
   const {
@@ -111,6 +204,16 @@ export function EditorialPlanningView() {
     }
   }
 
+  const fermentChoice = deriveFermentChoice(leavingType, yeastType)
+  const selectFerment = (choice: FermentChoice) => {
+    if (choice === 'sourdough') {
+      selectLeavening('sourdough')
+      return
+    }
+    selectLeavening('yeast')
+    selectYeastType(choice === 'fresh-yeast' ? 'fresh' : 'instant')
+  }
+
   const ledgerRows: LedgerRow[] = recipe.ingredients.map((ing) => ({
     name: ing.name,
     grams: ing.grams,
@@ -147,10 +250,8 @@ export function EditorialPlanningView() {
             loaves={loaves}
             loavesClampNote={clampNotes.loaves}
             onChangeLoaves={changeLoafCount}
-            leavingType={leavingType}
-            onSelectLeavening={selectLeavening}
-            yeastType={yeastType}
-            onSelectYeastType={selectYeastType}
+            fermentChoice={fermentChoice}
+            onSelectFerment={selectFerment}
             selectedHydration={selectedHydration}
             hydrationPercent={hydration}
             onSelectHydrationPreset={selectHydrationPreset}
@@ -255,10 +356,8 @@ function RecipeControlsStrip({
   loaves,
   loavesClampNote,
   onChangeLoaves,
-  leavingType,
-  onSelectLeavening,
-  yeastType,
-  onSelectYeastType,
+  fermentChoice,
+  onSelectFerment,
   selectedHydration,
   hydrationPercent,
   onSelectHydrationPreset,
@@ -273,10 +372,8 @@ function RecipeControlsStrip({
   loaves: number
   loavesClampNote: import('../../../domain/InputRanges').ClampResult
   onChangeLoaves: (count: number) => void
-  leavingType: 'sourdough' | 'yeast'
-  onSelectLeavening: (type: 'sourdough' | 'yeast') => void
-  yeastType: 'instant' | 'fresh'
-  onSelectYeastType: (type: 'instant' | 'fresh') => void
+  fermentChoice: FermentChoice
+  onSelectFerment: (choice: FermentChoice) => void
   selectedHydration: HydrationOptionValue
   hydrationPercent: number
   onSelectHydrationPreset: (preset: HydrationPresetName) => void
@@ -284,8 +381,8 @@ function RecipeControlsStrip({
   onEnterCustomHydration: (fraction: number) => void
 }) {
   return (
-    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 md:p-5">
-      <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
+    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 md:p-5 space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
         <SizeControl
           selectedPreset={selectedPreset}
           weight={weight}
@@ -299,15 +396,11 @@ function RecipeControlsStrip({
           clampNote={loavesClampNote}
         />
         <FermentControl
-          leavingType={leavingType}
-          onSelectLeavening={onSelectLeavening}
+          fermentChoice={fermentChoice}
+          onSelectFerment={onSelectFerment}
         />
-        {leavingType === 'yeast' && (
-          <YeastTypeControl
-            yeastType={yeastType}
-            onSelectYeastType={onSelectYeastType}
-          />
-        )}
+      </div>
+      <div className="pt-4 border-t border-outline-variant/15">
         <HydrationControl
           selectedOption={selectedHydration}
           customPercent={hydrationPercent}
@@ -330,9 +423,11 @@ function FieldKicker({ children }: { children: React.ReactNode }) {
 
 function ChipButton({
   isSelected,
+  stretch,
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   isSelected: boolean
+  stretch?: boolean
   ref?: (node: HTMLElement | null) => void
 }) {
   return (
@@ -340,13 +435,21 @@ function ChipButton({
       {...rest}
       className={[
         'px-3 py-1.5 rounded-full text-xs font-label transition-all',
+        stretch ? 'flex-1' : '',
         isSelected
-          ? 'bg-primary text-on-primary'
-          : 'bg-surface-container-low text-on-surface hover:bg-surface-container',
-      ].join(' ')}
+          ? 'bg-primary text-on-primary shadow-sm'
+          : 'bg-transparent text-on-surface-variant hover:text-on-surface',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     />
   )
 }
+
+const PILL_GROUP_CLASS =
+  'flex gap-0.5 bg-surface-container-low rounded-full p-1'
+
+type SizeOptionValue = WeightPresetValue | 'Custom'
 
 function SizeControl({
   selectedPreset,
@@ -361,47 +464,65 @@ function SizeControl({
   onChangeWeight: (grams: number) => void
   clampNote: import('../../../domain/InputRanges').ClampResult
 }) {
-  const options = WEIGHT_PRESETS.map((p) => ({ value: p.value, label: p.label }))
-  const segmented = useSegmented<WeightPresetValue>({
+  const [customMode, setCustomMode] = useState(selectedPreset === null)
+
+  const effectiveSelection: SizeOptionValue =
+    customMode || selectedPreset === null ? 'Custom' : selectedPreset
+
+  const options: { value: SizeOptionValue; label: string }[] = [
+    ...WEIGHT_PRESETS.map((p) => ({ value: p.value, label: p.label })),
+    { value: 'Custom', label: 'Custom' },
+  ]
+
+  const segmented = useSegmented<SizeOptionValue>({
     options,
-    value: selectedPreset,
-    onChange: onSelectPreset,
+    value: effectiveSelection,
+    onChange: (value) => {
+      if (value === 'Custom') {
+        setCustomMode(true)
+      } else {
+        setCustomMode(false)
+        onSelectPreset(value)
+      }
+    },
     label: 'Finished weight',
   })
-  const selectedSubtitle = WEIGHT_PRESETS.find(
-    (p) => p.value === selectedPreset,
-  )?.subtitle
+
+  const selectedSubtitle = !customMode
+    ? WEIGHT_PRESETS.find((p) => p.value === selectedPreset)?.subtitle
+    : undefined
 
   return (
-    <div className="flex flex-col min-w-[16rem]">
+    <div className="flex flex-col">
       <FieldKicker>Size</FieldKicker>
-      <div className="flex items-center gap-2 flex-wrap">
-        <div {...segmented.getRootProps()} className="flex gap-1">
-          {options.map((option) => {
-            const props = segmented.getOptionProps(option.value)
-            return (
-              <ChipButton
-                key={option.value}
-                {...props}
-                aria-label={option.label}
-                isSelected={selectedPreset === option.value}
-              >
-                {option.label}
-              </ChipButton>
-            )
-          })}
-        </div>
-        <div className="flex items-baseline gap-1">
+      <div {...segmented.getRootProps()} className={PILL_GROUP_CLASS}>
+        {options.map((option) => {
+          const props = segmented.getOptionProps(option.value)
+          const preset = WEIGHT_PRESETS.find((p) => p.value === option.value)
+          return (
+            <ChipButton
+              key={option.value}
+              {...props}
+              aria-label={option.label}
+              isSelected={effectiveSelection === option.value}
+            >
+              {preset ? <preset.Icon className="w-5 h-5" /> : option.label}
+            </ChipButton>
+          )
+        })}
+      </div>
+      {customMode && (
+        <div className="mt-3">
           <FinishedWeightField
             weight={weight}
             onChange={onChangeWeight}
             clampNote={clampNote}
-            resetKey={selectedPreset ?? 'custom'}
+            resetKey="custom"
           />
         </div>
-      </div>
+      )}
       {selectedSubtitle && (
-        <span className="font-label text-[0.6rem] uppercase tracking-widest text-on-surface-variant mt-1">
+        <span className="font-label text-[0.6rem] uppercase tracking-widest text-on-surface-variant mt-2">
           {selectedSubtitle}
         </span>
       )}
@@ -419,7 +540,7 @@ function LoavesControl({
   clampNote: import('../../../domain/InputRanges').ClampResult
 }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col items-center text-center">
       <FieldKicker>Loaves</FieldKicker>
       <LoafCountField
         loaves={loaves}
@@ -431,27 +552,28 @@ function LoavesControl({
 }
 
 function FermentControl({
-  leavingType,
-  onSelectLeavening,
+  fermentChoice,
+  onSelectFerment,
 }: {
-  leavingType: 'sourdough' | 'yeast'
-  onSelectLeavening: (type: 'sourdough' | 'yeast') => void
+  fermentChoice: FermentChoice
+  onSelectFerment: (choice: FermentChoice) => void
 }) {
-  const options: { value: 'sourdough' | 'yeast'; label: string }[] = [
+  const options: { value: FermentChoice; label: string }[] = [
     { value: 'sourdough', label: 'Sourdough' },
-    { value: 'yeast', label: 'Yeast' },
+    { value: 'fresh-yeast', label: 'Fresh yeast' },
+    { value: 'dry-yeast', label: 'Dry yeast' },
   ]
-  const segmented = useSegmented({
+  const segmented = useSegmented<FermentChoice>({
     options,
-    value: leavingType,
-    onChange: onSelectLeavening,
+    value: fermentChoice,
+    onChange: onSelectFerment,
     label: 'Fermentation path',
   })
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col items-end text-right">
       <FieldKicker>Ferment</FieldKicker>
-      <div {...segmented.getRootProps()} className="flex gap-1">
+      <div {...segmented.getRootProps()} className={PILL_GROUP_CLASS}>
         {options.map((option) => {
           const props = segmented.getOptionProps(option.value)
           return (
@@ -459,47 +581,7 @@ function FermentControl({
               key={option.value}
               {...props}
               aria-label={option.label}
-              isSelected={leavingType === option.value}
-            >
-              {option.label}
-            </ChipButton>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function YeastTypeControl({
-  yeastType,
-  onSelectYeastType,
-}: {
-  yeastType: 'instant' | 'fresh'
-  onSelectYeastType: (type: 'instant' | 'fresh') => void
-}) {
-  const options: { value: 'instant' | 'fresh'; label: string }[] = [
-    { value: 'instant', label: 'Instant — 1%' },
-    { value: 'fresh', label: 'Fresh — 3%' },
-  ]
-  const segmented = useSegmented({
-    options,
-    value: yeastType,
-    onChange: onSelectYeastType,
-    label: 'Yeast type',
-  })
-
-  return (
-    <div className="flex flex-col">
-      <FieldKicker>Yeast type</FieldKicker>
-      <div {...segmented.getRootProps()} className="flex gap-1">
-        {options.map((option) => {
-          const props = segmented.getOptionProps(option.value)
-          return (
-            <ChipButton
-              key={option.value}
-              {...props}
-              aria-label={option.label}
-              isSelected={yeastType === option.value}
+              isSelected={fermentChoice === option.value}
             >
               {option.label}
             </ChipButton>
@@ -544,7 +626,7 @@ function HydrationControl({
   return (
     <div className="flex flex-col">
       <FieldKicker>Hydration</FieldKicker>
-      <div {...segmented.getRootProps()} className="flex gap-1 flex-wrap">
+      <div {...segmented.getRootProps()} className={PILL_GROUP_CLASS}>
         {options.map((option) => {
           const props = segmented.getOptionProps(option.value)
           const isSelected = selectedOption === option.value
@@ -554,6 +636,7 @@ function HydrationControl({
               {...props}
               aria-label={option.label}
               isSelected={isSelected}
+              stretch
             >
               {option.label}
             </ChipButton>

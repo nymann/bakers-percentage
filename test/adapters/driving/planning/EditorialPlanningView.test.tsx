@@ -83,25 +83,33 @@ describe('Scenario 03: finished weight S/M/L segmented presets', () => {
       within(group).getByRole('radio', { name: /^L$/i }),
     ).toHaveAttribute('aria-checked', 'false')
 
-    expect(
-      screen.getByRole('spinbutton', { name: /finished weight/i }),
-    ).toHaveValue(900)
+    // Finished weight is observable in the ledger even when the input is hidden
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    expect(within(ledger).getByText(/finished loaf weight/i).parentElement)
+      .toHaveTextContent(/900/)
   })
 
-  it('typing a custom value clears preset selection', async () => {
+  it('selecting Custom reveals the weight input for manual entry', async () => {
     const user = userEvent.setup()
     renderEditorial()
 
     const group = screen.getByRole('radiogroup', { name: /finished weight/i })
     await user.click(within(group).getByRole('radio', { name: /^M$/i }))
 
+    // Input is hidden while a preset is selected
+    expect(
+      screen.queryByRole('spinbutton', { name: /finished weight/i }),
+    ).not.toBeInTheDocument()
+
+    const custom = within(group).getByRole('radio', { name: /custom/i })
+    await user.click(custom)
+
     const weightInput = screen.getByRole('spinbutton', { name: /finished weight/i })
     await user.clear(weightInput)
     await user.type(weightInput, '750')
 
-    for (const option of within(group).getAllByRole('radio')) {
-      expect(option).toHaveAttribute('aria-checked', 'false')
-    }
+    expect(custom).toHaveAttribute('aria-checked', 'true')
+    expect(weightInput).toHaveValue(750)
   })
 })
 
@@ -112,19 +120,21 @@ describe('Scenario 04: leavening segmented control', () => {
     const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
     const sourdough = within(group).getByRole('radio', { name: /sourdough/i })
     expect(sourdough).toHaveAttribute('aria-checked', 'true')
-    const yeast = within(group).getByRole('radio', { name: /^yeast$/i })
-    expect(yeast).toHaveAttribute('aria-checked', 'false')
+    const dryYeast = within(group).getByRole('radio', { name: /dry yeast/i })
+    expect(dryYeast).toHaveAttribute('aria-checked', 'false')
+    const freshYeast = within(group).getByRole('radio', { name: /fresh yeast/i })
+    expect(freshYeast).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('activating yeast switches leavening', async () => {
+  it('activating dry yeast switches leavening', async () => {
     const user = userEvent.setup()
     renderEditorial()
 
     const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
-    const yeastOption = within(group).getByRole('radio', { name: /^yeast$/i })
-    await user.click(yeastOption)
+    const dryYeastOption = within(group).getByRole('radio', { name: /dry yeast/i })
+    await user.click(dryYeastOption)
 
-    expect(yeastOption).toHaveAttribute('aria-checked', 'true')
+    expect(dryYeastOption).toHaveAttribute('aria-checked', 'true')
     expect(
       within(group).getByRole('radio', { name: /sourdough/i }),
     ).toHaveAttribute('aria-checked', 'false')
@@ -400,7 +410,7 @@ describe('Scenario 14-07: yeast leavening hides the timeline', () => {
     renderEditorial()
 
     const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
-    await user.click(within(group).getByRole('radio', { name: /^yeast$/i }))
+    await user.click(within(group).getByRole('radio', { name: /dry yeast/i }))
 
     expect(
       screen.queryByRole('slider', { name: /mix handle/i }),
