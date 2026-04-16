@@ -132,14 +132,14 @@ describe('FermentationStrategy schedule delegation', () => {
     const events = strategy.schedule(new Date('2026-04-16T18:00:00'))
     const names = events.map(e => e.name)
     expect(names).toContain('Feed your starter')
-    expect(names).not.toContain('Cold retard begins')
+    expect(names).not.toContain('Refrigerate')
   })
 
   it('RetardFermentation produces cold retard schedule', () => {
     const strategy = new RetardFermentation(24, 24, 0.75)
     const events = strategy.schedule(new Date('2026-04-17T09:00:00'))
     const names = events.map(e => e.name)
-    expect(names).toContain('Cold retard begins')
+    expect(names).toContain('Refrigerate')
     expect(names).toContain('Remove from fridge')
   })
 })

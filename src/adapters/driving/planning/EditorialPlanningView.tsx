@@ -57,6 +57,7 @@ function EditorialPlanningLayout() {
     loaves,
     salt,
     bakeOffLoss,
+    yeastType,
     leavingType,
     starterPercent,
     starterHydration,
@@ -67,6 +68,7 @@ function EditorialPlanningLayout() {
     changeLoafCount,
     changeSalt,
     changeBakeOffLoss,
+    selectYeastType,
     selectHydrationPreset,
     enterCustomHydration,
     unlockCustomHydration,
@@ -170,6 +172,13 @@ function EditorialPlanningLayout() {
             leavingType={leavingType}
             onSelectLeavening={selectLeavening}
           />
+
+          {leavingType === 'yeast' && (
+            <YeastTypeSegmented
+              yeastType={yeastType}
+              onSelectYeastType={selectYeastType}
+            />
+          )}
 
           <LoafCountField
             loaves={loaves}
@@ -348,6 +357,31 @@ function LeaveningSection({
           </div>
         </ToggleCard>
       </div>
+    </div>
+  )
+}
+
+function YeastTypeSegmented({
+  yeastType,
+  onSelectYeastType,
+}: {
+  yeastType: 'instant' | 'fresh'
+  onSelectYeastType: (type: 'instant' | 'fresh') => void
+}) {
+  return (
+    <div>
+      <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-4">
+        Yeast Type
+      </span>
+      <SegmentedSelector
+        label="Yeast type"
+        options={[
+          { value: 'instant', label: 'Instant — 1%' },
+          { value: 'fresh', label: 'Fresh — 3%' },
+        ]}
+        value={yeastType}
+        onChange={onSelectYeastType}
+      />
     </div>
   )
 }

@@ -1355,8 +1355,8 @@ describe('Scenario 01 (story 07): cold retard schedule', () => {
     expect(eventNames).toEqual([
       'Feed your starter',
       'Mix & bulk fermentation',
-      'Shape & refrigerate',
-      'Cold retard begins',
+      'Shape',
+      'Refrigerate',
       'Remove from fridge',
       'Preheat oven',
       'Bake',
@@ -1410,8 +1410,7 @@ describe('Scenario 02 (story 07): same-day schedule', () => {
     ])
 
     // Verify no cold retard events
-    expect(eventNames).not.toContain('Shape & refrigerate')
-    expect(eventNames).not.toContain('Cold retard begins')
+    expect(eventNames).not.toContain('Refrigerate')
     expect(eventNames).not.toContain('Remove from fridge')
   })
 })
@@ -1466,7 +1465,7 @@ describe('Scenario 04 (story 07): yeast schedule', () => {
     )
 
     expect(eventNames).not.toContain('Feed your starter')
-    expect(eventNames).not.toContain('Cold retard begins')
+    expect(eventNames).not.toContain('Refrigerate')
     expect(eventNames).not.toContain('Remove from fridge')
   })
 

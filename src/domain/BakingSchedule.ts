@@ -4,6 +4,7 @@ export type ScheduleEvent = {
 }
 
 const STARTER_FEED_BEFORE_MIX_MIN = 600 // 10h
+const SHAPE_MIN = 30
 const PREHEAT_MIN = 45
 const TEMPERING_MIN = 30
 const BAKE_MIN = 45
@@ -32,6 +33,7 @@ export class ColdRetardSchedule implements BakingSchedule {
     const mixTime = offsetMinutes(this.bakeTime, -this.totalHours * 60)
     const feedTime = offsetMinutes(mixTime, -STARTER_FEED_BEFORE_MIX_MIN)
     const shapeTime = offsetMinutes(mixTime, this.bulkHours * 60)
+    const refrigerateTime = offsetMinutes(shapeTime, SHAPE_MIN)
     const removeTime = offsetMinutes(this.bakeTime, -(TEMPERING_MIN + PREHEAT_MIN))
     const preheatTime = offsetMinutes(this.bakeTime, -PREHEAT_MIN)
     const outOfOven = offsetMinutes(this.bakeTime, BAKE_MIN)
@@ -40,8 +42,8 @@ export class ColdRetardSchedule implements BakingSchedule {
     return [
       { name: 'Feed your starter', time: feedTime },
       { name: 'Mix & bulk fermentation', time: mixTime },
-      { name: 'Shape & refrigerate', time: shapeTime },
-      { name: 'Cold retard begins', time: shapeTime },
+      { name: 'Shape', time: shapeTime },
+      { name: 'Refrigerate', time: refrigerateTime },
       { name: 'Remove from fridge', time: removeTime },
       { name: 'Preheat oven', time: preheatTime },
       { name: 'Bake', time: this.bakeTime },

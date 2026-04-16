@@ -12,8 +12,7 @@ describe('SameDaySchedule at 24C', () => {
 
   it('omits cold retard events', () => {
     const names = events.map(e => e.name)
-    expect(names).not.toContain('Shape & refrigerate')
-    expect(names).not.toContain('Cold retard begins')
+    expect(names).not.toContain('Refrigerate')
     expect(names).not.toContain('Remove from fridge')
   })
 
@@ -68,8 +67,7 @@ describe('YeastSchedule', () => {
 
   it('has no cold retard events', () => {
     const names = events.map(e => e.name)
-    expect(names).not.toContain('Shape & refrigerate')
-    expect(names).not.toContain('Cold retard begins')
+    expect(names).not.toContain('Refrigerate')
     expect(names).not.toContain('Remove from fridge')
   })
 
@@ -168,14 +166,14 @@ describe('ColdRetardSchedule at 24C', () => {
     expect(mix.time).toEqual(new Date('2026-04-16T09:00:00'))
   })
 
-  it('places "Shape & refrigerate" at mix plus bulk hours', () => {
-    const shape = events.find(e => e.name === 'Shape & refrigerate')!
+  it('places "Shape" at mix plus bulk hours', () => {
+    const shape = events.find(e => e.name === 'Shape')!
     expect(shape.time).toEqual(new Date('2026-04-16T12:00:00'))
   })
 
-  it('places "Cold retard begins" at shape time', () => {
-    const coldRetard = events.find(e => e.name === 'Cold retard begins')!
-    expect(coldRetard.time).toEqual(new Date('2026-04-16T12:00:00'))
+  it('places "Refrigerate" 30 minutes after shape to allow for shaping time', () => {
+    const refrigerate = events.find(e => e.name === 'Refrigerate')!
+    expect(refrigerate.time).toEqual(new Date('2026-04-16T12:30:00'))
   })
 
   it('places "Remove from fridge" at bake minus 1h15m', () => {

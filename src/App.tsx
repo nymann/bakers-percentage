@@ -14,7 +14,7 @@ const featureFlags = createInMemoryFeatureFlags({
   'baking-schedule': true,
   'visual-timeline': true,
   'editorial-shell': false,
-  'editorial-planning': false,
+  'editorial-planning': true,
 })
 
 export function AppContent() {
