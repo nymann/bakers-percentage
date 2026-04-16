@@ -1,29 +1,9 @@
-import { describe, it, expect, afterEach, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AppContent } from '../src/App'
 import { FeatureFlagProvider } from '../src/feature-flags'
 import { createInMemoryFeatureFlags } from '../src/adapters/driven/InMemoryFeatureFlags'
-
-function setViewport({ desktop }: { desktop: boolean }) {
-  vi.stubGlobal(
-    'matchMedia',
-    vi.fn().mockImplementation((query: string) => ({
-      matches: query.includes('1024px') ? desktop : false,
-      media: query,
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    })),
-  )
-}
-
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
 
 function renderApp() {
   const flags = createInMemoryFeatureFlags({})
@@ -44,22 +24,21 @@ describe('AppContent renders the editorial shell', () => {
 })
 
 describe('Scenario 02: editorial shell renders with Planning default', () => {
-  it('shows a banner containing the top app bar', () => {
+  it('shows a banner with the app branding', () => {
     renderApp()
 
-    expect(screen.getByRole('banner')).toBeInTheDocument()
+    const banner = screen.getByRole('banner')
+    expect(banner).toHaveTextContent(/the perfect bread/i)
   })
 
   it('lists Planning, Execution, and History tabs in a navigation region', () => {
     renderApp()
 
-    const nav = screen.getAllByRole('navigation')[0]
+    const nav = screen.getByRole('navigation', { name: /primary views/i })
     expect(nav).toBeInTheDocument()
-    const tabs = screen.getAllByRole('tab')
-    const tabNames = tabs.map((tab) => tab.textContent?.trim())
-    expect(tabNames).toEqual(
-      expect.arrayContaining(['Planning', 'Execution', 'History']),
-    )
+    expect(screen.getByRole('tab', { name: /^planning$/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /^execution$/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /^history$/i })).toBeInTheDocument()
   })
 
   it('marks Planning as the active tab by default', () => {
@@ -95,11 +74,8 @@ describe('Scenario 02: editorial shell renders with Planning default', () => {
     renderApp()
 
     const planningPanel = screen.getByRole('tabpanel', { name: /planning/i })
-    const heading = screen.getByRole('heading', {
-      level: 1,
-      name: /baker's percentage/i,
-    })
-    expect(planningPanel).toContainElement(heading)
+    const calculator = screen.getByRole('region', { name: /recipe calculator/i })
+    expect(planningPanel).toContainElement(calculator)
   })
 })
 
@@ -183,52 +159,17 @@ describe('Scenario 05: Home and End keys jump to edges', () => {
   })
 })
 
-describe('Scenario 06: mobile viewport renders bottom nav', () => {
-  it('shows the Mobile views nav and hides the Primary views side nav', () => {
-    setViewport({ desktop: false })
+describe('Scenario 06: side nav is the single navigation surface', () => {
+  it('exposes exactly one primary-views navigation region', () => {
     renderApp()
 
-    const mobileNav = screen.getByRole('navigation', { name: /mobile views/i })
-    expect(mobileNav).toBeInTheDocument()
-
-    expect(
-      screen.queryByRole('navigation', { name: /primary views/i }),
-    ).not.toBeInTheDocument()
+    const navs = screen.getAllByRole('navigation', { name: /primary views/i })
+    expect(navs).toHaveLength(1)
   })
 
-  it('renders all three tabs within the mobile nav', () => {
-    setViewport({ desktop: false })
+  it('does not render a separate mobile navigation region', () => {
     renderApp()
 
-    const mobileNav = screen.getByRole('navigation', { name: /mobile views/i })
-    const tabs = mobileNav.querySelectorAll('[role="tab"]')
-    const labels = Array.from(tabs).map((tab) => tab.textContent?.trim())
-    expect(labels).toEqual(['Planning', 'Execution', 'History'])
-  })
-
-  it('clicking a tab in the bottom nav switches the active view', async () => {
-    const user = userEvent.setup()
-    setViewport({ desktop: false })
-    renderApp()
-
-    await user.click(screen.getByRole('tab', { name: /history/i }))
-
-    expect(screen.getByRole('tab', { name: /history/i })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    )
-    expect(
-      screen.getByRole('tabpanel', { name: /history/i }),
-    ).toBeVisible()
-  })
-
-  it('desktop viewport shows Primary views side nav and hides Mobile views', () => {
-    setViewport({ desktop: true })
-    renderApp()
-
-    expect(
-      screen.getByRole('navigation', { name: /primary views/i }),
-    ).toBeInTheDocument()
     expect(
       screen.queryByRole('navigation', { name: /mobile views/i }),
     ).not.toBeInTheDocument()

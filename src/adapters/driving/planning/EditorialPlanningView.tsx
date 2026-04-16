@@ -5,8 +5,6 @@ import { useStarterRecommendation } from '../../../application/use-cases/useStar
 import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
-import { SegmentedSelector } from '../../../design-system/atoms/SegmentedSelector'
-import { ToggleCard } from '../../../design-system/atoms/ToggleCard'
 import { Disclosure } from '../../../design-system/atoms/Disclosure'
 import { Ledger, type LedgerRow } from '../../../design-system/molecules/Ledger'
 import { ArcPreview, type ArcStep } from '../../../design-system/molecules/ArcPreview'
@@ -134,55 +132,56 @@ export function EditorialPlanningView() {
   return (
     <section
       aria-label="Recipe calculator"
-      className="bg-background text-on-surface font-body px-4 md:px-8 py-8"
+      className="bg-background text-on-surface font-body"
     >
-      <div className="mb-10 max-w-6xl mx-auto">
-        <span className="font-label text-primary uppercase tracking-[0.2em] text-[0.7rem] block mb-2">
-          Recipe Configuration
-        </span>
-        <h1 className="font-headline text-4xl md:text-5xl text-on-surface leading-tight mb-2 italic">
-          Baker's Percentage Calculator
-        </h1>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
-        <section className="md:col-span-7 space-y-10">
-          <FinishedWeightSection
+      <div style={PLANNING_GRID_STYLE} className="gap-6 items-start">
+        <div style={{ gridArea: 'strip' }} className="min-w-0">
+          <RecipeControlsStrip
             selectedPreset={selectedWeightPreset}
             weight={recipe.finishedWeightPerLoaf}
+            weightClampNote={clampNotes.finishedWeight}
             onSelectPreset={(v) =>
               changeFinishedWeight(WEIGHT_PRESETS.find((p) => p.value === v)!.grams)
             }
             onChangeWeight={changeFinishedWeight}
-            clampNote={clampNotes.finishedWeight}
-          />
-
-          <LeaveningSection
+            loaves={loaves}
+            loavesClampNote={clampNotes.loaves}
+            onChangeLoaves={changeLoafCount}
             leavingType={leavingType}
             onSelectLeavening={selectLeavening}
+            yeastType={yeastType}
+            onSelectYeastType={selectYeastType}
+            selectedHydration={selectedHydration}
+            hydrationPercent={hydration}
+            onSelectHydrationPreset={selectHydrationPreset}
+            onUnlockCustomHydration={unlockCustomHydration}
+            onEnterCustomHydration={enterCustomHydration}
           />
+        </div>
 
-          {leavingType === 'yeast' && (
-            <YeastTypeSegmented
-              yeastType={yeastType}
-              onSelectYeastType={selectYeastType}
+        <div style={{ gridArea: 'timeline' }} className="min-w-0">
+          {showSourdoughAdvanced && (
+            <FermentationTimeline
+              mixHandleProps={timeline.getMixHandleProps()}
+              bakeHandleProps={timeline.getBakeHandleProps()}
+              mixTimeLabel={formatScheduleTime(timeline.mixTime)}
+              bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
+              duration={timeline.duration}
+              zone={fermentation.zone}
+              warning={fermentation.warning}
+              boundaries={fermentation.boundaries}
             />
           )}
 
-          <LoafCountField
-            loaves={loaves}
-            onChange={changeLoafCount}
-            clampNote={clampNotes.loaves}
-          />
+          {leavingType === 'yeast' && (
+            <BakeTimeField
+              bakeTime={bakeTime.bakeTime}
+              onChange={bakeTime.changeBakeTime}
+            />
+          )}
+        </div>
 
-          <HydrationSegmentedField
-            selectedOption={selectedHydration}
-            customPercent={hydration}
-            onSelectPreset={selectHydrationPreset}
-            onUnlockCustom={unlockCustomHydration}
-            onEnterCustom={enterCustomHydration}
-          />
-
+        <div style={{ gridArea: 'advanced' }} className="min-w-0">
           <Disclosure label="Advanced">
             <SaltField
               saltPercent={salt}
@@ -217,29 +216,12 @@ export function EditorialPlanningView() {
               </>
             )}
           </Disclosure>
+        </div>
 
-          {leavingType === 'yeast' && (
-            <BakeTimeField
-              bakeTime={bakeTime.bakeTime}
-              onChange={bakeTime.changeBakeTime}
-            />
-          )}
-
-          {showSourdoughAdvanced && (
-            <FermentationTimeline
-              mixHandleProps={timeline.getMixHandleProps()}
-              bakeHandleProps={timeline.getBakeHandleProps()}
-              mixTimeLabel={formatScheduleTime(timeline.mixTime)}
-              bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
-              duration={timeline.duration}
-              zone={fermentation.zone}
-              warning={fermentation.warning}
-              boundaries={fermentation.boundaries}
-            />
-          )}
-        </section>
-
-        <aside className="md:col-span-5 space-y-6 md:sticky md:top-4">
+        <aside
+          style={{ gridArea: 'formula' }}
+          className="space-y-6 lg:sticky lg:top-4 min-w-0"
+        >
           <Ledger
             rows={ledgerRows}
             multiLoaf={loaves > 1}
@@ -254,7 +236,119 @@ export function EditorialPlanningView() {
   )
 }
 
-function FinishedWeightSection({
+const PLANNING_GRID_STYLE = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) minmax(18rem, 22rem)',
+  gridTemplateAreas: `
+    "strip    formula"
+    "timeline formula"
+    "advanced formula"
+  `,
+} as const
+
+function RecipeControlsStrip({
+  selectedPreset,
+  weight,
+  weightClampNote,
+  onSelectPreset,
+  onChangeWeight,
+  loaves,
+  loavesClampNote,
+  onChangeLoaves,
+  leavingType,
+  onSelectLeavening,
+  yeastType,
+  onSelectYeastType,
+  selectedHydration,
+  hydrationPercent,
+  onSelectHydrationPreset,
+  onUnlockCustomHydration,
+  onEnterCustomHydration,
+}: {
+  selectedPreset: WeightPresetValue | null
+  weight: number
+  weightClampNote: import('../../../domain/InputRanges').ClampResult
+  onSelectPreset: (value: WeightPresetValue) => void
+  onChangeWeight: (grams: number) => void
+  loaves: number
+  loavesClampNote: import('../../../domain/InputRanges').ClampResult
+  onChangeLoaves: (count: number) => void
+  leavingType: 'sourdough' | 'yeast'
+  onSelectLeavening: (type: 'sourdough' | 'yeast') => void
+  yeastType: 'instant' | 'fresh'
+  onSelectYeastType: (type: 'instant' | 'fresh') => void
+  selectedHydration: HydrationOptionValue
+  hydrationPercent: number
+  onSelectHydrationPreset: (preset: HydrationPresetName) => void
+  onUnlockCustomHydration: () => void
+  onEnterCustomHydration: (fraction: number) => void
+}) {
+  return (
+    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 md:p-5">
+      <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
+        <SizeControl
+          selectedPreset={selectedPreset}
+          weight={weight}
+          onSelectPreset={onSelectPreset}
+          onChangeWeight={onChangeWeight}
+          clampNote={weightClampNote}
+        />
+        <LoavesControl
+          loaves={loaves}
+          onChange={onChangeLoaves}
+          clampNote={loavesClampNote}
+        />
+        <FermentControl
+          leavingType={leavingType}
+          onSelectLeavening={onSelectLeavening}
+        />
+        {leavingType === 'yeast' && (
+          <YeastTypeControl
+            yeastType={yeastType}
+            onSelectYeastType={onSelectYeastType}
+          />
+        )}
+        <HydrationControl
+          selectedOption={selectedHydration}
+          customPercent={hydrationPercent}
+          onSelectPreset={onSelectHydrationPreset}
+          onUnlockCustom={onUnlockCustomHydration}
+          onEnterCustom={onEnterCustomHydration}
+        />
+      </div>
+    </div>
+  )
+}
+
+function FieldKicker({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-label text-[0.65rem] uppercase tracking-widest text-on-surface-variant block mb-2">
+      {children}
+    </span>
+  )
+}
+
+function ChipButton({
+  isSelected,
+  ...rest
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  isSelected: boolean
+  ref?: (node: HTMLElement | null) => void
+}) {
+  return (
+    <button
+      {...rest}
+      className={[
+        'px-3 py-1.5 rounded-full text-xs font-label transition-all',
+        isSelected
+          ? 'bg-primary text-on-primary'
+          : 'bg-surface-container-low text-on-surface hover:bg-surface-container',
+      ].join(' ')}
+    />
+  )
+}
+
+function SizeControl({
   selectedPreset,
   weight,
   onSelectPreset,
@@ -267,110 +361,156 @@ function FinishedWeightSection({
   onChangeWeight: (grams: number) => void
   clampNote: import('../../../domain/InputRanges').ClampResult
 }) {
+  const options = WEIGHT_PRESETS.map((p) => ({ value: p.value, label: p.label }))
+  const segmented = useSegmented<WeightPresetValue>({
+    options,
+    value: selectedPreset,
+    onChange: onSelectPreset,
+    label: 'Finished weight',
+  })
+  const selectedSubtitle = WEIGHT_PRESETS.find(
+    (p) => p.value === selectedPreset,
+  )?.subtitle
+
   return (
-    <div>
-      <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-4">
-        Volume &amp; Scale
-      </span>
-      <SegmentedSelector
-        label="Finished weight"
-        options={WEIGHT_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
-        value={selectedPreset}
-        onChange={onSelectPreset}
-        renderOption={(option) => {
-          const preset = WEIGHT_PRESETS.find((p) => p.value === option.value)!
-          return (
-            <>
-              <span className="block font-headline text-2xl italic mb-1">
-                {preset.label}
-              </span>
-              <span className="block font-label text-[0.6rem] uppercase tracking-tighter opacity-80">
-                {preset.subtitle}
-              </span>
-            </>
-          )
-        }}
-      />
-      <div className="mt-4">
-        <FinishedWeightField
-          weight={weight}
-          onChange={onChangeWeight}
-          clampNote={clampNote}
-          resetKey={selectedPreset ?? 'custom'}
-        />
+    <div className="flex flex-col min-w-[16rem]">
+      <FieldKicker>Size</FieldKicker>
+      <div className="flex items-center gap-2 flex-wrap">
+        <div {...segmented.getRootProps()} className="flex gap-1">
+          {options.map((option) => {
+            const props = segmented.getOptionProps(option.value)
+            return (
+              <ChipButton
+                key={option.value}
+                {...props}
+                aria-label={option.label}
+                isSelected={selectedPreset === option.value}
+              >
+                {option.label}
+              </ChipButton>
+            )
+          })}
+        </div>
+        <div className="flex items-baseline gap-1">
+          <FinishedWeightField
+            weight={weight}
+            onChange={onChangeWeight}
+            clampNote={clampNote}
+            resetKey={selectedPreset ?? 'custom'}
+          />
+        </div>
       </div>
+      {selectedSubtitle && (
+        <span className="font-label text-[0.6rem] uppercase tracking-widest text-on-surface-variant mt-1">
+          {selectedSubtitle}
+        </span>
+      )}
     </div>
   )
 }
 
-function LeaveningSection({
+function LoavesControl({
+  loaves,
+  onChange,
+  clampNote,
+}: {
+  loaves: number
+  onChange: (count: number) => void
+  clampNote: import('../../../domain/InputRanges').ClampResult
+}) {
+  return (
+    <div className="flex flex-col">
+      <FieldKicker>Loaves</FieldKicker>
+      <LoafCountField
+        loaves={loaves}
+        onChange={onChange}
+        clampNote={clampNote}
+      />
+    </div>
+  )
+}
+
+function FermentControl({
   leavingType,
   onSelectLeavening,
 }: {
   leavingType: 'sourdough' | 'yeast'
   onSelectLeavening: (type: 'sourdough' | 'yeast') => void
 }) {
+  const options: { value: 'sourdough' | 'yeast'; label: string }[] = [
+    { value: 'sourdough', label: 'Sourdough' },
+    { value: 'yeast', label: 'Yeast' },
+  ]
+  const segmented = useSegmented({
+    options,
+    value: leavingType,
+    onChange: onSelectLeavening,
+    label: 'Fermentation path',
+  })
+
   return (
-    <div>
-      <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-4">
-        Fermentation Path
-      </span>
-      <div className="grid grid-cols-2 gap-4">
-        <ToggleCard
-          label="Sourdough"
-          pressed={leavingType === 'sourdough'}
-          onActivate={() => onSelectLeavening('sourdough')}
-        >
-          <div>
-            <h4 className="font-headline text-lg leading-none mb-1">Sourdough</h4>
-            <p className="text-[0.7rem] text-on-surface-variant font-body leading-tight">
-              Wild yeast, long ferment, deep complexity.
-            </p>
-          </div>
-        </ToggleCard>
-        <ToggleCard
-          label="Yeast"
-          pressed={leavingType === 'yeast'}
-          onActivate={() => onSelectLeavening('yeast')}
-        >
-          <div>
-            <h4 className="font-headline text-lg leading-none mb-1">Yeast</h4>
-            <p className="text-[0.7rem] text-on-surface-variant font-body leading-tight">
-              Commercial yeast, predictable, quick rise.
-            </p>
-          </div>
-        </ToggleCard>
+    <div className="flex flex-col">
+      <FieldKicker>Ferment</FieldKicker>
+      <div {...segmented.getRootProps()} className="flex gap-1">
+        {options.map((option) => {
+          const props = segmented.getOptionProps(option.value)
+          return (
+            <ChipButton
+              key={option.value}
+              {...props}
+              aria-label={option.label}
+              isSelected={leavingType === option.value}
+            >
+              {option.label}
+            </ChipButton>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function YeastTypeSegmented({
+function YeastTypeControl({
   yeastType,
   onSelectYeastType,
 }: {
   yeastType: 'instant' | 'fresh'
   onSelectYeastType: (type: 'instant' | 'fresh') => void
 }) {
+  const options: { value: 'instant' | 'fresh'; label: string }[] = [
+    { value: 'instant', label: 'Instant — 1%' },
+    { value: 'fresh', label: 'Fresh — 3%' },
+  ]
+  const segmented = useSegmented({
+    options,
+    value: yeastType,
+    onChange: onSelectYeastType,
+    label: 'Yeast type',
+  })
+
   return (
-    <div>
-      <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-4">
-        Yeast Type
-      </span>
-      <SegmentedSelector
-        label="Yeast type"
-        options={[
-          { value: 'instant', label: 'Instant — 1%' },
-          { value: 'fresh', label: 'Fresh — 3%' },
-        ]}
-        value={yeastType}
-        onChange={onSelectYeastType}
-      />
+    <div className="flex flex-col">
+      <FieldKicker>Yeast type</FieldKicker>
+      <div {...segmented.getRootProps()} className="flex gap-1">
+        {options.map((option) => {
+          const props = segmented.getOptionProps(option.value)
+          return (
+            <ChipButton
+              key={option.value}
+              {...props}
+              aria-label={option.label}
+              isSelected={yeastType === option.value}
+            >
+              {option.label}
+            </ChipButton>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function HydrationSegmentedField({
+function HydrationControl({
   selectedOption,
   customPercent,
   onSelectPreset,
@@ -402,33 +542,26 @@ function HydrationSegmentedField({
   })
 
   return (
-    <div>
-      <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-4">
-        Hydration
-      </span>
-      <div {...segmented.getRootProps()} className="flex gap-2 flex-wrap">
+    <div className="flex flex-col">
+      <FieldKicker>Hydration</FieldKicker>
+      <div {...segmented.getRootProps()} className="flex gap-1 flex-wrap">
         {options.map((option) => {
           const props = segmented.getOptionProps(option.value)
           const isSelected = selectedOption === option.value
           return (
-            <button
+            <ChipButton
               key={option.value}
               {...props}
               aria-label={option.label}
-              className={[
-                'px-4 py-2 rounded-full text-sm transition-all font-label',
-                isSelected
-                  ? 'bg-primary text-on-primary'
-                  : 'bg-surface-container-low text-on-surface hover:bg-surface-container',
-              ].join(' ')}
+              isSelected={isSelected}
             >
               {option.label}
-            </button>
+            </ChipButton>
           )
         })}
       </div>
       {selectedOption === 'Custom' && (
-        <div className="mt-4">
+        <div className="mt-2">
           <CustomHydrationInput
             percentage={customPercent}
             onChange={onEnterCustom}
@@ -510,7 +643,7 @@ function FermentationTimeline({
     'w-full accent-primary cursor-pointer h-1 bg-surface-container rounded-full'
 
   return (
-    <div className="mb-4 space-y-4">
+    <div className="space-y-4 p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/10">
       <div>
         <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-1">
           Fermentation Timeline

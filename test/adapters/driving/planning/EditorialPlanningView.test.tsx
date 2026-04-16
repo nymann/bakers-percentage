@@ -105,27 +105,29 @@ describe('Scenario 03: finished weight S/M/L segmented presets', () => {
   })
 })
 
-describe('Scenario 04: leavening toggle cards', () => {
-  it('sourdough card is pressed by default', () => {
+describe('Scenario 04: leavening segmented control', () => {
+  it('sourdough is selected by default', () => {
     renderEditorial()
 
-    const sourdough = screen.getByRole('button', { name: /sourdough/i, pressed: true })
-    expect(sourdough).toHaveAttribute('aria-pressed', 'true')
-    const yeast = screen.getByRole('button', { name: /^yeast$/i })
-    expect(yeast).toHaveAttribute('aria-pressed', 'false')
+    const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    const sourdough = within(group).getByRole('radio', { name: /sourdough/i })
+    expect(sourdough).toHaveAttribute('aria-checked', 'true')
+    const yeast = within(group).getByRole('radio', { name: /^yeast$/i })
+    expect(yeast).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('activating yeast card switches leavening', async () => {
+  it('activating yeast switches leavening', async () => {
     const user = userEvent.setup()
     renderEditorial()
 
-    const yeastCard = screen.getByRole('button', { name: /^yeast$/i })
-    await user.click(yeastCard)
+    const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    const yeastOption = within(group).getByRole('radio', { name: /^yeast$/i })
+    await user.click(yeastOption)
 
-    expect(yeastCard).toHaveAttribute('aria-pressed', 'true')
+    expect(yeastOption).toHaveAttribute('aria-checked', 'true')
     expect(
-      screen.getByRole('button', { name: /sourdough/i }),
-    ).toHaveAttribute('aria-pressed', 'false')
+      within(group).getByRole('radio', { name: /sourdough/i }),
+    ).toHaveAttribute('aria-checked', 'false')
 
     // Recipe switched to yeast: Yeast row appears
     const table = screen.getByRole('table', { name: /ingredient ledger/i })
@@ -397,7 +399,8 @@ describe('Scenario 14-07: yeast leavening hides the timeline', () => {
     const user = userEvent.setup()
     renderEditorial()
 
-    await user.click(screen.getByRole('button', { name: /^yeast$/i }))
+    const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(group).getByRole('radio', { name: /^yeast$/i }))
 
     expect(
       screen.queryByRole('slider', { name: /mix handle/i }),
