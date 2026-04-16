@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useActiveView, type ViewId } from '../../../application/use-cases/useActiveView'
+import { useToasts } from '../../../application/use-cases/useToasts'
 import { useMediaQuery } from '../../../design-system/headless/useMediaQuery'
 import { useFeatureFlag } from '../../../use-feature-flag'
-import { RecipeCalculator } from '../planning/RecipeCalculator'
+import type { PlanningPreferences } from '../../../domain/PlanningPreferences'
+import { RecipeCalculator, type PlanningHandle } from '../planning/RecipeCalculator'
 import { ExecutionView } from '../execution/ExecutionView'
 import { HistoryView } from '../history/HistoryView'
+import { ToastStack } from './ToastStack'
 import { SideNavBar } from './SideNavBar'
 import { TopNavBar } from './TopNavBar'
 
@@ -22,12 +25,20 @@ export function EditorialShell() {
   const view = useActiveView({ enabledViews })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const isDesktop = useMediaQuery('(min-width: 768px)')
+  const { toasts, showToast, dismiss } = useToasts()
+  const planningRef = useRef<PlanningHandle>(null)
 
   const openSettings = () => setSettingsOpen(true)
   const closeSettings = () => setSettingsOpen(false)
 
   const goToExecution = () => view.switchTo('execution')
   const goToHistory = () => view.switchTo('history')
+
+  const handleRetry = (prefs: PlanningPreferences, name: string) => {
+    planningRef.current?.applyPreferences(prefs)
+    view.switchTo('planning')
+    showToast(`Loaded settings from "${name}"`)
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background text-on-surface font-body">
@@ -43,6 +54,7 @@ export function EditorialShell() {
             onCloseSettings={closeSettings}
             canStartBake={executionEnabled}
             onBakeStarted={goToExecution}
+            controlRef={planningRef}
           />
         </section>
         {executionEnabled && (
@@ -52,10 +64,11 @@ export function EditorialShell() {
         )}
         {historyEnabled && (
           <section {...view.getPanelProps('history')}>
-            <HistoryView />
+            <HistoryView onRetryBake={handleRetry} />
           </section>
         )}
       </main>
+      <ToastStack toasts={toasts} onDismiss={dismiss} />
     </div>
   )
 }

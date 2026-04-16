@@ -43,7 +43,7 @@ export function ExecutionView({ onBakeFinished }: ExecutionViewProps = {}) {
   }
 
   return (
-    <article className="space-y-10">
+    <article className="space-y-10 animate-fade-in">
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <span className="font-label text-primary uppercase tracking-[0.2em] text-[0.7rem] block mb-2">

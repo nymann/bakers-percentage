@@ -5,6 +5,7 @@ import {
 } from './bake-storage-context'
 import type { BakeStorage } from './application/ports/BakeStoragePort'
 import type { ActiveBake, FinishedBake } from './domain/Bake'
+import type { PlanningPreferences } from './domain/PlanningPreferences'
 
 export function BakeStorageProvider({
   storage,
@@ -18,6 +19,9 @@ export function BakeStorageProvider({
   )
   const [history, setHistory] = useState<readonly FinishedBake[]>(() =>
     storage.readHistory(),
+  )
+  const [preferences, setPreferences] = useState<PlanningPreferences | null>(
+    () => storage.readPreferences(),
   )
 
   const saveActive = useCallback(
@@ -36,9 +40,24 @@ export function BakeStorageProvider({
     [storage],
   )
 
+  const savePreferences = useCallback(
+    (next: PlanningPreferences) => {
+      storage.writePreferences(next)
+      setPreferences(next)
+    },
+    [storage],
+  )
+
   const value = useMemo<BakeStorageValue>(
-    () => ({ active, history, saveActive, saveHistory }),
-    [active, history, saveActive, saveHistory],
+    () => ({
+      active,
+      history,
+      preferences,
+      saveActive,
+      saveHistory,
+      savePreferences,
+    }),
+    [active, history, preferences, saveActive, saveHistory, savePreferences],
   )
 
   return (

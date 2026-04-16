@@ -62,14 +62,17 @@ export function Ledger({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.name} className="group">
+            <tr
+              key={row.name}
+              className="group transition-colors hover:bg-surface-container-low/40"
+            >
               <td className="py-2 pr-3 font-body text-on-surface-variant">{row.name}</td>
-              <td className="py-2 pl-3 text-right font-headline text-xl whitespace-nowrap">
+              <td className="py-2 pl-3 text-right font-headline text-xl whitespace-nowrap tabular-nums">
                 {row.grams}
                 <span className="text-xs italic ml-1">g</span>
               </td>
               {multiLoaf && (
-                <td className="py-2 pl-3 text-right font-headline text-xl whitespace-nowrap">
+                <td className="py-2 pl-3 text-right font-headline text-xl whitespace-nowrap tabular-nums">
                   {row.total ?? row.grams}
                   <span className="text-xs italic ml-1">g</span>
                 </td>

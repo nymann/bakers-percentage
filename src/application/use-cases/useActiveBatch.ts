@@ -9,6 +9,7 @@ import {
   type ProgressStep,
   type RecipeSnapshot,
 } from '../../domain/Bake'
+import type { PlanningPreferences } from '../../domain/PlanningPreferences'
 import { useBakeStorageValue } from '../../use-bake-storage'
 
 export interface StartBakeInput {
@@ -16,6 +17,7 @@ export interface StartBakeInput {
   readonly recipe: RecipeSnapshot
   readonly schedule: readonly BakeScheduleEvent[]
   readonly checklistLabels: readonly string[]
+  readonly preferences?: PlanningPreferences
   readonly now: Date
 }
 
@@ -61,6 +63,7 @@ export function useActiveBatch(
         recipe: input.recipe,
         schedule: input.schedule,
         checklist: initialChecklist(input.checklistLabels),
+        preferences: input.preferences,
       }
       saveActive(bake)
     },

@@ -1,10 +1,12 @@
-import { EditorialPlanningView } from './EditorialPlanningView'
+import type { Ref } from 'react'
+import { EditorialPlanningView, type PlanningHandle } from './EditorialPlanningView'
 
 export interface RecipeCalculatorProps {
   settingsOpen?: boolean
   onCloseSettings?: () => void
   onBakeStarted?: () => void
   canStartBake?: boolean
+  controlRef?: Ref<PlanningHandle>
 }
 
 export function RecipeCalculator({
@@ -12,6 +14,7 @@ export function RecipeCalculator({
   onCloseSettings = () => {},
   onBakeStarted = () => {},
   canStartBake = false,
+  controlRef,
 }: RecipeCalculatorProps = {}) {
   return (
     <EditorialPlanningView
@@ -19,6 +22,9 @@ export function RecipeCalculator({
       onCloseSettings={onCloseSettings}
       onBakeStarted={onBakeStarted}
       canStartBake={canStartBake}
+      controlRef={controlRef}
     />
   )
 }
+
+export type { PlanningHandle } from './EditorialPlanningView'

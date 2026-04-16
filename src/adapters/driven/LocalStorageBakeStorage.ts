@@ -1,8 +1,10 @@
 import type { ActiveBake, FinishedBake } from '../../domain/Bake'
+import type { PlanningPreferences } from '../../domain/PlanningPreferences'
 import type { BakeStorage } from '../../application/ports/BakeStoragePort'
 
 const ACTIVE_KEY = 'bakers-percentage:active-bake'
 const HISTORY_KEY = 'bakers-percentage:bake-history'
+const PREFERENCES_KEY = 'bakers-percentage:planning-preferences'
 const CURRENT_VERSION = 1
 
 type Envelope<T> = {
@@ -33,6 +35,12 @@ function writeEnvelope<T>(key: string, data: T): void {
   }
 }
 
+type StoredFinishedBake = Omit<FinishedBake, 'notes'> & { notes?: string }
+
+function withNotesDefault(bakes: readonly StoredFinishedBake[]): readonly FinishedBake[] {
+  return bakes.map((b) => ({ ...b, notes: b.notes ?? '' }))
+}
+
 export function createLocalStorageBakeStorage(): BakeStorage {
   return {
     readActive(): ActiveBake | null {
@@ -42,10 +50,16 @@ export function createLocalStorageBakeStorage(): BakeStorage {
       writeEnvelope(ACTIVE_KEY, bake)
     },
     readHistory(): readonly FinishedBake[] {
-      return readEnvelope<readonly FinishedBake[]>(HISTORY_KEY) ?? []
+      return withNotesDefault(readEnvelope<readonly StoredFinishedBake[]>(HISTORY_KEY) ?? [])
     },
     writeHistory(history: readonly FinishedBake[]): void {
       writeEnvelope(HISTORY_KEY, history)
+    },
+    readPreferences(): PlanningPreferences | null {
+      return readEnvelope<PlanningPreferences>(PREFERENCES_KEY) ?? null
+    },
+    writePreferences(preferences: PlanningPreferences): void {
+      writeEnvelope(PREFERENCES_KEY, preferences)
     },
   }
 }

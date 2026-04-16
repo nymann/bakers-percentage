@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactElement } from 'react'
+import { useEffect, useImperativeHandle, useMemo, useState, type ReactElement, type Ref } from 'react'
 import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCalculator'
 import { useFermentationZone } from '../../../application/use-cases/useFermentationZone'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
@@ -6,10 +6,12 @@ import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
 import { useActiveBatch } from '../../../application/use-cases/useActiveBatch'
+import { useBakeStorageValue } from '../../../use-bake-storage'
+import type { PlanningPreferences } from '../../../domain/PlanningPreferences'
 import { bakeNameFor, checklistForLeavening } from './startBake'
 import { Ledger, type LedgerRow } from '../../../design-system/molecules/Ledger'
 import { ArcPreview, type ArcStep } from '../../../design-system/molecules/ArcPreview'
-import { useSegmented } from '../../../design-system/headless/useSegmented'
+import { PillGroup, type PillOption } from '../../../design-system/atoms/PillGroup'
 import { useNumberInput } from '../../../design-system/headless/useNumberInput'
 import { FinishedWeightField } from './fields/FinishedWeightField'
 import { LoafCountField } from './fields/LoafCountField'
@@ -125,11 +127,16 @@ function deriveFermentChoice(
   return yeastType === 'fresh' ? 'fresh-yeast' : 'dry-yeast'
 }
 
+export interface PlanningHandle {
+  readonly applyPreferences: (prefs: PlanningPreferences) => void
+}
+
 export interface EditorialPlanningViewProps {
   settingsOpen: boolean
   onCloseSettings: () => void
   onBakeStarted?: () => void
   canStartBake?: boolean
+  controlRef?: Ref<PlanningHandle>
 }
 
 export function EditorialPlanningView({
@@ -137,7 +144,9 @@ export function EditorialPlanningView({
   onCloseSettings,
   onBakeStarted,
   canStartBake = false,
+  controlRef,
 }: EditorialPlanningViewProps) {
+  const { preferences: storedPreferences, savePreferences } = useBakeStorageValue()
   const {
     recipe,
     hydration,
@@ -151,6 +160,7 @@ export function EditorialPlanningView({
     doughTemperature,
     hydrationSelection,
     clampNotes,
+    preferences,
     changeFinishedWeight,
     changeLoafCount,
     changeSalt,
@@ -163,7 +173,13 @@ export function EditorialPlanningView({
     changeStarterPercent,
     changeStarterHydration,
     changeDoughTemperature,
-  } = useRecipeCalculator('sourdough')
+    applyPreferences,
+  } = useRecipeCalculator('sourdough', {
+    initial: storedPreferences,
+    onPreferencesChange: savePreferences,
+  })
+
+  useImperativeHandle(controlRef, () => ({ applyPreferences }), [applyPreferences])
 
   const fermentation = useFermentationZone(doughTemperature, hydration)
   const { changeFermentationDuration } = fermentation
@@ -259,6 +275,7 @@ export function EditorialPlanningView({
         timeMs: ev.time.getTime(),
       })),
       checklistLabels: checklistForLeavening(leavingType),
+      preferences,
       now: new Date(),
     })
     onBakeStarted?.()
@@ -269,7 +286,7 @@ export function EditorialPlanningView({
   return (
     <section
       aria-label="Recipe calculator"
-      className="bg-background text-on-surface font-body"
+      className="bg-background text-on-surface font-body animate-fade-in"
     >
       <div className="space-y-4">
         <RecipeControlsStrip
@@ -331,10 +348,12 @@ export function EditorialPlanningView({
         {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
 
         {canStartBake && (
-          <StartBakeButton
-            onStart={handleStartBake}
-            hasActiveBake={activeBake !== null}
-          />
+          <div className="animate-slide-up-fade">
+            <StartBakeButton
+              onStart={handleStartBake}
+              hasActiveBake={activeBake !== null}
+            />
+          </div>
         )}
       </div>
 
@@ -491,34 +510,6 @@ function FieldKicker({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ChipButton({
-  isSelected,
-  stretch,
-  ...rest
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  isSelected: boolean
-  stretch?: boolean
-  ref?: (node: HTMLElement | null) => void
-}) {
-  return (
-    <button
-      {...rest}
-      className={[
-        'px-3 py-1.5 rounded-full text-xs font-label transition-all',
-        stretch ? 'flex-1' : 'whitespace-nowrap',
-        isSelected
-          ? 'bg-primary text-on-primary shadow-sm'
-          : 'bg-transparent text-on-surface-variant hover:text-on-surface',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    />
-  )
-}
-
-const PILL_GROUP_CLASS =
-  'flex gap-0.5 bg-surface-container-low rounded-full p-1'
-
 type SizeOptionValue = WeightPresetValue | 'Custom'
 
 function SizeControl({
@@ -539,46 +530,33 @@ function SizeControl({
   const effectiveSelection: SizeOptionValue =
     customMode || selectedPreset === null ? 'Custom' : selectedPreset
 
-  const options: { value: SizeOptionValue; label: string }[] = [
-    ...WEIGHT_PRESETS.map((p) => ({ value: p.value, label: p.label })),
+  const options: PillOption<SizeOptionValue>[] = [
+    ...WEIGHT_PRESETS.map<PillOption<SizeOptionValue>>((p) => ({
+      value: p.value,
+      label: p.label,
+      content: <p.Icon className="w-5 h-5" />,
+    })),
     { value: 'Custom', label: 'Custom' },
   ]
-
-  const segmented = useSegmented<SizeOptionValue>({
-    options,
-    value: effectiveSelection,
-    onChange: (value) => {
-      if (value === 'Custom') {
-        setCustomMode(true)
-      } else {
-        setCustomMode(false)
-        onSelectPreset(value)
-      }
-    },
-    label: 'Finished weight',
-  })
 
   return (
     <div className="flex flex-col">
       <FieldKicker>Size</FieldKicker>
-      <div {...segmented.getRootProps()} className={PILL_GROUP_CLASS}>
-        {options.map((option) => {
-          const props = segmented.getOptionProps(option.value)
-          const preset = WEIGHT_PRESETS.find((p) => p.value === option.value)
-          return (
-            <ChipButton
-              key={option.value}
-              {...props}
-              aria-label={option.label}
-              isSelected={effectiveSelection === option.value}
-            >
-              {preset ? <preset.Icon className="w-5 h-5" /> : option.label}
-            </ChipButton>
-          )
-        })}
-      </div>
+      <PillGroup<SizeOptionValue>
+        ariaLabel="Finished weight"
+        options={options}
+        value={effectiveSelection}
+        onChange={(value) => {
+          if (value === 'Custom') {
+            setCustomMode(true)
+          } else {
+            setCustomMode(false)
+            onSelectPreset(value)
+          }
+        }}
+      />
       {customMode && (
-        <div className="mt-3">
+        <div className="mt-3 animate-slide-up-fade">
           <FinishedWeightField
             weight={weight}
             onChange={onChangeWeight}
@@ -619,36 +597,21 @@ function FermentControl({
   fermentChoice: FermentChoice
   onSelectFerment: (choice: FermentChoice) => void
 }) {
-  const options: { value: FermentChoice; label: string }[] = [
+  const options: PillOption<FermentChoice>[] = [
     { value: 'sourdough', label: 'Sourdough' },
     { value: 'fresh-yeast', label: 'Fresh yeast' },
     { value: 'dry-yeast', label: 'Dry yeast' },
   ]
-  const segmented = useSegmented<FermentChoice>({
-    options,
-    value: fermentChoice,
-    onChange: onSelectFerment,
-    label: 'Fermentation path',
-  })
 
   return (
     <div className="flex flex-col items-start md:items-end text-left md:text-right">
       <FieldKicker>Ferment</FieldKicker>
-      <div {...segmented.getRootProps()} className={PILL_GROUP_CLASS}>
-        {options.map((option) => {
-          const props = segmented.getOptionProps(option.value)
-          return (
-            <ChipButton
-              key={option.value}
-              {...props}
-              aria-label={option.label}
-              isSelected={fermentChoice === option.value}
-            >
-              {option.label}
-            </ChipButton>
-          )
-        })}
-      </div>
+      <PillGroup<FermentChoice>
+        ariaLabel="Fermentation path"
+        options={options}
+        value={fermentChoice}
+        onChange={onSelectFerment}
+      />
     </div>
   )
 }
@@ -666,46 +629,29 @@ function HydrationControl({
   onUnlockCustom: () => void
   onEnterCustom: (fraction: number) => void
 }) {
-  const options: { value: HydrationOptionValue; label: string }[] = [
-    ...HYDRATION_PRESETS.map((p) => ({
+  const options: PillOption<HydrationOptionValue>[] = [
+    ...HYDRATION_PRESETS.map<PillOption<HydrationOptionValue>>((p) => ({
       value: p.name,
       label: `${p.name} — ${Math.round(p.percentage * 100)}%`,
     })),
     { value: 'Custom', label: 'Custom' },
   ]
 
-  const segmented = useSegmented<HydrationOptionValue>({
-    options,
-    value: selectedOption,
-    onChange: (value) => {
-      if (value === 'Custom') onUnlockCustom()
-      else onSelectPreset(value)
-    },
-    label: 'Hydration',
-  })
-
   return (
     <div className="flex flex-col">
       <FieldKicker>Hydration</FieldKicker>
-      <div {...segmented.getRootProps()} className={PILL_GROUP_CLASS}>
-        {options.map((option) => {
-          const props = segmented.getOptionProps(option.value)
-          const isSelected = selectedOption === option.value
-          return (
-            <ChipButton
-              key={option.value}
-              {...props}
-              aria-label={option.label}
-              isSelected={isSelected}
-              stretch
-            >
-              {option.label}
-            </ChipButton>
-          )
-        })}
-      </div>
+      <PillGroup<HydrationOptionValue>
+        ariaLabel="Hydration"
+        options={options}
+        value={selectedOption}
+        onChange={(value) => {
+          if (value === 'Custom') onUnlockCustom()
+          else onSelectPreset(value)
+        }}
+        stretch
+      />
       {selectedOption === 'Custom' && (
-        <div className="mt-2">
+        <div className="mt-2 animate-slide-up-fade">
           <CustomHydrationInput
             percentage={customPercent}
             onChange={onEnterCustom}

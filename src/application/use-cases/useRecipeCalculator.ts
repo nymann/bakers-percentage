@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   YeastRecipe,
   yeastPercentage,
@@ -25,16 +25,11 @@ import {
   DOUGH_TEMPERATURE_RANGE,
   type ClampResult,
 } from '../../domain/InputRanges'
-
-const DEFAULTS = {
-  finishedWeight: 900,
-  loaves: 1,
-  salt: 0.02,
-  bakeOffLoss: 0.13,
-  starterPercent: 0.1,
-  starterHydration: 1.0,
-  doughTemperature: 24,
-}
+import {
+  DEFAULT_PLANNING_PREFERENCES,
+  type PlanningPreferences,
+  type SerializedHydrationSelection,
+} from '../../domain/PlanningPreferences'
 
 type ClampNotes = {
   loaves: ClampResult
@@ -47,32 +42,63 @@ type ClampNotes = {
   doughTemperature: ClampResult
 }
 
-const INITIAL_STARTER_PERCENT_RANGE = starterPercentRange(0.75, DEFAULTS.starterHydration)
-
-const INITIAL_CLAMP_NOTES: ClampNotes = {
-  loaves: { value: DEFAULTS.loaves, clamped: false, range: LOAVES_RANGE },
-  finishedWeight: { value: DEFAULTS.finishedWeight, clamped: false, range: FINISHED_WEIGHT_RANGE },
-  hydration: { value: 0.75, clamped: false, range: HYDRATION_RANGE },
-  salt: { value: DEFAULTS.salt, clamped: false, range: SALT_RANGE },
-  bakeOffLoss: { value: DEFAULTS.bakeOffLoss, clamped: false, range: BAKE_OFF_LOSS_RANGE },
-  starterPercent: { value: DEFAULTS.starterPercent, clamped: false, range: INITIAL_STARTER_PERCENT_RANGE },
-  starterHydration: { value: DEFAULTS.starterHydration, clamped: false, range: STARTER_HYDRATION_RANGE },
-  doughTemperature: { value: DEFAULTS.doughTemperature, clamped: false, range: DOUGH_TEMPERATURE_RANGE },
+function clampNotesFor(prefs: PlanningPreferences): ClampNotes {
+  return {
+    loaves: { value: prefs.loaves, clamped: false, range: LOAVES_RANGE },
+    finishedWeight: { value: prefs.finishedWeight, clamped: false, range: FINISHED_WEIGHT_RANGE },
+    hydration: { value: prefs.hydrationSelection.mode === 'custom' ? prefs.hydrationSelection.percentage : 0.75, clamped: false, range: HYDRATION_RANGE },
+    salt: { value: prefs.salt, clamped: false, range: SALT_RANGE },
+    bakeOffLoss: { value: prefs.bakeOffLoss, clamped: false, range: BAKE_OFF_LOSS_RANGE },
+    starterPercent: { value: prefs.starterPercent, clamped: false, range: starterPercentRange(prefs.hydrationSelection.mode === 'custom' ? prefs.hydrationSelection.percentage : 0.75, prefs.starterHydration) },
+    starterHydration: { value: prefs.starterHydration, clamped: false, range: STARTER_HYDRATION_RANGE },
+    doughTemperature: { value: prefs.doughTemperature, clamped: false, range: DOUGH_TEMPERATURE_RANGE },
+  }
 }
 
-export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
-  const [leavingType, setLeavingType] = useState<LeavingType>(initialLeavening)
-  const [finishedWeight, setFinishedWeight] = useState(DEFAULTS.finishedWeight)
-  const [loaves, setLoaves] = useState(DEFAULTS.loaves)
-  const [salt, setSalt] = useState(DEFAULTS.salt)
-  const [bakeOffLoss, setBakeOffLoss] = useState(DEFAULTS.bakeOffLoss)
-  const [yeastType, setYeastType] = useState<YeastType>('instant')
+function materializeHydration(sel: SerializedHydrationSelection): HydrationSelection {
+  return sel.mode === 'preset'
+    ? new PresetHydration(sel.preset)
+    : new CustomHydration(sel.percentage)
+}
+
+function serializeHydration(sel: HydrationSelection): SerializedHydrationSelection {
+  return sel.mode === 'preset'
+    ? { mode: 'preset', preset: sel.preset }
+    : { mode: 'custom', percentage: sel.percentage }
+}
+
+export interface UseRecipeCalculatorOptions {
+  readonly initial?: PlanningPreferences | null
+  readonly onPreferencesChange?: (preferences: PlanningPreferences) => void
+}
+
+export function useRecipeCalculator(
+  initialLeavening: LeavingType = 'yeast',
+  options: UseRecipeCalculatorOptions = {},
+) {
+  const { initial, onPreferencesChange } = options
+  const initialPrefs = useMemo<PlanningPreferences>(
+    () => ({
+      ...DEFAULT_PLANNING_PREFERENCES,
+      leavingType: initialLeavening,
+      ...(initial ?? {}),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed once on mount
+    [],
+  )
+
+  const [leavingType, setLeavingType] = useState<LeavingType>(initialPrefs.leavingType)
+  const [finishedWeight, setFinishedWeight] = useState(initialPrefs.finishedWeight)
+  const [loaves, setLoaves] = useState(initialPrefs.loaves)
+  const [salt, setSalt] = useState(initialPrefs.salt)
+  const [bakeOffLoss, setBakeOffLoss] = useState(initialPrefs.bakeOffLoss)
+  const [yeastType, setYeastType] = useState<YeastType>(initialPrefs.yeastType)
   const [hydrationSelection, setHydrationSelection] =
-    useState<HydrationSelection>(new PresetHydration('Open crumb'))
-  const [starterPercent, setStarterPercent] = useState(DEFAULTS.starterPercent)
-  const [starterHydration, setStarterHydration] = useState(DEFAULTS.starterHydration)
-  const [doughTemperature, setDoughTemperature] = useState(DEFAULTS.doughTemperature)
-  const [clampNotes, setClampNotes] = useState<ClampNotes>(INITIAL_CLAMP_NOTES)
+    useState<HydrationSelection>(() => materializeHydration(initialPrefs.hydrationSelection))
+  const [starterPercent, setStarterPercent] = useState(initialPrefs.starterPercent)
+  const [starterHydration, setStarterHydration] = useState(initialPrefs.starterHydration)
+  const [doughTemperature, setDoughTemperature] = useState(initialPrefs.doughTemperature)
+  const [clampNotes, setClampNotes] = useState<ClampNotes>(() => clampNotesFor(initialPrefs))
 
   const hydration = hydrationSelection.percentage
 
@@ -152,14 +178,14 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
     (type: LeavingType) => {
       setLeavingType(type)
       if (type === 'sourdough') {
-        setStarterPercent(DEFAULTS.starterPercent)
-        setStarterHydration(DEFAULTS.starterHydration)
-        setDoughTemperature(DEFAULTS.doughTemperature)
+        setStarterPercent(DEFAULT_PLANNING_PREFERENCES.starterPercent)
+        setStarterHydration(DEFAULT_PLANNING_PREFERENCES.starterHydration)
+        setDoughTemperature(DEFAULT_PLANNING_PREFERENCES.doughTemperature)
         setClampNotes((prev) => ({
           ...prev,
-          starterPercent: INITIAL_CLAMP_NOTES.starterPercent,
-          starterHydration: INITIAL_CLAMP_NOTES.starterHydration,
-          doughTemperature: INITIAL_CLAMP_NOTES.doughTemperature,
+          starterPercent: clampNotesFor(DEFAULT_PLANNING_PREFERENCES).starterPercent,
+          starterHydration: clampNotesFor(DEFAULT_PLANNING_PREFERENCES).starterHydration,
+          doughTemperature: clampNotesFor(DEFAULT_PLANNING_PREFERENCES).doughTemperature,
         }))
       }
     },
@@ -194,6 +220,51 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
     [],
   )
 
+  const applyPreferences = useCallback((prefs: PlanningPreferences) => {
+    setLeavingType(prefs.leavingType)
+    setYeastType(prefs.yeastType)
+    setFinishedWeight(prefs.finishedWeight)
+    setLoaves(prefs.loaves)
+    setHydrationSelection(materializeHydration(prefs.hydrationSelection))
+    setSalt(prefs.salt)
+    setBakeOffLoss(prefs.bakeOffLoss)
+    setStarterPercent(prefs.starterPercent)
+    setStarterHydration(prefs.starterHydration)
+    setDoughTemperature(prefs.doughTemperature)
+    setClampNotes(clampNotesFor(prefs))
+  }, [])
+
+  const preferences = useMemo<PlanningPreferences>(
+    () => ({
+      leavingType,
+      yeastType,
+      finishedWeight,
+      loaves,
+      hydrationSelection: serializeHydration(hydrationSelection),
+      salt,
+      bakeOffLoss,
+      starterPercent,
+      starterHydration,
+      doughTemperature,
+    }),
+    [
+      leavingType,
+      yeastType,
+      finishedWeight,
+      loaves,
+      hydrationSelection,
+      salt,
+      bakeOffLoss,
+      starterPercent,
+      starterHydration,
+      doughTemperature,
+    ],
+  )
+
+  useEffect(() => {
+    onPreferencesChange?.(preferences)
+  }, [preferences, onPreferencesChange])
+
   return {
     recipe,
     hydration,
@@ -207,6 +278,7 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
     doughTemperature,
     hydrationSelection,
     clampNotes,
+    preferences,
     changeFinishedWeight,
     changeLoafCount,
     changeSalt,
@@ -219,5 +291,6 @@ export function useRecipeCalculator(initialLeavening: LeavingType = 'yeast') {
     changeStarterPercent,
     changeStarterHydration,
     changeDoughTemperature,
+    applyPreferences,
   }
 }

@@ -9,6 +9,7 @@ export interface UseBakeHistory {
   readonly select: (id: string) => void
   readonly clearSelection: () => void
   readonly remove: (id: string) => void
+  readonly updateNotes: (id: string, notes: string) => void
 }
 
 export function useBakeHistory(): UseBakeHistory {
@@ -36,6 +37,15 @@ export function useBakeHistory(): UseBakeHistory {
     [history, saveHistory],
   )
 
+  const updateNotes = useCallback(
+    (id: string, notes: string) => {
+      saveHistory(
+        history.map((bake) => (bake.id === id ? { ...bake, notes } : bake)),
+      )
+    },
+    [history, saveHistory],
+  )
+
   return {
     bakes: history,
     isEmpty: history.length === 0,
@@ -43,5 +53,6 @@ export function useBakeHistory(): UseBakeHistory {
     select,
     clearSelection,
     remove,
+    updateNotes,
   }
 }

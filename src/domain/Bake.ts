@@ -1,3 +1,5 @@
+import type { PlanningPreferences } from './PlanningPreferences'
+
 export type Milliseconds = number
 
 export type BakeScheduleEvent = {
@@ -31,10 +33,12 @@ export type ActiveBake = {
   readonly recipe: RecipeSnapshot
   readonly schedule: readonly BakeScheduleEvent[]
   readonly checklist: readonly ChecklistItem[]
+  readonly preferences?: PlanningPreferences
 }
 
 export type FinishedBake = ActiveBake & {
   readonly finishedAtMs: Milliseconds
+  readonly notes: string
 }
 
 export type ProgressStatus = 'done' | 'current' | 'upcoming'
@@ -72,7 +76,7 @@ export function completeBake(
   active: ActiveBake,
   finishedAtMs: Milliseconds,
 ): FinishedBake {
-  return { ...active, finishedAtMs }
+  return { ...active, finishedAtMs, notes: '' }
 }
 
 export type RelativeTime = {

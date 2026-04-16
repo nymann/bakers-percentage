@@ -24,3 +24,13 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
     }),
   })
 }
+
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class NoopResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  ;(globalThis as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver =
+    NoopResizeObserver as unknown as typeof ResizeObserver
+}

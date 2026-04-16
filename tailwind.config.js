@@ -68,6 +68,31 @@ export default {
         body: ['Manrope', 'sans-serif'],
         label: ['Manrope', 'sans-serif'],
       },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slide-up-fade': {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'toast-in': {
+          '0%': { opacity: '0', transform: 'translateY(16px) scale(0.96)' },
+          '60%': { opacity: '1', transform: 'translateY(-2px) scale(1.01)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'pop-in': {
+          '0%': { opacity: '0', transform: 'scale(0.92)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'slide-up-fade': 'slide-up-fade 320ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'toast-in': 'toast-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'pop-in': 'pop-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+      },
     },
   },
   plugins: [],
