@@ -6,12 +6,10 @@ export function LoafCountField({
   loaves,
   onChange,
   clampNote,
-  validationEnabled,
 }: {
   loaves: number
   onChange: (count: number) => void
   clampNote: ClampResult
-  validationEnabled: boolean
 }) {
   const input = useNumberInput({ value: loaves, onChange })
 
@@ -20,7 +18,7 @@ export function LoafCountField({
       <label>
         Loaf count <input {...input.getInputProps()} />
       </label>
-      {validationEnabled && <ClampNote result={clampNote} />}
+      <ClampNote result={clampNote} />
     </div>
   )
 }

@@ -5,18 +5,8 @@ import { RecipeCalculator } from '../../../../src/adapters/driving/planning/Reci
 import { FeatureFlagProvider } from '../../../../src/feature-flags'
 import { createInMemoryFeatureFlags } from '../../../../src/adapters/driven/InMemoryFeatureFlags'
 
-function renderEditorial(overrides: Record<string, boolean> = {}) {
-  const flags = createInMemoryFeatureFlags({
-    'yeast-recipe-calculator': true,
-    'hydration-preset': true,
-    'validate-basic-inputs': true,
-    'manual-starter-percent': true,
-    'fermentation-zone-feedback': true,
-    'auto-recommend-starter-percent': true,
-    'baking-schedule': true,
-    'visual-timeline': false,
-    ...overrides,
-  })
+function renderEditorial() {
+  const flags = createInMemoryFeatureFlags({})
   return render(
     <FeatureFlagProvider service={flags}>
       <RecipeCalculator />
@@ -24,8 +14,8 @@ function renderEditorial(overrides: Record<string, boolean> = {}) {
   )
 }
 
-describe('RecipeCalculator renders the editorial layout unconditionally', () => {
-  it('renders the ingredient ledger without a planning-layout flag in config', () => {
+describe('RecipeCalculator renders the editorial layout', () => {
+  it('renders the ingredient ledger', () => {
     renderEditorial()
 
     expect(

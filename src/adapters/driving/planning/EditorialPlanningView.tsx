@@ -4,7 +4,6 @@ import { useFermentationZone } from '../../../application/use-cases/useFermentat
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
 import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
-import { useFeatureFlag } from '../../../use-feature-flag'
 import { SegmentedSelector } from '../../../design-system/atoms/SegmentedSelector'
 import { ToggleCard } from '../../../design-system/atoms/ToggleCard'
 import { Disclosure } from '../../../design-system/atoms/Disclosure'
@@ -39,18 +38,6 @@ const WEIGHT_PRESETS: readonly {
 type HydrationOptionValue = HydrationPresetName | 'Custom'
 
 export function EditorialPlanningView() {
-  const yeastEnabled = useFeatureFlag('yeast-recipe-calculator')
-  if (!yeastEnabled) return null
-  return <EditorialPlanningLayout />
-}
-
-function EditorialPlanningLayout() {
-  const hydrationPresetEnabled = useFeatureFlag('hydration-preset')
-  const validationEnabled = useFeatureFlag('validate-basic-inputs')
-  const fermentationZoneEnabled = useFeatureFlag('fermentation-zone-feedback')
-  const autoRecommendEnabled = useFeatureFlag('auto-recommend-starter-percent')
-  const bakingScheduleEnabled = useFeatureFlag('baking-schedule')
-
   const {
     recipe,
     hydration,
@@ -82,7 +69,7 @@ function EditorialPlanningLayout() {
   const { changeFermentationDuration } = fermentation
   const bakeTime = useBakeTime(fermentation.duration)
 
-  const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
+  const autoRecommendActive = leavingType === 'sourdough'
   const effectiveDuration = autoRecommendActive ? bakeTime.duration : fermentation.duration
 
   useEffect(() => {
@@ -165,7 +152,6 @@ function EditorialPlanningLayout() {
             }
             onChangeWeight={changeFinishedWeight}
             clampNote={clampNotes.finishedWeight}
-            validationEnabled={validationEnabled}
           />
 
           <LeaveningSection
@@ -184,56 +170,50 @@ function EditorialPlanningLayout() {
             loaves={loaves}
             onChange={changeLoafCount}
             clampNote={clampNotes.loaves}
-            validationEnabled={validationEnabled}
           />
 
-          {hydrationPresetEnabled && (
-            <HydrationSegmentedField
-              selectedOption={selectedHydration}
-              customPercent={hydration}
-              onSelectPreset={selectHydrationPreset}
-              onUnlockCustom={unlockCustomHydration}
-              onEnterCustom={enterCustomHydration}
-            />
-          )}
+          <HydrationSegmentedField
+            selectedOption={selectedHydration}
+            customPercent={hydration}
+            onSelectPreset={selectHydrationPreset}
+            onUnlockCustom={unlockCustomHydration}
+            onEnterCustom={enterCustomHydration}
+          />
 
-          {validationEnabled && (
-            <Disclosure label="Advanced">
-              <SaltField
-                saltPercent={salt}
-                onChange={changeSalt}
-                clampNote={clampNotes.salt}
-              />
-              <BakeOffLossField
-                bakeOffLoss={bakeOffLoss}
-                onChange={changeBakeOffLoss}
-                clampNote={clampNotes.bakeOffLoss}
-              />
-              {showSourdoughAdvanced && (
-                <>
-                  <StarterHydrationField
-                    starterHydration={starterHydration}
-                    onChange={changeStarterHydration}
-                    clampNote={clampNotes.starterHydration}
-                    resetKey={leavingType}
-                  />
-                  <DoughTemperatureField
-                    doughTemperature={doughTemperature}
-                    onChange={changeDoughTemperature}
-                    clampNote={clampNotes.doughTemperature}
-                    resetKey={leavingType}
-                  />
-                </>
-              )}
-            </Disclosure>
-          )}
+          <Disclosure label="Advanced">
+            <SaltField
+              saltPercent={salt}
+              onChange={changeSalt}
+              clampNote={clampNotes.salt}
+            />
+            <BakeOffLossField
+              bakeOffLoss={bakeOffLoss}
+              onChange={changeBakeOffLoss}
+              clampNote={clampNotes.bakeOffLoss}
+            />
+            {showSourdoughAdvanced && (
+              <>
+                <StarterHydrationField
+                  starterHydration={starterHydration}
+                  onChange={changeStarterHydration}
+                  clampNote={clampNotes.starterHydration}
+                  resetKey={leavingType}
+                />
+                <DoughTemperatureField
+                  doughTemperature={doughTemperature}
+                  onChange={changeDoughTemperature}
+                  clampNote={clampNotes.doughTemperature}
+                  resetKey={leavingType}
+                />
+              </>
+            )}
+          </Disclosure>
 
           {showSourdoughAdvanced && (
             <StarterPercentField
               percent={starterPercent}
               onChange={handleStarterPercentChange}
               clampNote={clampNotes.starterPercent}
-              validationEnabled={validationEnabled}
               resetKey={leavingType}
             />
           )}
@@ -243,7 +223,7 @@ function EditorialPlanningLayout() {
             onChange={bakeTime.changeBakeTime}
           />
 
-          {fermentationZoneEnabled && showSourdoughAdvanced && (
+          {showSourdoughAdvanced && (
             <div role="status" className="font-label text-xs uppercase tracking-wider text-on-surface-variant">
               {fermentation.zone}
             </div>
@@ -258,9 +238,7 @@ function EditorialPlanningLayout() {
             finishedLoafWeight={recipe.finishedWeightPerLoaf}
             hydrationPercent={hydration}
           />
-          {bakingScheduleEnabled && arcSteps.length > 0 && (
-            <ArcPreview steps={arcSteps} />
-          )}
+          {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
         </aside>
       </div>
     </section>
@@ -273,14 +251,12 @@ function FinishedWeightSection({
   onSelectPreset,
   onChangeWeight,
   clampNote,
-  validationEnabled,
 }: {
   selectedPreset: WeightPresetValue | null
   weight: number
   onSelectPreset: (value: WeightPresetValue) => void
   onChangeWeight: (grams: number) => void
   clampNote: import('../../../domain/InputRanges').ClampResult
-  validationEnabled: boolean
 }) {
   return (
     <div>
@@ -311,7 +287,6 @@ function FinishedWeightSection({
           weight={weight}
           onChange={onChangeWeight}
           clampNote={clampNote}
-          validationEnabled={validationEnabled}
           resetKey={selectedPreset ?? 'custom'}
         />
       </div>

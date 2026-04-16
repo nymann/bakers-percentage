@@ -5,8 +5,6 @@ import { AppContent } from '../src/App'
 import { FeatureFlagProvider } from '../src/feature-flags'
 import { createInMemoryFeatureFlags } from '../src/adapters/driven/InMemoryFeatureFlags'
 
-type FlagOverrides = Record<string, boolean>
-
 function setViewport({ desktop }: { desktop: boolean }) {
   vi.stubGlobal(
     'matchMedia',
@@ -27,20 +25,8 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function renderApp(overrides: FlagOverrides = {}) {
-  const flags = createInMemoryFeatureFlags({
-    'yeast-recipe-calculator': true,
-    'hydration-preset': true,
-    'validate-basic-inputs': true,
-    'manual-starter-percent': true,
-    'fermentation-zone-feedback': true,
-    'auto-recommend-starter-percent': true,
-    'baking-schedule': true,
-    'visual-timeline': true,
-    'execution-view': true,
-    'history-view': true,
-    ...overrides,
-  })
+function renderApp() {
+  const flags = createInMemoryFeatureFlags({})
   return render(
     <FeatureFlagProvider service={flags}>
       <AppContent />
@@ -48,8 +34,8 @@ function renderApp(overrides: FlagOverrides = {}) {
   )
 }
 
-describe('AppContent renders the editorial shell unconditionally', () => {
-  it('renders the editorial shell chrome with no shell-related flag in config', () => {
+describe('AppContent renders the editorial shell', () => {
+  it('renders the editorial shell chrome', () => {
     renderApp()
 
     expect(screen.getByRole('banner')).toBeInTheDocument()
@@ -194,38 +180,6 @@ describe('Scenario 05: Home and End keys jump to edges', () => {
       'aria-selected',
       'true',
     )
-  })
-})
-
-describe('Scenario 11.01: execution-view flag OFF hides Execution tab', () => {
-  it('renders only Planning and History tabs when execution-view is OFF', () => {
-    renderApp({ 'execution-view': false })
-
-    const tabs = screen.getAllByRole('tab')
-    const tabNames = tabs.map((tab) => tab.textContent?.trim())
-    expect(new Set(tabNames)).toEqual(new Set(['Planning', 'History']))
-    expect(
-      screen.queryByRole('tab', { name: /execution/i }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('tabpanel', { name: /execution/i }),
-    ).not.toBeInTheDocument()
-  })
-})
-
-describe('Scenario 12.01: history-view flag OFF hides History tab', () => {
-  it('renders only Planning and Execution tabs when history-view is OFF', () => {
-    renderApp({ 'history-view': false })
-
-    const tabs = screen.getAllByRole('tab')
-    const tabNames = tabs.map((tab) => tab.textContent?.trim())
-    expect(new Set(tabNames)).toEqual(new Set(['Planning', 'Execution']))
-    expect(
-      screen.queryByRole('tab', { name: /history/i }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('tabpanel', { name: /history/i }),
-    ).not.toBeInTheDocument()
   })
 })
 

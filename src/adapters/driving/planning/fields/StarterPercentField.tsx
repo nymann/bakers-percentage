@@ -6,13 +6,11 @@ export function StarterPercentField({
   percent,
   onChange,
   clampNote,
-  validationEnabled,
   resetKey,
 }: {
   percent: number
   onChange: (fraction: number) => void
   clampNote: ClampResult
-  validationEnabled: boolean
   resetKey?: unknown
 }) {
   const input = useNumberInput({
@@ -26,7 +24,7 @@ export function StarterPercentField({
       <label>
         Starter (%) <input {...input.getInputProps()} />
       </label>
-      {validationEnabled && <StarterPercentClampNote result={clampNote} />}
+      <StarterPercentClampNote result={clampNote} />
     </div>
   )
 }

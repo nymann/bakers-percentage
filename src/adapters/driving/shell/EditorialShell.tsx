@@ -1,10 +1,5 @@
-import { useMemo } from 'react'
-import {
-  useActiveView,
-  type ViewId,
-} from '../../../application/use-cases/useActiveView'
+import { useActiveView } from '../../../application/use-cases/useActiveView'
 import { useMediaQuery } from '../../../design-system/headless/useMediaQuery'
-import { useFeatureFlag } from '../../../use-feature-flag'
 import { RecipeCalculator } from '../planning/RecipeCalculator'
 import { ExecutionView } from '../execution/ExecutionView'
 import { HistoryView } from '../history/HistoryView'
@@ -15,15 +10,7 @@ import { BottomNavBar } from './BottomNavBar'
 const DESKTOP_BREAKPOINT = '(min-width: 1024px)'
 
 export function EditorialShell() {
-  const executionEnabled = useFeatureFlag('execution-view')
-  const historyEnabled = useFeatureFlag('history-view')
-  const enabledViews = useMemo<readonly ViewId[]>(() => {
-    const views: ViewId[] = ['planning']
-    if (executionEnabled) views.push('execution')
-    if (historyEnabled) views.push('history')
-    return views
-  }, [executionEnabled, historyEnabled])
-  const view = useActiveView({ enabledViews })
+  const view = useActiveView()
   const isDesktop = useMediaQuery(DESKTOP_BREAKPOINT)
 
   return (
@@ -35,16 +22,12 @@ export function EditorialShell() {
           <section {...view.getPanelProps('planning')}>
             <RecipeCalculator />
           </section>
-          {executionEnabled && (
-            <section {...view.getPanelProps('execution')}>
-              <ExecutionView />
-            </section>
-          )}
-          {historyEnabled && (
-            <section {...view.getPanelProps('history')}>
-              <HistoryView />
-            </section>
-          )}
+          <section {...view.getPanelProps('execution')}>
+            <ExecutionView />
+          </section>
+          <section {...view.getPanelProps('history')}>
+            <HistoryView />
+          </section>
         </main>
       </div>
       {!isDesktop && <BottomNavBar view={view} />}

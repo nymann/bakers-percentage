@@ -6,13 +6,11 @@ export function FinishedWeightField({
   weight,
   onChange,
   clampNote,
-  validationEnabled,
   resetKey,
 }: {
   weight: number
   onChange: (grams: number) => void
   clampNote: ClampResult
-  validationEnabled: boolean
   resetKey?: unknown
 }) {
   const input = useNumberInput({ value: weight, onChange, resetKey })
@@ -22,7 +20,7 @@ export function FinishedWeightField({
       <label>
         Finished weight (g) <input {...input.getInputProps()} />
       </label>
-      {validationEnabled && <ClampNote result={clampNote} />}
+      <ClampNote result={clampNote} />
     </div>
   )
 }
