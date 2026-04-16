@@ -381,6 +381,61 @@ describe('Scenario 14-03: mix handle adjusts fermentation duration', () => {
   })
 })
 
+describe('Scenario 14-07: yeast leavening hides the timeline', () => {
+  it('yeast mode hides both handle sliders and shows the datetime bake time input', async () => {
+    const user = userEvent.setup()
+    renderEditorial()
+
+    await user.click(screen.getByRole('button', { name: /^yeast$/i }))
+
+    expect(
+      screen.queryByRole('slider', { name: /mix handle/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('slider', { name: /bake handle/i }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/bake time/i)).toHaveAttribute(
+      'type',
+      'datetime-local',
+    )
+  })
+})
+
+describe('Scenario 14-06: handles snap to 15-minute increments', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    // "now" aligned to a 15-min mark so snapping is predictable
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('rounds bake handle value 7 minutes past a quarter hour down to the quarter hour', () => {
+    renderEditorial()
+
+    const bakeSlider = screen.getByRole('slider', {
+      name: /bake handle/i,
+    }) as HTMLInputElement
+    // 22 minutes from now = 15min past quarter-hour + 7; should snap to 15
+    fireEvent.change(bakeSlider, { target: { value: '22' } })
+
+    expect(Number(bakeSlider.value)).toBe(15)
+  })
+
+  it('rounds mix handle value 7 minutes past a quarter hour down to the quarter hour', () => {
+    renderEditorial()
+
+    const mixSlider = screen.getByRole('slider', {
+      name: /mix handle/i,
+    }) as HTMLInputElement
+    fireEvent.change(mixSlider, { target: { value: '37' } })
+
+    expect(Number(mixSlider.value)).toBe(30)
+  })
+})
+
 describe('Scenario 14-05: status region announces active zone', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
