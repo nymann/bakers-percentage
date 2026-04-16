@@ -2,7 +2,6 @@ import { useEffect, useImperativeHandle, useMemo, useState, type ReactElement, t
 import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCalculator'
 import { useFermentationZone } from '../../../application/use-cases/useFermentationZone'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
-import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
 import { useActiveBatch } from '../../../application/use-cases/useActiveBatch'
@@ -15,7 +14,6 @@ import { PillGroup, type PillOption } from '../../../design-system/atoms/PillGro
 import { useNumberInput } from '../../../design-system/headless/useNumberInput'
 import { FinishedWeightField } from './fields/FinishedWeightField'
 import { LoafCountField } from './fields/LoafCountField'
-import { BakeTimeField } from './fields/BakeTimeField'
 import { AdvancedSettingsDialog } from './AdvancedSettingsDialog'
 import { formatPercentage, formatScheduleTime } from './format'
 import { HYDRATION_PRESETS, type HydrationPresetName } from '../../../domain/Hydration'
@@ -183,18 +181,15 @@ export function EditorialPlanningView({
 
   const fermentation = useFermentationZone(doughTemperature, hydration)
   const { changeFermentationDuration } = fermentation
-  const bakeTime = useBakeTime(fermentation.duration)
   const timeline = useTimeline()
 
   const autoRecommendActive = leavingType === 'sourdough'
-  const effectiveBakeTime = autoRecommendActive ? timeline.bakeTime : bakeTime.bakeTime
-  const effectiveDuration = autoRecommendActive ? timeline.duration : fermentation.duration
+  const effectiveBakeTime = timeline.bakeTime
+  const effectiveDuration = timeline.duration
 
   useEffect(() => {
-    if (autoRecommendActive) {
-      changeFermentationDuration(timeline.duration)
-    }
-  }, [autoRecommendActive, timeline.duration, changeFermentationDuration])
+    changeFermentationDuration(timeline.duration)
+  }, [timeline.duration, changeFermentationDuration])
 
   const recommendation = useStarterRecommendation(
     doughTemperature,
@@ -311,27 +306,18 @@ export function EditorialPlanningView({
 
         <div className="grid gap-4 items-stretch grid-cols-1 md:[grid-template-columns:minmax(0,1fr)_minmax(22rem,28rem)]">
           <div className="min-w-0 flex flex-col">
-            {showSourdoughAdvanced && (
-              <FermentationTimeline
-                mixHandleProps={timeline.getMixHandleProps()}
-                bakeHandleProps={timeline.getBakeHandleProps()}
-                mixTimeLabel={formatScheduleTime(timeline.mixTime)}
-                bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
-                duration={timeline.duration}
-                zone={fermentation.zone}
-                warning={fermentation.warning}
-                boundaries={fermentation.boundaries}
-                roomTemperature={doughTemperature}
-                onChangeRoomTemperature={changeDoughTemperature}
-              />
-            )}
-
-            {leavingType === 'yeast' && (
-              <BakeTimeField
-                bakeTime={bakeTime.bakeTime}
-                onChange={bakeTime.changeBakeTime}
-              />
-            )}
+            <FermentationTimeline
+              mixHandleProps={timeline.getMixHandleProps()}
+              bakeHandleProps={timeline.getBakeHandleProps()}
+              mixTimeLabel={formatScheduleTime(timeline.mixTime)}
+              bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
+              duration={timeline.duration}
+              zone={fermentation.zone}
+              warning={fermentation.warning}
+              boundaries={fermentation.boundaries}
+              roomTemperature={doughTemperature}
+              onChangeRoomTemperature={changeDoughTemperature}
+            />
           </div>
 
           <aside className="min-w-0">

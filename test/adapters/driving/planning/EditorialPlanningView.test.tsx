@@ -457,8 +457,23 @@ describe('Scenario 14-03: mix handle adjusts fermentation duration', () => {
   })
 })
 
-describe('Scenario 14-07: yeast leavening hides the timeline', () => {
-  it('yeast mode hides both handle sliders and shows the datetime bake time input', async () => {
+describe('Scenario 15-01: yeast leavening renders the fermentation timeline', () => {
+  it('fresh yeast mode shows Mix handle and Bake handle sliders', async () => {
+    const user = userEvent.setup()
+    renderEditorial()
+
+    const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(group).getByRole('radio', { name: /fresh yeast/i }))
+
+    expect(
+      screen.getByRole('slider', { name: /mix handle/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('slider', { name: /bake handle/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('dry yeast mode shows Mix handle and Bake handle sliders', async () => {
     const user = userEvent.setup()
     renderEditorial()
 
@@ -466,15 +481,21 @@ describe('Scenario 14-07: yeast leavening hides the timeline', () => {
     await user.click(within(group).getByRole('radio', { name: /dry yeast/i }))
 
     expect(
-      screen.queryByRole('slider', { name: /mix handle/i }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('slider', { name: /mix handle/i }),
+    ).toBeInTheDocument()
     expect(
-      screen.queryByRole('slider', { name: /bake handle/i }),
-    ).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/bake time/i)).toHaveAttribute(
-      'type',
-      'datetime-local',
-    )
+      screen.getByRole('slider', { name: /bake handle/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('yeast mode no longer renders the legacy datetime bake time input', async () => {
+    const user = userEvent.setup()
+    renderEditorial()
+
+    const group = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(group).getByRole('radio', { name: /dry yeast/i }))
+
+    expect(screen.queryByLabelText(/bake time/i)).not.toBeInTheDocument()
   })
 })
 
