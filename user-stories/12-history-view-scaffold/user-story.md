@@ -8,7 +8,7 @@ As a baker, I want a History view scaffold, so that past bakes can be surfaced i
 
 ## Acceptance Criteria
 - `history-view` flag: OFF → History nav tab is absent or disabled; ON → tab active, panel renders
-- Panel matches the editorial mockup structure (list of past bakes, detail pane placeholder) with placeholder content only — no live data
+- Panel matches the editorial mockup structure (list of past bakes, detail pane placeholder) from `../editorial-mockup.html.md`, with placeholder content only — no live data
 - Empty headless hook `useBakeHistory` compiles with an empty-list placeholder shape — no persistence, no business logic
 - View is navigable from any other view via the shell nav built in story 09
 - No regressions to Planning, Execution, or existing tests

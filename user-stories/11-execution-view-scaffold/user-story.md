@@ -8,7 +8,7 @@ As a baker in the middle of a bake, I want an Execution view scaffold, so that f
 
 ## Acceptance Criteria
 - `execution-view` flag: OFF → Execution nav tab is absent or disabled; ON → tab active, panel renders
-- Panel matches the editorial mockup structure (header, step checklist, progress arc placeholder) with placeholder content only — no live data
+- Panel matches the editorial mockup structure (header, step checklist, progress arc placeholder) from `../editorial-mockup.html.md`, with placeholder content only — no live data
 - Empty headless hooks `useActiveBatch` and `useBakingArc` compile with placeholder shapes (e.g. empty arrays, null state) — no business logic
 - Checkbox list of fold steps rendered via `useCheckboxList` (Radix Checkbox) — toggling is visual only (no persistence)
 - Progress arc renders via `useProgressStep` primitive with static sample steps

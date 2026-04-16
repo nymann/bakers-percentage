@@ -8,7 +8,7 @@ As a baker, I want a modern editorial shell with top app bar and view navigation
 
 ## Acceptance Criteria
 - Tailwind (build-time, not CDN), shadcn/ui CLI, Radix UI installed
-- `tailwind.config.js` ports palette, `borderRadius`, `fontFamily` from `references/editorial-mockup.html.md`
+- `tailwind.config.js` ports palette, `borderRadius`, `fontFamily` from `../editorial-mockup.html.md`
 - Google Fonts (Noto Serif, Manrope, Material Symbols) loaded via `index.html`
 - `components.json` configures shadcn CLI to emit atoms into `src/design-system/atoms/` (not default `components/ui/`), with utils alias at `src/design-system/lib/utils.ts`, preserving the existing atoms/molecules/headless triad and the `design-system-pure` depcruise rule
 - `editorial-shell` flag: OFF → current layout unchanged; ON → new shell

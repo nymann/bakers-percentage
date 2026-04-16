@@ -6,6 +6,9 @@
 ## Story
 As a baker, I want the Planning view to use the editorial design language, so that configuring a recipe feels like reading a well-typeset cookbook without losing any existing behavior.
 
+## Visual reference
+`../editorial-mockup.html.md` (Planning section — asymmetric `md:col-span-7` / `md:col-span-5` grid, sticky ledger, connector-line ingredient rows, arc preview).
+
 ## Acceptance Criteria
 - `editorial-planning` flag: OFF → current inline-styled `RecipeCalculator`; ON → editorial rewrite
 - All existing Planning behavior preserved — existing role/label queries stay green
