@@ -1,3 +1,6 @@
+install:
+    npm ci
+
 dev:
     npx vite
 
@@ -12,3 +15,6 @@ test:
 
 lint:
     npx eslint .
+
+depcruise:
+    npx depcruise --config .dependency-cruiser.cjs src

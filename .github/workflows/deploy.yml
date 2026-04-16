@@ -27,13 +27,17 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
 
-      - run: npm test
+      - run: just install
 
-      - run: npm run depcruise
+      - run: just test
 
-      - run: npm run build
+      - run: just depcruise
+
+      - run: just build
 
       - uses: actions/configure-pages@v5
 
