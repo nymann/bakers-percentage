@@ -933,6 +933,41 @@ describe('Scenario 16-03: long yeast duration uses the cold-retard recommendatio
   })
 })
 
+describe('Scenario 16-04: fresh yeast cold-retard scales 3× from instant', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('switching from dry to fresh yeast at 14h retard ~3× the yeast row grams', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '22' } })
+    fireEvent.blur(tempInput)
+
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    const table = within(ledger).getByRole('table')
+
+    const instantRetard = yeastRowGramsNumber(table)
+
+    await user.click(within(fermentGroup).getByRole('radio', { name: /fresh yeast/i }))
+    const freshRetard = yeastRowGramsNumber(table)
+
+    const ratio = freshRetard / instantRetard
+    expect(ratio).toBeGreaterThanOrEqual(2.5)
+    expect(ratio).toBeLessThanOrEqual(3.5)
+  })
+})
+
 describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
