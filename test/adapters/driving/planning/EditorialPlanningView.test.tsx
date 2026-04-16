@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { RecipeCalculator } from '../../../../src/adapters/driving/planning/RecipeCalculator'
@@ -307,6 +307,13 @@ function minutesOfDay(hhmm: string): number {
   return h * 60 + m
 }
 
+function signedMinutesDelta(after: string, before: string): number {
+  let delta = minutesOfDay(after) - minutesOfDay(before)
+  if (delta > 12 * 60) delta -= 24 * 60
+  if (delta < -12 * 60) delta += 24 * 60
+  return delta
+}
+
 describe('Scenario 14-02: bake handle shifts out-of-oven time', () => {
   it('moving the bake handle 60 minutes later advances out-of-oven by 60 minutes', () => {
     renderEditorial()
@@ -329,3 +336,57 @@ describe('Scenario 14-02: bake handle shifts out-of-oven time', () => {
     expect(bakeSlider.getAttribute('aria-valuetext')).not.toBe(beforeValueText)
   })
 })
+
+describe('Scenario 14-03: mix handle adjusts fermentation duration', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    // 10:00 → bake defaults to tomorrow 09:00 (23h away); mix at today 19:00 (9h from now)
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('dragging mix handle 2 hours earlier moves mix time back by 2 hours', () => {
+    renderEditorial()
+
+    const mixSlider = screen.getByRole('slider', {
+      name: /mix handle/i,
+    }) as HTMLInputElement
+    const before = mixSlider.getAttribute('aria-valuetext')!
+
+    fireEvent.change(mixSlider, {
+      target: { value: String(Number(mixSlider.value) - 120) },
+    })
+
+    const after = mixSlider.getAttribute('aria-valuetext')!
+    expect(signedMinutesDelta(after, before)).toBe(-120)
+  })
+
+  it('dragging mix handle earlier updates the recommended starter %', () => {
+    renderEditorial()
+
+    const table = screen.getByRole('table', { name: /ingredient ledger/i })
+    const starterBefore = starterRowGrams(table)
+
+    const mixSlider = screen.getByRole('slider', {
+      name: /mix handle/i,
+    }) as HTMLInputElement
+    fireEvent.change(mixSlider, {
+      target: { value: String(Number(mixSlider.value) - 120) },
+    })
+
+    expect(starterRowGrams(table)).not.toBe(starterBefore)
+  })
+})
+
+function starterRowGrams(table: HTMLElement): string {
+  const rows = within(table).getAllByRole('row')
+  const starter = rows.find(
+    (r) => within(r).queryAllByRole('cell')[0]?.textContent === 'Starter',
+  )
+  if (!starter) throw new Error('Starter row not found')
+  const cells = within(starter).getAllByRole('cell')
+  return cells[1].textContent ?? ''
+}
