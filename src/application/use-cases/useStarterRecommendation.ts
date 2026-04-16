@@ -1,37 +1,37 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
-  FermentationWindow,
+  Fermentation,
+  FRIDGE_TEMP,
   type FermentationMethod,
-} from '../../domain/StarterRecommendation'
+} from '../../domain/Fermentation'
 
-export function useStarterRecommendation(window: FermentationWindow) {
+const SAME_DAY_MAX_HOURS = 12
+
+export function useStarterRecommendation(
+  doughTempC: number,
+  hydration: number,
+  totalHours: number,
+) {
   const [percentOverride, setPercentOverride] = useState<number | null>(null)
   const [methodOverride, setMethodOverride] = useState<FermentationMethod | null>(null)
 
-  const autoResult = useMemo(
-    () => window.recommendStarterPercent(),
-    [window.totalHours, window.doughTempC, window.hydration, window.starterHydration],
+  const autoFermentationTemp = totalHours > SAME_DAY_MAX_HOURS ? FRIDGE_TEMP : doughTempC
+
+  const autoStrategy = useMemo(
+    () => Fermentation.create(autoFermentationTemp, doughTempC, hydration, totalHours),
+    [autoFermentationTemp, doughTempC, hydration, totalHours],
   )
 
-  const effectiveMethod = methodOverride ?? autoResult.method
+  const effectiveMethod = methodOverride ?? autoStrategy.method
 
-  const recommendation = useMemo(() => {
-    if (methodOverride && methodOverride !== autoResult.method) {
-      return window.recommendStarterPercent()
-    }
-    return autoResult
-  }, [autoResult, methodOverride, window.totalHours, window.doughTempC, window.hydration, window.starterHydration])
+  const effectiveFermentationTemp = effectiveMethod === 'cold-retard' ? FRIDGE_TEMP : doughTempC
 
-  const recommendedPercent = useMemo(() => {
-    if (methodOverride === null || methodOverride === autoResult.method) {
-      return autoResult.starterPercent
-    }
-    if (methodOverride === 'same-day') {
-      return window.withTotalHours(Math.min(window.totalHours, 12)).recommendStarterPercent().starterPercent
-    }
-    return window.withTotalHours(Math.max(window.totalHours, 13)).recommendStarterPercent().starterPercent
-  }, [autoResult, methodOverride, window.totalHours, window.doughTempC, window.hydration, window.starterHydration])
+  const effectiveStrategy = useMemo(
+    () => Fermentation.create(effectiveFermentationTemp, doughTempC, hydration, totalHours),
+    [effectiveFermentationTemp, doughTempC, hydration, totalHours],
+  )
 
+  const recommendedPercent = effectiveStrategy.starterPercent
   const isOverridden = percentOverride !== null
   const isMethodOverridden = methodOverride !== null
   const hasAnyOverride = isOverridden || isMethodOverridden
@@ -52,8 +52,9 @@ export function useStarterRecommendation(window: FermentationWindow) {
   }, [])
 
   return {
-    autoMethod: autoResult.method,
+    autoMethod: autoStrategy.method,
     effectiveMethod,
+    effectiveStrategy,
     recommendedPercent,
     effectivePercent,
     isOverridden,

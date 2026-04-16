@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { FermentationAssessment } from '../../domain/FermentationZone'
+import { Fermentation } from '../../domain/Fermentation'
 import {
   FERMENTATION_DURATION_RANGE,
   type ClampResult,
@@ -17,13 +17,13 @@ export function useFermentationZone(tempC: number, hydration: number) {
   const [duration, setDuration] = useState(DEFAULT_DURATION)
   const [clampNote, setClampNote] = useState<ClampResult>(INITIAL_CLAMP_NOTE)
 
-  const assessment = useMemo(
-    () => new FermentationAssessment(duration, tempC, hydration),
+  const strategy = useMemo(
+    () => Fermentation.create(tempC, tempC, hydration, duration),
     [duration, tempC, hydration],
   )
 
-  const zone = assessment.zone
-  const warning = assessment.warning
+  const zone = strategy.zone
+  const warning = strategy.warning
 
   const changeFermentationDuration = useCallback((hours: number) => {
     const result = FERMENTATION_DURATION_RANGE.clamp(hours)

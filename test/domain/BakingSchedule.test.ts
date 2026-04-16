@@ -1,17 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { createSchedule, type ScheduleConfig } from '../../src/domain/BakingSchedule'
+import { SameDaySchedule, ColdRetardSchedule, YeastSchedule } from '../../src/domain/BakingSchedule'
+import { bulkHours } from '../../src/domain/Fermentation'
 
-describe('generateSchedule: same-day at 24C', () => {
+describe('SameDaySchedule at 24C', () => {
   const bakeTime = new Date('2026-04-16T18:00:00')
-  const config: ScheduleConfig = {
-    bakeTime,
-    leavingType: 'sourdough',
-    doughTempC: 24,
-    fermentationMethod: 'same-day',
-    totalHours: 6,
-  }
-
-  const events = createSchedule(config).events
+  const events = new SameDaySchedule(bakeTime, bulkHours(24)).events
 
   it('returns 7 events (no cold retard steps)', () => {
     expect(events).toHaveLength(7)
@@ -25,19 +18,16 @@ describe('generateSchedule: same-day at 24C', () => {
   })
 
   it('places "Feed your starter" at mix minus 10h', () => {
-    // mix = bake - 3h = 15:00; feed = 15:00 - 10h = 05:00
     const feed = events.find(e => e.name === 'Feed your starter')!
     expect(feed.time).toEqual(new Date('2026-04-16T05:00:00'))
   })
 
   it('places "Mix & bulk fermentation" at bake minus bulk hours', () => {
-    // bake - 3h = 15:00
     const mix = events.find(e => e.name === 'Mix & bulk fermentation')!
     expect(mix.time).toEqual(new Date('2026-04-16T15:00:00'))
   })
 
   it('places "Shape" at mix plus bulk hours', () => {
-    // mix + 3h = 18:00
     const shape = events.find(e => e.name === 'Shape')!
     expect(shape.time).toEqual(new Date('2026-04-16T18:00:00'))
   })
@@ -63,17 +53,9 @@ describe('generateSchedule: same-day at 24C', () => {
   })
 })
 
-describe('generateSchedule: yeast', () => {
+describe('YeastSchedule', () => {
   const bakeTime = new Date('2026-04-16T18:00:00')
-  const config: ScheduleConfig = {
-    bakeTime,
-    leavingType: 'yeast',
-    doughTempC: 24,
-    fermentationMethod: 'same-day',
-    totalHours: 0,
-  }
-
-  const events = createSchedule(config).events
+  const events = new YeastSchedule(bakeTime).events
 
   it('returns 8 events', () => {
     expect(events).toHaveLength(8)
@@ -92,7 +74,6 @@ describe('generateSchedule: yeast', () => {
   })
 
   it('places "Mix dough" at bake minus 4h45m', () => {
-    // 18:00 - 4h45m = 13:15
     const mix = events.find(e => e.name === 'Mix dough')!
     expect(mix.time).toEqual(new Date('2026-04-16T13:15:00'))
   })
@@ -103,7 +84,6 @@ describe('generateSchedule: yeast', () => {
   })
 
   it('places "Shape" at mix plus 1h30m', () => {
-    // 13:15 + 1h30m = 14:45
     const shape = events.find(e => e.name === 'Shape')!
     expect(shape.time).toEqual(new Date('2026-04-16T14:45:00'))
   })
@@ -134,21 +114,15 @@ describe('generateSchedule: yeast', () => {
   })
 })
 
-describe('generateSchedule: starter feed tracks mix time', () => {
+describe('starter feed tracks mix time', () => {
   const bakeTime = new Date('2026-04-17T09:00:00')
 
   it.each([
     { tempC: 21, label: '21C (bulk 4h)' },
     { tempC: 24, label: '24C (bulk 3h)' },
     { tempC: 27, label: '27C (bulk 2h)' },
-  ])('at $label, feed is always 10h before mix', ({ tempC }) => {
-    const events = createSchedule({
-      bakeTime,
-      leavingType: 'sourdough',
-      doughTempC: tempC,
-      fermentationMethod: 'cold-retard',
-      totalHours: 24,
-    }).events
+  ])('cold retard at $label, feed is always 10h before mix', ({ tempC }) => {
+    const events = new ColdRetardSchedule(bakeTime, bulkHours(tempC), 24).events
 
     const mix = events.find(e => e.name === 'Mix & bulk fermentation')!
     const feed = events.find(e => e.name === 'Feed your starter')!
@@ -161,13 +135,7 @@ describe('generateSchedule: starter feed tracks mix time', () => {
     { tempC: 24, label: '24C' },
     { tempC: 27, label: '27C' },
   ])('same-day at $label also has feed 10h before mix', ({ tempC }) => {
-    const events = createSchedule({
-      bakeTime,
-      leavingType: 'sourdough',
-      doughTempC: tempC,
-      fermentationMethod: 'same-day',
-      totalHours: 6,
-    }).events
+    const events = new SameDaySchedule(bakeTime, bulkHours(tempC)).events
 
     const mix = events.find(e => e.name === 'Mix & bulk fermentation')!
     const feed = events.find(e => e.name === 'Feed your starter')!
@@ -176,17 +144,9 @@ describe('generateSchedule: starter feed tracks mix time', () => {
   })
 })
 
-describe('generateSchedule: cold retard at 24C', () => {
+describe('ColdRetardSchedule at 24C', () => {
   const bakeTime = new Date('2026-04-17T09:00:00')
-  const config: ScheduleConfig = {
-    bakeTime,
-    leavingType: 'sourdough',
-    doughTempC: 24,
-    fermentationMethod: 'cold-retard',
-    totalHours: 24,
-  }
-
-  const events = createSchedule(config).events
+  const events = new ColdRetardSchedule(bakeTime, bulkHours(24), 24).events
 
   it('returns 9 events', () => {
     expect(events).toHaveLength(9)
@@ -199,19 +159,16 @@ describe('generateSchedule: cold retard at 24C', () => {
   })
 
   it('places "Feed your starter" at mix minus 10h', () => {
-    // mix = bake - 24h = Apr 16 09:00; feed = mix - 10h = Apr 15 23:00
     const feed = events.find(e => e.name === 'Feed your starter')!
     expect(feed.time).toEqual(new Date('2026-04-15T23:00:00'))
   })
 
   it('places "Mix & bulk fermentation" at bake minus totalHours', () => {
-    // bake - 24h = Apr 16 09:00
     const mix = events.find(e => e.name === 'Mix & bulk fermentation')!
     expect(mix.time).toEqual(new Date('2026-04-16T09:00:00'))
   })
 
   it('places "Shape & refrigerate" at mix plus bulk hours', () => {
-    // mix + 3h = Apr 16 12:00
     const shape = events.find(e => e.name === 'Shape & refrigerate')!
     expect(shape.time).toEqual(new Date('2026-04-16T12:00:00'))
   })

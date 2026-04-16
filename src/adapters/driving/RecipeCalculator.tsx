@@ -6,7 +6,7 @@ import { useBakeTime } from '../../application/use-cases/useBakeTime'
 import { useBakingSchedule } from '../../application/use-cases/useBakingSchedule'
 import type { YeastType } from '../../domain/Recipe'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
-import { FermentationWindow, type FermentationMethod } from '../../domain/StarterRecommendation'
+import type { FermentationMethod } from '../../domain/Fermentation'
 import { HYDRATION_PRESETS } from '../../domain/Hydration'
 import type { ClampResult } from '../../domain/InputRanges'
 import { useFeatureFlag } from '../../feature-flags'
@@ -240,7 +240,7 @@ function RecipeCalculatorView() {
   }, [autoRecommendActive, bakeTime.duration, fermentation.changeFermentationDuration])
 
   const recommendation = useStarterRecommendation(
-    new FermentationWindow(effectiveDuration, doughTemperature, hydration, starterHydration),
+    doughTemperature, hydration, effectiveDuration,
   )
 
   useEffect(() => {
@@ -252,9 +252,7 @@ function RecipeCalculatorView() {
   const schedule = useBakingSchedule(
     bakeTime.bakeTime,
     leavingType,
-    doughTemperature,
-    recommendation.effectiveMethod,
-    effectiveDuration,
+    leavingType === 'sourdough' ? recommendation.effectiveStrategy : null,
   )
 
   const weightInput = useNumberInput(

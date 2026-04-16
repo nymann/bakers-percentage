@@ -1,17 +1,17 @@
 import { useMemo } from 'react'
-import { createSchedule, type ScheduleEvent } from '../../domain/BakingSchedule'
+import { YeastSchedule, type ScheduleEvent } from '../../domain/BakingSchedule'
 import type { LeavingType } from '../../domain/SourdoughRecipe'
-import type { FermentationMethod } from '../../domain/StarterRecommendation'
+import type { FermentationStrategy } from '../../domain/Fermentation'
 
 export function useBakingSchedule(
   bakeTime: Date,
   leavingType: LeavingType,
-  doughTempC: number,
-  fermentationMethod: FermentationMethod,
-  totalHours: number,
+  strategy: FermentationStrategy | null,
 ): ScheduleEvent[] {
-  return useMemo(
-    () => createSchedule({ bakeTime, leavingType, doughTempC, fermentationMethod, totalHours }).events,
-    [bakeTime, leavingType, doughTempC, fermentationMethod, totalHours],
-  )
+  return useMemo(() => {
+    if (leavingType === 'yeast' || !strategy) {
+      return new YeastSchedule(bakeTime).events
+    }
+    return strategy.schedule(bakeTime)
+  }, [bakeTime, leavingType, strategy])
 }

@@ -1,7 +1,3 @@
-import type { LeavingType } from './SourdoughRecipe'
-import type { FermentationMethod } from './StarterRecommendation'
-import { bulkHours } from './StarterRecommendation'
-
 export type ScheduleEvent = {
   readonly name: string
   readonly time: Date
@@ -24,15 +20,14 @@ export interface BakingSchedule {
 export class ColdRetardSchedule implements BakingSchedule {
   constructor(
     readonly bakeTime: Date,
-    readonly doughTempC: number,
+    readonly bulkHours: number,
     readonly totalHours: number,
   ) {}
 
   get events(): ScheduleEvent[] {
-    const bulk = bulkHours(this.doughTempC)
     const mixTime = offsetMinutes(this.bakeTime, -this.totalHours * 60)
     const feedTime = offsetMinutes(mixTime, -STARTER_FEED_BEFORE_MIX_MIN)
-    const shapeTime = offsetMinutes(mixTime, bulk * 60)
+    const shapeTime = offsetMinutes(mixTime, this.bulkHours * 60)
     const removeTime = offsetMinutes(this.bakeTime, -(TEMPERING_MIN + PREHEAT_MIN))
     const preheatTime = offsetMinutes(this.bakeTime, -PREHEAT_MIN)
     const outOfOven = offsetMinutes(this.bakeTime, BAKE_MIN)
@@ -81,14 +76,13 @@ export class YeastSchedule implements BakingSchedule {
 export class SameDaySchedule implements BakingSchedule {
   constructor(
     readonly bakeTime: Date,
-    readonly doughTempC: number,
+    readonly bulkHours: number,
   ) {}
 
   get events(): ScheduleEvent[] {
-    const bulk = bulkHours(this.doughTempC)
-    const mixTime = offsetMinutes(this.bakeTime, -bulk * 60)
+    const mixTime = offsetMinutes(this.bakeTime, -this.bulkHours * 60)
     const feedTime = offsetMinutes(mixTime, -STARTER_FEED_BEFORE_MIX_MIN)
-    const shapeTime = offsetMinutes(mixTime, bulk * 60)
+    const shapeTime = offsetMinutes(mixTime, this.bulkHours * 60)
     const preheatTime = offsetMinutes(this.bakeTime, -PREHEAT_MIN)
     const outOfOven = offsetMinutes(this.bakeTime, BAKE_MIN)
     const readyToEat = offsetMinutes(this.bakeTime, BAKE_MIN + COOL_MIN)
@@ -103,22 +97,4 @@ export class SameDaySchedule implements BakingSchedule {
       { name: 'Ready to eat', time: readyToEat },
     ]
   }
-}
-
-export type ScheduleConfig = {
-  readonly bakeTime: Date
-  readonly leavingType: LeavingType
-  readonly doughTempC: number
-  readonly fermentationMethod: FermentationMethod
-  readonly totalHours: number
-}
-
-export function createSchedule(config: ScheduleConfig): BakingSchedule {
-  if (config.leavingType === 'sourdough' && config.fermentationMethod === 'cold-retard') {
-    return new ColdRetardSchedule(config.bakeTime, config.doughTempC, config.totalHours)
-  }
-  if (config.leavingType === 'sourdough') {
-    return new SameDaySchedule(config.bakeTime, config.doughTempC)
-  }
-  return new YeastSchedule(config.bakeTime)
 }
