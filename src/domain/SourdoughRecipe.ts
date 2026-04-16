@@ -3,15 +3,31 @@ import type { IngredientRow, RecipeCalculation, RecipeOutput } from './Recipe'
 export type LeavingType = 'sourdough' | 'yeast'
 
 export class SourdoughRecipe implements RecipeCalculation {
+  readonly finishedWeight: number
+  readonly loaves: number
+  readonly hydration: number
+  readonly salt: number
+  readonly bakeOffLoss: number
+  readonly starterPercent: number
+  readonly starterHydration: number
+
   constructor(
-    readonly finishedWeight: number,
-    readonly loaves: number,
-    readonly hydration: number,
-    readonly salt: number,
-    readonly bakeOffLoss: number,
-    readonly starterPercent: number,
-    readonly starterHydration: number,
-  ) {}
+    finishedWeight: number,
+    loaves: number,
+    hydration: number,
+    salt: number,
+    bakeOffLoss: number,
+    starterPercent: number,
+    starterHydration: number,
+  ) {
+    this.finishedWeight = finishedWeight
+    this.loaves = loaves
+    this.hydration = hydration
+    this.salt = salt
+    this.bakeOffLoss = bakeOffLoss
+    this.starterPercent = starterPercent
+    this.starterHydration = starterHydration
+  }
 
   calculate(): RecipeOutput {
     const targetDoughPerLoaf = this.finishedWeight / (1 - this.bakeOffLoss)

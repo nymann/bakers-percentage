@@ -13,7 +13,11 @@ export const HYDRATION_PRESETS: readonly HydrationPreset[] = [
 
 export class PresetHydration {
   readonly mode = 'preset' as const
-  constructor(readonly preset: HydrationPresetName) {}
+  readonly preset: HydrationPresetName
+
+  constructor(preset: HydrationPresetName) {
+    this.preset = preset
+  }
 
   get percentage(): number {
     return HYDRATION_PRESETS.find((p) => p.name === this.preset)!.percentage
@@ -22,7 +26,11 @@ export class PresetHydration {
 
 export class CustomHydration {
   readonly mode = 'custom' as const
-  constructor(readonly percentage: number) {}
+  readonly percentage: number
+
+  constructor(percentage: number) {
+    this.percentage = percentage
+  }
 }
 
 export type HydrationSelection = PresetHydration | CustomHydration

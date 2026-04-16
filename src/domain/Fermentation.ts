@@ -61,12 +61,15 @@ const B2 = 0.0121
 
 export class RatkowskyFermentation implements FermentationStrategy {
   readonly method = 'same-day' as const
+  readonly totalHours: number
+  readonly tempC: number
+  readonly hydration: number
 
-  constructor(
-    readonly totalHours: number,
-    readonly tempC: number,
-    readonly hydration: number,
-  ) {}
+  constructor(totalHours: number, tempC: number, hydration: number) {
+    this.totalHours = totalHours
+    this.tempC = tempC
+    this.hydration = hydration
+  }
 
   get starterPercent(): number {
     const dt = this.tempC - T_REF
@@ -93,12 +96,15 @@ const COLD_EXPONENT = 0.5885
 
 export class RetardFermentation implements FermentationStrategy {
   readonly method = 'cold-retard' as const
+  readonly totalHours: number
+  readonly doughTempC: number
+  readonly hydration: number
 
-  constructor(
-    readonly totalHours: number,
-    readonly doughTempC: number,
-    readonly hydration: number,
-  ) {}
+  constructor(totalHours: number, doughTempC: number, hydration: number) {
+    this.totalHours = totalHours
+    this.doughTempC = doughTempC
+    this.hydration = hydration
+  }
 
   get starterPercent(): number {
     const coldHours = Math.max(1, this.totalHours - bulkHours(this.doughTempC))

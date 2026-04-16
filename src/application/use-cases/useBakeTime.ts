@@ -6,7 +6,8 @@ function initialBakeTime(now: Date, durationHours: number): Date {
 }
 
 export function useBakeTime(initialDurationHours: number, nowFn: () => Date = () => new Date()) {
-  const now = useMemo(nowFn, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- capture `now` once on mount
+  const now = useMemo(() => nowFn(), [])
   const [bakeTime, setBakeTime] = useState(() => initialBakeTime(now, initialDurationHours))
 
   const duration = useMemo(() => {

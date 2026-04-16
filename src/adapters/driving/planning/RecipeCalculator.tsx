@@ -4,7 +4,7 @@ import { useFermentationZone } from '../../../application/use-cases/useFermentat
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
 import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
-import { useFeatureFlag } from '../../../feature-flags'
+import { useFeatureFlag } from '../../../use-feature-flag'
 import { tokens } from '../../../design-system/tokens'
 import { FinishedWeightField } from './fields/FinishedWeightField'
 import { LeaveningField } from './fields/LeaveningField'
@@ -65,6 +65,7 @@ function RecipeCalculatorView() {
   } = useRecipeCalculator(manualStarterEnabled ? 'sourdough' : 'yeast')
 
   const fermentation = useFermentationZone(doughTemperature, hydration)
+  const { changeFermentationDuration } = fermentation
   const bakeTime = useBakeTime(fermentation.duration)
 
   const autoRecommendActive = autoRecommendEnabled && leavingType === 'sourdough'
@@ -72,9 +73,9 @@ function RecipeCalculatorView() {
 
   useEffect(() => {
     if (autoRecommendActive) {
-      fermentation.changeFermentationDuration(bakeTime.duration)
+      changeFermentationDuration(bakeTime.duration)
     }
-  }, [autoRecommendActive, bakeTime.duration, fermentation.changeFermentationDuration])
+  }, [autoRecommendActive, bakeTime.duration, changeFermentationDuration])
 
   const recommendation = useStarterRecommendation(doughTemperature, hydration, effectiveDuration)
 

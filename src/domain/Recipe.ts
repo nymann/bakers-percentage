@@ -26,14 +26,28 @@ export interface RecipeCalculation {
 }
 
 export class YeastRecipe implements RecipeCalculation {
+  readonly finishedWeight: number
+  readonly loaves: number
+  readonly hydration: number
+  readonly salt: number
+  readonly yeast: number
+  readonly bakeOffLoss: number
+
   constructor(
-    readonly finishedWeight: number,
-    readonly loaves: number,
-    readonly hydration: number,
-    readonly salt: number,
-    readonly yeast: number,
-    readonly bakeOffLoss: number,
-  ) {}
+    finishedWeight: number,
+    loaves: number,
+    hydration: number,
+    salt: number,
+    yeast: number,
+    bakeOffLoss: number,
+  ) {
+    this.finishedWeight = finishedWeight
+    this.loaves = loaves
+    this.hydration = hydration
+    this.salt = salt
+    this.yeast = yeast
+    this.bakeOffLoss = bakeOffLoss
+  }
 
   calculate(): RecipeOutput {
     const targetDoughPerLoaf = this.finishedWeight / (1 - this.bakeOffLoss)

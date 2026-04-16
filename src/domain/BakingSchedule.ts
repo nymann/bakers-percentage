@@ -18,11 +18,15 @@ export interface BakingSchedule {
 }
 
 export class ColdRetardSchedule implements BakingSchedule {
-  constructor(
-    readonly bakeTime: Date,
-    readonly bulkHours: number,
-    readonly totalHours: number,
-  ) {}
+  readonly bakeTime: Date
+  readonly bulkHours: number
+  readonly totalHours: number
+
+  constructor(bakeTime: Date, bulkHours: number, totalHours: number) {
+    this.bakeTime = bakeTime
+    this.bulkHours = bulkHours
+    this.totalHours = totalHours
+  }
 
   get events(): ScheduleEvent[] {
     const mixTime = offsetMinutes(this.bakeTime, -this.totalHours * 60)
@@ -51,7 +55,11 @@ const YEAST_FIRST_RISE_MIN = 90
 const YEAST_TOTAL_PREBAKE_MIN = 285 // 4h 45m
 
 export class YeastSchedule implements BakingSchedule {
-  constructor(readonly bakeTime: Date) {}
+  readonly bakeTime: Date
+
+  constructor(bakeTime: Date) {
+    this.bakeTime = bakeTime
+  }
 
   get events(): ScheduleEvent[] {
     const mixTime = offsetMinutes(this.bakeTime, -YEAST_TOTAL_PREBAKE_MIN)
@@ -74,10 +82,13 @@ export class YeastSchedule implements BakingSchedule {
 }
 
 export class SameDaySchedule implements BakingSchedule {
-  constructor(
-    readonly bakeTime: Date,
-    readonly bulkHours: number,
-  ) {}
+  readonly bakeTime: Date
+  readonly bulkHours: number
+
+  constructor(bakeTime: Date, bulkHours: number) {
+    this.bakeTime = bakeTime
+    this.bulkHours = bulkHours
+  }
 
   get events(): ScheduleEvent[] {
     const mixTime = offsetMinutes(this.bakeTime, -this.bulkHours * 60)

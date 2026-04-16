@@ -5,11 +5,15 @@ export type ClampResult = {
 }
 
 export class InputRange {
-  constructor(
-    readonly min: number,
-    readonly max: number,
-    readonly unit: string,
-  ) {}
+  readonly min: number
+  readonly max: number
+  readonly unit: string
+
+  constructor(min: number, max: number, unit: string) {
+    this.min = min
+    this.max = max
+    this.unit = unit
+  }
 
   clamp(value: number): ClampResult {
     const clamped = Math.min(Math.max(value, this.min), this.max)

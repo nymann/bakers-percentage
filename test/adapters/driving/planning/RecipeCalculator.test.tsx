@@ -839,7 +839,7 @@ describe('Scenario 01 (story 04a): switch sourdough to instant yeast', () => {
     // Default is sourdough — verify sourdough table rows
     const table = screen.getByRole('table')
     let rows = within(table).getAllByRole('row')
-    let ingredientNames = rows.slice(1).map((row) =>
+    const ingredientNames = rows.slice(1).map((row) =>
       within(row).getAllByRole('cell')[0].textContent,
     )
     expect(ingredientNames).toEqual(['Base flour', 'Water', 'Salt', 'Starter'])
@@ -1277,9 +1277,6 @@ describe('Scenario 06: override fermentation method', () => {
     const user = userEvent.setup()
     renderWithFlags(allFlags)
 
-    const note = screen.getByRole('note')
-    const initialText = note.textContent
-
     const methodSelect = screen.getByRole('combobox', { name: /fermentation method/i })
     await user.selectOptions(methodSelect, 'same-day')
 
@@ -1312,7 +1309,6 @@ describe('Scenario 07: bake time datetime picker', () => {
   })
 
   it('updates recommendation when bake time changes', async () => {
-    const user = userEvent.setup()
     renderWithFlags(allFlags)
 
     const note = screen.getByRole('note')
