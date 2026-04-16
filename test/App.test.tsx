@@ -2,15 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AppContent } from '../src/App'
-import { FeatureFlagProvider } from '../src/feature-flags'
-import { createInMemoryFeatureFlags } from '../src/adapters/driven/InMemoryFeatureFlags'
+import { TestProviders } from './helpers'
 
 function renderApp() {
-  const flags = createInMemoryFeatureFlags({})
   return render(
-    <FeatureFlagProvider service={flags}>
+    <TestProviders>
       <AppContent />
-    </FeatureFlagProvider>,
+    </TestProviders>,
   )
 }
 
@@ -56,18 +54,6 @@ describe('Scenario 02: editorial shell renders with Planning default', () => {
 
     const visiblePanels = screen.getAllByRole('tabpanel')
     expect(visiblePanels).toHaveLength(1)
-
-    const executionTab = screen.getByRole('tab', { name: /execution/i })
-    const executionPanel = document.getElementById(
-      executionTab.getAttribute('aria-controls') ?? '',
-    )
-    expect(executionPanel).toHaveAttribute('hidden')
-
-    const historyTab = screen.getByRole('tab', { name: /history/i })
-    const historyPanel = document.getElementById(
-      historyTab.getAttribute('aria-controls') ?? '',
-    )
-    expect(historyPanel).toHaveAttribute('hidden')
   })
 
   it('renders the RecipeCalculator inside the Planning panel', () => {

@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { useActiveView } from '../../../application/use-cases/useActiveView'
+import { useMemo, useState } from 'react'
+import { useActiveView, type ViewId } from '../../../application/use-cases/useActiveView'
 import { useMediaQuery } from '../../../design-system/headless/useMediaQuery'
+import { useFeatureFlag } from '../../../use-feature-flag'
 import { RecipeCalculator } from '../planning/RecipeCalculator'
 import { ExecutionView } from '../execution/ExecutionView'
 import { HistoryView } from '../history/HistoryView'
@@ -8,12 +9,25 @@ import { SideNavBar } from './SideNavBar'
 import { TopNavBar } from './TopNavBar'
 
 export function EditorialShell() {
-  const view = useActiveView()
+  const executionEnabled = useFeatureFlag('execution')
+  const historyEnabled = useFeatureFlag('history')
+
+  const enabledViews = useMemo<readonly ViewId[]>(() => {
+    const views: ViewId[] = ['planning']
+    if (executionEnabled) views.push('execution')
+    if (historyEnabled) views.push('history')
+    return views
+  }, [executionEnabled, historyEnabled])
+
+  const view = useActiveView({ enabledViews })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const openSettings = () => setSettingsOpen(true)
   const closeSettings = () => setSettingsOpen(false)
+
+  const goToExecution = () => view.switchTo('execution')
+  const goToHistory = () => view.switchTo('history')
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background text-on-surface font-body">
@@ -27,14 +41,20 @@ export function EditorialShell() {
           <RecipeCalculator
             settingsOpen={settingsOpen}
             onCloseSettings={closeSettings}
+            canStartBake={executionEnabled}
+            onBakeStarted={goToExecution}
           />
         </section>
-        <section {...view.getPanelProps('execution')}>
-          <ExecutionView />
-        </section>
-        <section {...view.getPanelProps('history')}>
-          <HistoryView />
-        </section>
+        {executionEnabled && (
+          <section {...view.getPanelProps('execution')}>
+            <ExecutionView onBakeFinished={historyEnabled ? goToHistory : undefined} />
+          </section>
+        )}
+        {historyEnabled && (
+          <section {...view.getPanelProps('history')}>
+            <HistoryView />
+          </section>
+        )}
       </main>
     </div>
   )

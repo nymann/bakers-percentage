@@ -5,6 +5,8 @@ import { useStarterRecommendation } from '../../../application/use-cases/useStar
 import { useBakeTime } from '../../../application/use-cases/useBakeTime'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
+import { useActiveBatch } from '../../../application/use-cases/useActiveBatch'
+import { bakeNameFor, checklistForLeavening } from './startBake'
 import { Ledger, type LedgerRow } from '../../../design-system/molecules/Ledger'
 import { ArcPreview, type ArcStep } from '../../../design-system/molecules/ArcPreview'
 import { useSegmented } from '../../../design-system/headless/useSegmented'
@@ -126,11 +128,15 @@ function deriveFermentChoice(
 export interface EditorialPlanningViewProps {
   settingsOpen: boolean
   onCloseSettings: () => void
+  onBakeStarted?: () => void
+  canStartBake?: boolean
 }
 
 export function EditorialPlanningView({
   settingsOpen,
   onCloseSettings,
+  onBakeStarted,
+  canStartBake = false,
 }: EditorialPlanningViewProps) {
   const {
     recipe,
@@ -232,6 +238,32 @@ export function EditorialPlanningView({
     isPast: ev.time.getTime() < nowMs,
   }))
 
+  const { batch: activeBake, startBake } = useActiveBatch()
+
+  const handleStartBake = () => {
+    startBake({
+      name: bakeNameFor({
+        leaving: leavingType,
+        loaves,
+        finishedWeight: recipe.finishedWeightPerLoaf,
+      }),
+      recipe: {
+        ingredients: recipe.ingredients,
+        totalDoughWeight: recipe.totalDoughWeight,
+        finishedWeightPerLoaf: recipe.finishedWeightPerLoaf,
+        loaves,
+        hydration,
+      },
+      schedule: schedule.map((ev) => ({
+        name: ev.name,
+        timeMs: ev.time.getTime(),
+      })),
+      checklistLabels: checklistForLeavening(leavingType),
+      now: new Date(),
+    })
+    onBakeStarted?.()
+  }
+
   const showSourdoughAdvanced = leavingType === 'sourdough'
 
   return (
@@ -297,6 +329,13 @@ export function EditorialPlanningView({
         </div>
 
         {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
+
+        {canStartBake && (
+          <StartBakeButton
+            onStart={handleStartBake}
+            hasActiveBake={activeBake !== null}
+          />
+        )}
       </div>
 
       <AdvancedSettingsDialog
@@ -385,6 +424,52 @@ function RecipeControlsStrip({
           onEnterCustom={onEnterCustomHydration}
         />
       </div>
+    </div>
+  )
+}
+
+function StartBakeButton({
+  onStart,
+  hasActiveBake,
+}: {
+  onStart: () => void
+  hasActiveBake: boolean
+}) {
+  return (
+    <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 sm:p-6 bg-primary-container/40 rounded-2xl border border-primary/30 shadow-[0_12px_30px_rgba(49,51,44,0.06)]">
+      <div className="flex items-start gap-4 min-w-0">
+        <span
+          aria-hidden="true"
+          className="shrink-0 w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center"
+        >
+          <span className="material-symbols-outlined !text-[22px]">
+            local_fire_department
+          </span>
+        </span>
+        <div className="min-w-0">
+          <span className="font-label text-[0.65rem] uppercase tracking-widest text-primary block mb-1">
+            Ready to bake
+          </span>
+          <p className="font-body text-sm text-on-surface">
+            {hasActiveBake
+              ? 'A bake is already in progress — starting now will replace it.'
+              : 'Lock in this recipe and follow it live in Execution.'}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onStart}
+        className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-primary text-on-primary font-label uppercase tracking-[0.18em] text-[0.8rem] shadow-[0_10px_24px_rgba(49,51,44,0.18)] hover:shadow-[0_14px_32px_rgba(49,51,44,0.22)] hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all self-stretch sm:self-auto sm:min-w-[12rem]"
+      >
+        <span
+          aria-hidden="true"
+          className="material-symbols-outlined !text-[20px] transition-transform group-hover:translate-x-0.5"
+        >
+          play_arrow
+        </span>
+        {hasActiveBake ? 'Restart bake' : 'Start bake'}
+      </button>
     </div>
   )
 }

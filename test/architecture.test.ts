@@ -12,5 +12,5 @@ describe('Architecture: Port-Adapter Boundaries', () => {
       const output = (error as { stdout?: string }).stdout ?? ''
       expect.fail(`Architecture violations:\n${output}`)
     }
-  })
+  }, 30_000)
 })

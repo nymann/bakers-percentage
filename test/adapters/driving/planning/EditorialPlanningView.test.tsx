@@ -2,18 +2,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { RecipeCalculator } from '../../../../src/adapters/driving/planning/RecipeCalculator'
-import { FeatureFlagProvider } from '../../../../src/feature-flags'
-import { createInMemoryFeatureFlags } from '../../../../src/adapters/driven/InMemoryFeatureFlags'
+import { TestProviders } from '../../../helpers'
 
 function renderEditorial(opts: { settingsOpen?: boolean } = {}) {
-  const flags = createInMemoryFeatureFlags({})
   return render(
-    <FeatureFlagProvider service={flags}>
+    <TestProviders>
       <RecipeCalculator
         settingsOpen={opts.settingsOpen ?? false}
         onCloseSettings={() => {}}
       />
-    </FeatureFlagProvider>,
+    </TestProviders>,
   )
 }
 
@@ -222,11 +220,10 @@ describe('Scenario 06: advanced settings live behind a dialog', () => {
       screen.getByRole('spinbutton', { name: /^starter \(%\)$/i }),
     ).toBeInTheDocument()
 
-    const flags = createInMemoryFeatureFlags({})
     rerender(
-      <FeatureFlagProvider service={flags}>
+      <TestProviders>
         <RecipeCalculator settingsOpen={false} onCloseSettings={() => {}} />
-      </FeatureFlagProvider>,
+      </TestProviders>,
     )
 
     expect(
