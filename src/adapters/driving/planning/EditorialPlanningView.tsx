@@ -1,6 +1,9 @@
 import { useEffect, useImperativeHandle, useMemo, useState, type ReactElement, type Ref } from 'react'
 import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCalculator'
-import { useFermentationZone } from '../../../application/use-cases/useFermentationZone'
+import {
+  useFermentationZone,
+  asLeavingTypeContext,
+} from '../../../application/use-cases/useFermentationZone'
 import { createYeastFermentation } from '../../../domain/Fermentation'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
 import { useTimeline } from '../../../application/use-cases/useTimeline'
@@ -181,7 +184,11 @@ export function EditorialPlanningView({
 
   useImperativeHandle(controlRef, () => ({ applyPreferences }), [applyPreferences])
 
-  const fermentation = useFermentationZone(doughTemperature, hydration)
+  const fermentation = useFermentationZone(
+    doughTemperature,
+    hydration,
+    asLeavingTypeContext(leavingType, yeastType, salt),
+  )
   const { changeFermentationDuration } = fermentation
   const timeline = useTimeline()
 

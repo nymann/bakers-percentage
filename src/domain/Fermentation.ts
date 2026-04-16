@@ -163,7 +163,7 @@ const SALT_REF = 0.018
 const SALT_INHIBITION_PER_PERCENT = 0.10
 
 const YEAST_GREEN_REF = { low: 2, high: 6 }
-const YEAST_YELLOW_REF = { low: 1, high: 12 }
+const YEAST_YELLOW_REF = { low: 1.5, high: 12 }
 
 function yeastTempFactor(tempC: number): number {
   return Math.pow(YEAST_Q10, (YEAST_T_REF - tempC) / 10)

@@ -648,11 +648,9 @@ describe('Scenario 15-02: duration drives recommended yeast percent', () => {
     const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
     const bakeMinutes = Number(bakeSlider.value)
 
-    // duration = 8h
     fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 480) } })
     const yeastAt8h = yeastRowGramsNumber(table)
 
-    // duration = 4h
     fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 240) } })
     const yeastAt4h = yeastRowGramsNumber(table)
 
@@ -660,5 +658,208 @@ describe('Scenario 15-02: duration drives recommended yeast percent', () => {
     const ratio = yeastAt4h / yeastAt8h
     expect(ratio).toBeGreaterThanOrEqual(1.5)
     expect(ratio).toBeLessThanOrEqual(3.0)
+  })
+})
+
+describe('Scenario 15-03: fresh vs instant scales recommendation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('switching from dry to fresh yeast multiplies yeast row grams by ~3', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    const table = within(ledger).getByRole('table')
+
+    // Anchor duration to 4h so we have meaningful grams
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 240) } })
+
+    const dryGrams = yeastRowGramsNumber(table)
+
+    await user.click(within(fermentGroup).getByRole('radio', { name: /fresh yeast/i }))
+    const freshGrams = yeastRowGramsNumber(table)
+
+    expect(freshGrams).toBeGreaterThan(dryGrams)
+    const ratio = freshGrams / dryGrams
+    expect(ratio).toBeGreaterThanOrEqual(2.5)
+    expect(ratio).toBeLessThanOrEqual(3.5)
+  })
+})
+
+describe('Scenario 15-04: room temperature shifts yeast zones', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('lowering room temperature widens green zone band and increases recommended yeast', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    const table = within(ledger).getByRole('table')
+
+    // Anchor duration at 6h so it remains in green at both temps
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 360) } })
+
+    const yeastAt24 = yeastRowGramsNumber(table)
+    const greenAt24 = screen.getByLabelText(/green zone/i).getAttribute('aria-label') ?? ''
+
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '14' } })
+    fireEvent.blur(tempInput)
+
+    const yeastAt14 = yeastRowGramsNumber(table)
+    const greenAt14 = screen.getByLabelText(/green zone/i).getAttribute('aria-label') ?? ''
+
+    expect(yeastAt14).toBeGreaterThan(yeastAt24)
+    expect(greenAt14).not.toBe(greenAt24)
+  })
+})
+
+describe('Scenario 15-05: salt inhibits yeast', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('increasing salt raises recommended yeast row grams', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial({ settingsOpen: true })
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const dialog = screen.getByRole('dialog', { name: /advanced settings/i })
+    const saltInput = within(dialog).getByRole('spinbutton', { name: /salt/i }) as HTMLInputElement
+
+    // Anchor duration at 4h — meaningful grams
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 240) } })
+
+    fireEvent.change(saltInput, { target: { value: '1.0' } })
+    fireEvent.blur(saltInput)
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    const table = within(ledger).getByRole('table')
+    const yeastLowSalt = yeastRowGramsNumber(table)
+
+    fireEvent.change(saltInput, { target: { value: '2.5' } })
+    fireEvent.blur(saltInput)
+    const yeastHighSalt = yeastRowGramsNumber(table)
+
+    expect(yeastHighSalt).toBeGreaterThan(yeastLowSalt)
+  })
+})
+
+describe('Scenario 15-06: cold room uses retard strategy', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('lowering room temperature to 4°C produces a non-zero yeast recommendation', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '4' } })
+    fireEvent.blur(tempInput)
+
+    const ledger = screen.getByRole('region', { name: /ingredient ledger/i })
+    const table = within(ledger).getByRole('table')
+
+    expect(yeastRowGramsNumber(table)).toBeGreaterThan(0)
+  })
+})
+
+describe('Scenario 15-07: under-proof yeast duration shows red zone warning', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('setting duration to ~1h on yeast renders red status with a too-fast warning', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+    // 60 min < yellowLow (1.5h at 24°C) → red
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 60) } })
+
+    expect(screen.getByRole('status')).toHaveTextContent(/red/i)
+    expect(screen.getByText(/too fast|flat/i)).toBeInTheDocument()
+  })
+})
+
+describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('setting duration to 24h on yeast at 24°C renders red status with over-proof warning', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const bakeSlider = screen.getByRole('slider', { name: /bake handle/i }) as HTMLInputElement
+    const mixSlider = screen.getByRole('slider', { name: /mix handle/i }) as HTMLInputElement
+    const bakeMinutes = Number(bakeSlider.value)
+    // 24h at 24°C — well past yeast yellowHigh = 12h
+    fireEvent.change(mixSlider, { target: { value: String(bakeMinutes - 1440) } })
+
+    expect(screen.getByRole('status')).toHaveTextContent(/red/i)
+    expect(screen.getByText(/over-proof/i)).toBeInTheDocument()
   })
 })
