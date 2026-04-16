@@ -40,6 +40,7 @@ function renderApp(overrides: FlagOverrides = {}) {
     'editorial-shell': false,
     'editorial-planning': false,
     'execution-view': true,
+    'history-view': true,
     ...overrides,
   })
   return render(
@@ -214,6 +215,22 @@ describe('Scenario 11.01: execution-view flag OFF hides Execution tab', () => {
     ).not.toBeInTheDocument()
     expect(
       screen.queryByRole('tabpanel', { name: /execution/i }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Scenario 12.01: history-view flag OFF hides History tab', () => {
+  it('renders only Planning and Execution tabs when history-view is OFF', () => {
+    renderApp({ 'editorial-shell': true, 'history-view': false })
+
+    const tabs = screen.getAllByRole('tab')
+    const tabNames = tabs.map((tab) => tab.textContent?.trim())
+    expect(new Set(tabNames)).toEqual(new Set(['Planning', 'Execution']))
+    expect(
+      screen.queryByRole('tab', { name: /history/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('tabpanel', { name: /history/i }),
     ).not.toBeInTheDocument()
   })
 })

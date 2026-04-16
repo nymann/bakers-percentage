@@ -7,6 +7,7 @@ import { useMediaQuery } from '../../../design-system/headless/useMediaQuery'
 import { useFeatureFlag } from '../../../use-feature-flag'
 import { RecipeCalculator } from '../planning/RecipeCalculator'
 import { ExecutionView } from '../execution/ExecutionView'
+import { HistoryView } from '../history/HistoryView'
 import { TopAppBar } from './TopAppBar'
 import { SideNavBar } from './SideNavBar'
 import { BottomNavBar } from './BottomNavBar'
@@ -15,13 +16,13 @@ const DESKTOP_BREAKPOINT = '(min-width: 1024px)'
 
 export function EditorialShell() {
   const executionEnabled = useFeatureFlag('execution-view')
-  const enabledViews = useMemo<readonly ViewId[]>(
-    () =>
-      executionEnabled
-        ? ['planning', 'execution', 'history']
-        : ['planning', 'history'],
-    [executionEnabled],
-  )
+  const historyEnabled = useFeatureFlag('history-view')
+  const enabledViews = useMemo<readonly ViewId[]>(() => {
+    const views: ViewId[] = ['planning']
+    if (executionEnabled) views.push('execution')
+    if (historyEnabled) views.push('history')
+    return views
+  }, [executionEnabled, historyEnabled])
   const view = useActiveView({ enabledViews })
   const isDesktop = useMediaQuery(DESKTOP_BREAKPOINT)
 
@@ -39,21 +40,14 @@ export function EditorialShell() {
               <ExecutionView />
             </section>
           )}
-          <section {...view.getPanelProps('history')}>
-            <PlaceholderPanel title="History" />
-          </section>
+          {historyEnabled && (
+            <section {...view.getPanelProps('history')}>
+              <HistoryView />
+            </section>
+          )}
         </main>
       </div>
       {!isDesktop && <BottomNavBar view={view} />}
-    </div>
-  )
-}
-
-function PlaceholderPanel({ title }: { title: string }) {
-  return (
-    <div className="py-12 text-center text-on-surface-variant font-body">
-      <h2 className="font-headline text-3xl italic mb-2">{title}</h2>
-      <p>Coming soon.</p>
     </div>
   )
 }

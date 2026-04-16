@@ -16,6 +16,7 @@ const featureFlags = createInMemoryFeatureFlags({
   'editorial-shell': false,
   'editorial-planning': true,
   'execution-view': false,
+  'history-view': false,
 })
 
 export function AppContent() {
