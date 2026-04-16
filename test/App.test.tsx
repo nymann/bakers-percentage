@@ -39,6 +39,7 @@ function renderApp(overrides: FlagOverrides = {}) {
     'visual-timeline': true,
     'editorial-shell': false,
     'editorial-planning': false,
+    'execution-view': true,
     ...overrides,
   })
   return render(
@@ -198,6 +199,22 @@ describe('Scenario 05: Home and End keys jump to edges', () => {
       'aria-selected',
       'true',
     )
+  })
+})
+
+describe('Scenario 11.01: execution-view flag OFF hides Execution tab', () => {
+  it('renders only Planning and History tabs when execution-view is OFF', () => {
+    renderApp({ 'editorial-shell': true, 'execution-view': false })
+
+    const tabs = screen.getAllByRole('tab')
+    const tabNames = tabs.map((tab) => tab.textContent?.trim())
+    expect(new Set(tabNames)).toEqual(new Set(['Planning', 'History']))
+    expect(
+      screen.queryByRole('tab', { name: /execution/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('tabpanel', { name: /execution/i }),
+    ).not.toBeInTheDocument()
   })
 })
 

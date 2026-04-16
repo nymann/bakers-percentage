@@ -125,6 +125,46 @@ describe('useActiveView: arrow key navigation', () => {
   })
 })
 
+describe('useActiveView: enabledViews filtering', () => {
+  it('lists only enabled views', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'history'] }),
+    )
+
+    expect(result.current.views.map((v) => v.id)).toEqual(['planning', 'history'])
+  })
+
+  it('ArrowRight cycles within enabled views (skips disabled execution)', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'history'] }),
+    )
+
+    act(() => {
+      result.current.getTabProps('planning').onKeyDown(makeKey('ArrowRight'))
+    })
+
+    expect(result.current.activeView).toBe('history')
+
+    act(() => {
+      result.current.getTabProps('history').onKeyDown(makeKey('ArrowRight'))
+    })
+
+    expect(result.current.activeView).toBe('planning')
+  })
+
+  it('End jumps to last enabled view', () => {
+    const { result } = renderHook(() =>
+      useActiveView({ enabledViews: ['planning', 'history'] }),
+    )
+
+    act(() => {
+      result.current.getTabProps('planning').onKeyDown(makeKey('End'))
+    })
+
+    expect(result.current.activeView).toBe('history')
+  })
+})
+
 describe('useActiveView: Home and End keys', () => {
   it('Home jumps to planning (first)', () => {
     const { result } = renderHook(() => useActiveView())

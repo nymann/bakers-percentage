@@ -13,6 +13,8 @@ export const VIEWS: readonly ViewDescriptor[] = [
   { id: 'history', label: 'History' },
 ] as const
 
+const ALL_VIEW_IDS: readonly ViewId[] = VIEWS.map((v) => v.id)
+
 export interface TabProps {
   id: string
   role: 'tab'
@@ -39,8 +41,23 @@ export interface UseActiveView {
   getPanelProps: (view: ViewId) => PanelProps
 }
 
-export function useActiveView(): UseActiveView {
-  const [activeView, setActiveView] = useState<ViewId>('planning')
+export interface UseActiveViewOptions {
+  enabledViews?: readonly ViewId[]
+}
+
+export function useActiveView(options: UseActiveViewOptions = {}): UseActiveView {
+  const enabledKey = (options.enabledViews ?? ALL_VIEW_IDS).join(',')
+  const enabledViews = useMemo<readonly ViewId[]>(
+    () => enabledKey.split(',').filter((id): id is ViewId => id.length > 0) as ViewId[],
+    [enabledKey],
+  )
+
+  const views = useMemo(
+    () => VIEWS.filter((view) => enabledViews.includes(view.id)),
+    [enabledViews],
+  )
+
+  const [activeView, setActiveView] = useState<ViewId>(() => enabledViews[0] ?? 'planning')
 
   const switchTo = useCallback((view: ViewId) => {
     setActiveView(view)
@@ -56,10 +73,10 @@ export function useActiveView(): UseActiveView {
         'aria-controls': panelId(view),
         tabIndex: isActive ? 0 : -1,
         onClick: () => setActiveView(view),
-        onKeyDown: (event) => handleTabKeyDown(event, view, setActiveView),
+        onKeyDown: (event) => handleTabKeyDown(event, view, enabledViews, setActiveView),
       }
     },
-    [activeView],
+    [activeView, enabledViews],
   )
 
   const getPanelProps = useCallback(
@@ -76,12 +93,12 @@ export function useActiveView(): UseActiveView {
   return useMemo(
     () => ({
       activeView,
-      views: VIEWS,
+      views,
       switchTo,
       getTabProps,
       getPanelProps,
     }),
-    [activeView, switchTo, getTabProps, getPanelProps],
+    [activeView, views, switchTo, getTabProps, getPanelProps],
   )
 }
 
@@ -96,10 +113,11 @@ function panelId(view: ViewId): string {
 function handleTabKeyDown(
   event: KeyboardEvent,
   current: ViewId,
+  order: readonly ViewId[],
   setActiveView: (view: ViewId) => void,
 ): void {
-  const order = VIEWS.map((v) => v.id)
   const index = order.indexOf(current)
+  if (index === -1) return
   let nextIndex: number | null = null
 
   switch (event.key) {
