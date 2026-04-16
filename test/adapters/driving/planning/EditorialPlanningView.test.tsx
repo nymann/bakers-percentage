@@ -51,8 +51,12 @@ describe('Scenario 02: editorial layout renders ingredient ledger', () => {
     ).toBeInTheDocument()
   })
 
-  it('still exposes finished weight by spinbutton label', () => {
+  it('exposes finished weight by spinbutton label once Custom is chosen', async () => {
+    const user = userEvent.setup()
     renderEditorial()
+
+    const group = screen.getByRole('radiogroup', { name: /finished weight/i })
+    await user.click(within(group).getByRole('radio', { name: /custom/i }))
 
     expect(
       screen.getByRole('spinbutton', { name: /finished weight/i }),
@@ -268,6 +272,8 @@ describe('Scenario 07: ingredient ledger accessible', () => {
       .slice(1)
       .map((r) => within(r).getAllByRole('cell')[1].textContent)
 
+    const group = screen.getByRole('radiogroup', { name: /finished weight/i })
+    await user.click(within(group).getByRole('radio', { name: /custom/i }))
     const weightInput = screen.getByRole('spinbutton', { name: /finished weight/i })
     await user.clear(weightInput)
     await user.type(weightInput, '1200')

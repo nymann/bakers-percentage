@@ -27,7 +27,7 @@ import {
 } from '../../domain/InputRanges'
 
 const DEFAULTS = {
-  finishedWeight: 800,
+  finishedWeight: 900,
   loaves: 1,
   salt: 0.02,
   bakeOffLoss: 0.13,

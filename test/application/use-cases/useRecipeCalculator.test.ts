@@ -9,8 +9,8 @@ describe('useRecipeCalculator', () => {
     const flour = result.current.recipe.ingredients.find(
       (i) => i.name === 'Flour',
     )!
-    expect(flour.grams).toBe(520)
-    expect(result.current.recipe.finishedWeightPerLoaf).toBe(800)
+    expect(flour.grams).toBe(584)
+    expect(result.current.recipe.finishedWeightPerLoaf).toBe(900)
   })
 
   it('doubles total dough weight when loaf count changes to 2', () => {
@@ -21,9 +21,9 @@ describe('useRecipeCalculator', () => {
     const flour = result.current.recipe.ingredients.find(
       (i) => i.name === 'Flour',
     )!
-    expect(flour.grams).toBe(520) // per-loaf unchanged
-    expect(result.current.recipe.totalDoughWeight).toBe(1849)
-    expect(result.current.recipe.finishedWeightPerLoaf).toBe(800)
+    expect(flour.grams).toBe(584) // per-loaf unchanged
+    expect(result.current.recipe.totalDoughWeight).toBe(2081)
+    expect(result.current.recipe.finishedWeightPerLoaf).toBe(900)
   })
 
   it('triples yeast grams when selecting fresh yeast', () => {
@@ -32,14 +32,14 @@ describe('useRecipeCalculator', () => {
     const yeastBefore = result.current.recipe.ingredients.find(
       (i) => i.name === 'Yeast',
     )!
-    expect(yeastBefore.grams).toBe(5) // instant default
+    expect(yeastBefore.grams).toBe(6) // instant default
 
     act(() => result.current.selectYeastType('fresh'))
 
     const yeastAfter = result.current.recipe.ingredients.find(
       (i) => i.name === 'Yeast',
     )!
-    expect(yeastAfter.grams).toBe(16) // 520 * 0.03 ≈ 16
+    expect(yeastAfter.grams).toBe(18) // 584 * 0.03 ≈ 18
     expect(yeastAfter.percentage).toBe(0.03)
   })
 
@@ -54,8 +54,8 @@ describe('useRecipeCalculator', () => {
     const water = result.current.recipe.ingredients.find(
       (i) => i.name === 'Water',
     )!
-    expect(flour.grams).toBe(541)
-    expect(water.grams).toBe(368)
+    expect(flour.grams).toBe(609)
+    expect(water.grams).toBe(414)
     expect(result.current.hydrationSelection).toEqual({
       mode: 'preset',
       preset: 'Classic',
@@ -70,7 +70,7 @@ describe('useRecipeCalculator', () => {
     const water = result.current.recipe.ingredients.find(
       (i) => i.name === 'Water',
     )!
-    expect(water.grams).toBe(374)
+    expect(water.grams).toBe(421)
     expect(result.current.hydrationSelection).toEqual({
       mode: 'custom',
       percentage: 0.7,
@@ -90,7 +90,7 @@ describe('useRecipeCalculator', () => {
     const water = result.current.recipe.ingredients.find(
       (i) => i.name === 'Water',
     )!
-    expect(water.grams).toBe(390)
+    expect(water.grams).toBe(438)
   })
 
   it('returns to preset from custom mode', () => {
@@ -107,7 +107,7 @@ describe('useRecipeCalculator', () => {
     const water = result.current.recipe.ingredients.find(
       (i) => i.name === 'Water',
     )!
-    expect(water.grams).toBe(368)
+    expect(water.grams).toBe(414)
     expect(result.current.hydrationSelection).toEqual({
       mode: 'preset',
       preset: 'Classic',
@@ -125,8 +125,8 @@ describe('useRecipeCalculator', () => {
     const water = result.current.recipe.ingredients.find(
       (i) => i.name === 'Water',
     )!
-    expect(flour.grams).toBe(500)
-    expect(water.grams).toBe(410)
+    expect(flour.grams).toBe(562)
+    expect(water.grams).toBe(461)
     expect(result.current.hydrationSelection).toEqual({
       mode: 'preset',
       preset: 'High hydration',
@@ -242,12 +242,12 @@ describe('useRecipeCalculator', () => {
     const byName = (name: string) =>
       result.current.recipe.ingredients.find((i) => i.name === name)!
 
-    expect(byName('Base flour').grams).toBe(416)
+    expect(byName('Base flour').grams).toBe(468)
     expect(byName('Base flour').percentage).toBeCloseTo(0.8)
-    expect(byName('Water').grams).toBe(286)
+    expect(byName('Water').grams).toBe(321)
     expect(byName('Water').percentage).toBeCloseTo(0.75)
-    expect(byName('Salt').grams).toBe(10)
-    expect(byName('Starter').grams).toBe(208)
+    expect(byName('Salt').grams).toBe(12)
+    expect(byName('Starter').grams).toBe(234)
     expect(byName('Starter').percentage).toBeCloseTo(0.2)
   })
 
