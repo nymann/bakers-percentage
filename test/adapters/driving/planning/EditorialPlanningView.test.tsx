@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { RecipeCalculator } from '../../../../src/adapters/driving/planning/RecipeCalculator'
 import { FeatureFlagProvider } from '../../../../src/feature-flags'
@@ -288,5 +288,44 @@ describe('Scenario 14-01: timeline replaces bake time for sourdough', () => {
     renderEditorial()
 
     expect(screen.queryByLabelText(/bake time/i)).not.toBeInTheDocument()
+  })
+})
+
+function outOfOvenTimeText(): string {
+  const arc = screen.getByRole('region', { name: /baking schedule/i })
+  const item = within(arc)
+    .getAllByRole('listitem')
+    .find((li) => li.textContent?.includes('Out of oven'))
+  if (!item) throw new Error('Out of oven event not found')
+  const match = item.textContent?.match(/\d{2}:\d{2}/)
+  if (!match) throw new Error('Out of oven time not found')
+  return match[0]
+}
+
+function minutesOfDay(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 60 + m
+}
+
+describe('Scenario 14-02: bake handle shifts out-of-oven time', () => {
+  it('moving the bake handle 60 minutes later advances out-of-oven by 60 minutes', () => {
+    renderEditorial()
+
+    const bakeSlider = screen.getByRole('slider', {
+      name: /bake handle/i,
+    }) as HTMLInputElement
+    const before = outOfOvenTimeText()
+    const beforeValueText = bakeSlider.getAttribute('aria-valuetext')
+
+    fireEvent.change(bakeSlider, {
+      target: { value: String(Number(bakeSlider.value) + 60) },
+    })
+
+    const after = outOfOvenTimeText()
+    let delta = minutesOfDay(after) - minutesOfDay(before)
+    if (delta < 0) delta += 24 * 60
+    expect(delta).toBe(60)
+
+    expect(bakeSlider.getAttribute('aria-valuetext')).not.toBe(beforeValueText)
   })
 })
