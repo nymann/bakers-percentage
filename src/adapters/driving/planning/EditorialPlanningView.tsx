@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCalculator'
 import { useFermentationZone } from '../../../application/use-cases/useFermentationZone'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
@@ -104,7 +104,7 @@ const WEIGHT_PRESETS: readonly {
   value: WeightPresetValue
   label: string
   grams: number
-  Icon: (props: { className?: string }) => JSX.Element
+  Icon: (props: { className?: string }) => ReactElement
 }[] = [
   { value: 'S', label: 'S', grams: 500, Icon: BouleIcon },
   { value: 'M', label: 'M', grams: 900, Icon: BatardIcon },
