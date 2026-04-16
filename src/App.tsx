@@ -1,8 +1,6 @@
 import { FeatureFlagProvider } from './feature-flags'
 import { createInMemoryFeatureFlags } from './adapters/driven/InMemoryFeatureFlags'
-import { RecipeCalculator } from './adapters/driving/planning/RecipeCalculator'
 import { EditorialShell } from './adapters/driving/shell/EditorialShell'
-import { useFeatureFlag } from './use-feature-flag'
 
 const featureFlags = createInMemoryFeatureFlags({
   'yeast-recipe-calculator': true,
@@ -13,15 +11,12 @@ const featureFlags = createInMemoryFeatureFlags({
   'auto-recommend-starter-percent': true,
   'baking-schedule': true,
   'visual-timeline': true,
-  'editorial-shell': false,
-  'editorial-planning': true,
-  'execution-view': false,
-  'history-view': false,
+  'execution-view': true,
+  'history-view': true,
 })
 
 export function AppContent() {
-  const shellEnabled = useFeatureFlag('editorial-shell')
-  return shellEnabled ? <EditorialShell /> : <RecipeCalculator />
+  return <EditorialShell />
 }
 
 export function App() {

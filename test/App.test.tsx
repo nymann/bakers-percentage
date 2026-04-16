@@ -37,8 +37,6 @@ function renderApp(overrides: FlagOverrides = {}) {
     'auto-recommend-starter-percent': true,
     'baking-schedule': true,
     'visual-timeline': true,
-    'editorial-shell': false,
-    'editorial-planning': false,
     'execution-view': true,
     'history-view': true,
     ...overrides,
@@ -50,28 +48,24 @@ function renderApp(overrides: FlagOverrides = {}) {
   )
 }
 
-describe('Scenario 01: editorial-shell flag off preserves legacy layout', () => {
-  it('renders the legacy RecipeCalculator at the root with no shell chrome', () => {
-    renderApp({ 'editorial-shell': false })
+describe('AppContent renders the editorial shell unconditionally', () => {
+  it('renders the editorial shell chrome with no shell-related flag in config', () => {
+    renderApp()
 
-    expect(
-      screen.getByRole('heading', { level: 1, name: /baker's percentage/i }),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
-    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
-    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getAllByRole('tab').length).toBeGreaterThan(0)
   })
 })
 
-describe('Scenario 02: editorial-shell flag on renders shell with Planning default', () => {
+describe('Scenario 02: editorial shell renders with Planning default', () => {
   it('shows a banner containing the top app bar', () => {
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     expect(screen.getByRole('banner')).toBeInTheDocument()
   })
 
   it('lists Planning, Execution, and History tabs in a navigation region', () => {
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     const nav = screen.getAllByRole('navigation')[0]
     expect(nav).toBeInTheDocument()
@@ -83,14 +77,14 @@ describe('Scenario 02: editorial-shell flag on renders shell with Planning defau
   })
 
   it('marks Planning as the active tab by default', () => {
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     const planningTab = screen.getByRole('tab', { name: /planning/i })
     expect(planningTab).toHaveAttribute('aria-selected', 'true')
   })
 
   it('shows only the Planning panel', () => {
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     const planningPanel = screen.getByRole('tabpanel', { name: /planning/i })
     expect(planningPanel).toBeVisible()
@@ -112,7 +106,7 @@ describe('Scenario 02: editorial-shell flag on renders shell with Planning defau
   })
 
   it('renders the RecipeCalculator inside the Planning panel', () => {
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     const planningPanel = screen.getByRole('tabpanel', { name: /planning/i })
     const heading = screen.getByRole('heading', {
@@ -126,7 +120,7 @@ describe('Scenario 02: editorial-shell flag on renders shell with Planning defau
 describe('Scenario 03: clicking a nav tab switches the view', () => {
   it('activates the Execution tab and panel, deactivating Planning', async () => {
     const user = userEvent.setup()
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     const executionTab = screen.getByRole('tab', { name: /execution/i })
     await user.click(executionTab)
@@ -154,7 +148,7 @@ describe('Scenario 03: clicking a nav tab switches the view', () => {
 describe('Scenario 04: arrow keys cycle tabs', () => {
   it('ArrowRight moves focus and selection through tabs, wrapping at the end', async () => {
     const user = userEvent.setup()
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     screen.getByRole('tab', { name: /planning/i }).focus()
 
@@ -176,7 +170,7 @@ describe('Scenario 04: arrow keys cycle tabs', () => {
 describe('Scenario 05: Home and End keys jump to edges', () => {
   it('Home jumps from Execution to Planning', async () => {
     const user = userEvent.setup()
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     screen.getByRole('tab', { name: /execution/i }).focus()
     await user.keyboard('{Home}')
@@ -190,7 +184,7 @@ describe('Scenario 05: Home and End keys jump to edges', () => {
 
   it('End jumps from any tab to History', async () => {
     const user = userEvent.setup()
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     screen.getByRole('tab', { name: /execution/i }).focus()
     await user.keyboard('{End}')
@@ -205,7 +199,7 @@ describe('Scenario 05: Home and End keys jump to edges', () => {
 
 describe('Scenario 11.01: execution-view flag OFF hides Execution tab', () => {
   it('renders only Planning and History tabs when execution-view is OFF', () => {
-    renderApp({ 'editorial-shell': true, 'execution-view': false })
+    renderApp({ 'execution-view': false })
 
     const tabs = screen.getAllByRole('tab')
     const tabNames = tabs.map((tab) => tab.textContent?.trim())
@@ -221,7 +215,7 @@ describe('Scenario 11.01: execution-view flag OFF hides Execution tab', () => {
 
 describe('Scenario 12.01: history-view flag OFF hides History tab', () => {
   it('renders only Planning and Execution tabs when history-view is OFF', () => {
-    renderApp({ 'editorial-shell': true, 'history-view': false })
+    renderApp({ 'history-view': false })
 
     const tabs = screen.getAllByRole('tab')
     const tabNames = tabs.map((tab) => tab.textContent?.trim())
@@ -238,7 +232,7 @@ describe('Scenario 12.01: history-view flag OFF hides History tab', () => {
 describe('Scenario 06: mobile viewport renders bottom nav', () => {
   it('shows the Mobile views nav and hides the Primary views side nav', () => {
     setViewport({ desktop: false })
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     const mobileNav = screen.getByRole('navigation', { name: /mobile views/i })
     expect(mobileNav).toBeInTheDocument()
@@ -250,7 +244,7 @@ describe('Scenario 06: mobile viewport renders bottom nav', () => {
 
   it('renders all three tabs within the mobile nav', () => {
     setViewport({ desktop: false })
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     const mobileNav = screen.getByRole('navigation', { name: /mobile views/i })
     const tabs = mobileNav.querySelectorAll('[role="tab"]')
@@ -261,7 +255,7 @@ describe('Scenario 06: mobile viewport renders bottom nav', () => {
   it('clicking a tab in the bottom nav switches the active view', async () => {
     const user = userEvent.setup()
     setViewport({ desktop: false })
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     await user.click(screen.getByRole('tab', { name: /history/i }))
 
@@ -276,7 +270,7 @@ describe('Scenario 06: mobile viewport renders bottom nav', () => {
 
   it('desktop viewport shows Primary views side nav and hides Mobile views', () => {
     setViewport({ desktop: true })
-    renderApp({ 'editorial-shell': true })
+    renderApp()
 
     expect(
       screen.getByRole('navigation', { name: /primary views/i }),

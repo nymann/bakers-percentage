@@ -1,6 +1,5 @@
 import type { ClampResult } from '../../../../domain/InputRanges'
 import { useNumberInput } from '../../../../design-system/headless/useNumberInput'
-import { tokens } from '../../../../design-system/tokens'
 import { ClampNote } from '../ClampNote'
 
 export function DoughTemperatureField({
@@ -21,7 +20,7 @@ export function DoughTemperatureField({
   })
 
   return (
-    <div style={{ marginBottom: tokens.spacing.sm }}>
+    <div className="mb-2">
       <label>
         Dough temperature (°C) <input {...input.getInputProps()} />
       </label>

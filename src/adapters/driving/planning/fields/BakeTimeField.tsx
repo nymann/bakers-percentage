@@ -1,4 +1,3 @@
-import { tokens } from '../../../../design-system/tokens'
 import { formatDatetimeLocal } from '../format'
 
 export function BakeTimeField({
@@ -9,7 +8,7 @@ export function BakeTimeField({
   onChange: (time: Date) => void
 }) {
   return (
-    <div style={{ marginBottom: tokens.spacing.md }}>
+    <div className="mb-4">
       <label>
         Bake time{' '}
         <input

@@ -1,6 +1,5 @@
 import type { ClampResult } from '../../../../domain/InputRanges'
 import { useNumberInput } from '../../../../design-system/headless/useNumberInput'
-import { tokens } from '../../../../design-system/tokens'
 import { ClampNote } from '../ClampNote'
 
 export function LoafCountField({
@@ -17,7 +16,7 @@ export function LoafCountField({
   const input = useNumberInput({ value: loaves, onChange })
 
   return (
-    <div style={{ marginBottom: tokens.spacing.md }}>
+    <div className="mb-4">
       <label>
         Loaf count <input {...input.getInputProps()} />
       </label>

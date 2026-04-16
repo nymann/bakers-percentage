@@ -1,5 +1,4 @@
 import type { ClampResult } from '../../../domain/InputRanges'
-import { tokens } from '../../../design-system/tokens'
 import { formatRangeValue } from './format'
 
 export function ClampNote({ result }: { result: ClampResult }) {
@@ -9,7 +8,7 @@ export function ClampNote({ result }: { result: ClampResult }) {
   const max = formatRangeValue(range.max, range.unit)
   const suffix = range.unit
   return (
-    <small style={{ color: tokens.colors.textMuted, marginLeft: tokens.spacing.sm }}>
+    <small className="text-on-surface-variant ml-2">
       Valid range: {min}–{max}{suffix}
     </small>
   )
@@ -18,7 +17,7 @@ export function ClampNote({ result }: { result: ClampResult }) {
 export function StarterPercentClampNote({ result }: { result: ClampResult }) {
   if (!result.clamped) return null
   return (
-    <small style={{ color: tokens.colors.textMuted, marginLeft: tokens.spacing.sm }}>
+    <small className="text-on-surface-variant ml-2">
       Base flour must remain positive
     </small>
   )

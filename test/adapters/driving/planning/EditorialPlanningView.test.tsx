@@ -15,7 +15,6 @@ function renderEditorial(overrides: Record<string, boolean> = {}) {
     'auto-recommend-starter-percent': true,
     'baking-schedule': true,
     'visual-timeline': false,
-    'editorial-planning': true,
     ...overrides,
   })
   return render(
@@ -25,29 +24,17 @@ function renderEditorial(overrides: Record<string, boolean> = {}) {
   )
 }
 
-describe('Scenario 01: editorial-planning flag OFF preserves legacy calculator', () => {
-  it('does not render editorial layout when flag is OFF', () => {
-    const flags = createInMemoryFeatureFlags({
-      'yeast-recipe-calculator': true,
-      'editorial-planning': false,
-    })
-    render(
-      <FeatureFlagProvider service={flags}>
-        <RecipeCalculator />
-      </FeatureFlagProvider>,
-    )
+describe('RecipeCalculator renders the editorial layout unconditionally', () => {
+  it('renders the ingredient ledger without a planning-layout flag in config', () => {
+    renderEditorial()
 
     expect(
-      screen.queryByRole('region', { name: /ingredient ledger/i }),
-    ).not.toBeInTheDocument()
-    // Legacy heading still present
-    expect(
-      screen.getByRole('heading', { level: 1, name: /baker's percentage/i }),
+      screen.getByRole('region', { name: /ingredient ledger/i }),
     ).toBeInTheDocument()
   })
 })
 
-describe('Scenario 02: editorial-planning flag ON renders editorial layout', () => {
+describe('Scenario 02: editorial layout renders ingredient ledger', () => {
   it('renders the ingredient ledger region', () => {
     renderEditorial()
 

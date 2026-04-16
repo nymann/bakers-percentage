@@ -29,12 +29,12 @@ export function Ledger({
       aria-label="Ingredient ledger"
       className="bg-surface-container-lowest p-8 md:p-10 rounded-2xl border border-outline-variant/10"
     >
-      <header className="flex justify-between items-end mb-6 border-b border-outline-variant/15 pb-3">
+      <div className="flex justify-between items-end mb-6 border-b border-outline-variant/15 pb-3">
         <h2 className="font-headline text-xl italic">{title}</h2>
         <span className="font-label text-xs text-primary">
           Hydration: {Math.round(hydrationPercent * 100)}%
         </span>
-      </header>
+      </div>
       <table aria-label="Ingredient ledger" className="w-full">
         <thead>
           <tr>
@@ -81,7 +81,7 @@ export function Ledger({
           ))}
         </tbody>
       </table>
-      <footer className="mt-6 pt-4 border-t border-dashed border-outline-variant/40 space-y-1">
+      <div className="mt-6 pt-4 border-t border-dashed border-outline-variant/40 space-y-1">
         <div className="flex justify-between items-center">
           <span className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant">
             Total dough weight
@@ -100,7 +100,7 @@ export function Ledger({
             <span className="text-sm italic ml-1">g</span>
           </span>
         </div>
-      </footer>
+      </div>
     </section>
   )
 }

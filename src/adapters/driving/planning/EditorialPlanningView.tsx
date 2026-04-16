@@ -146,14 +146,14 @@ function EditorialPlanningLayout() {
       aria-label="Recipe calculator"
       className="bg-background text-on-surface font-body px-4 md:px-8 py-8"
     >
-      <header className="mb-10 max-w-6xl mx-auto">
+      <div className="mb-10 max-w-6xl mx-auto">
         <span className="font-label text-primary uppercase tracking-[0.2em] text-[0.7rem] block mb-2">
           Recipe Configuration
         </span>
         <h1 className="font-headline text-4xl md:text-5xl text-on-surface leading-tight mb-2 italic">
           Baker's Percentage Calculator
         </h1>
-      </header>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
         <section className="md:col-span-7 space-y-10">

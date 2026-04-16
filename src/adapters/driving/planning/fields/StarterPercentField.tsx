@@ -1,6 +1,5 @@
 import type { ClampResult } from '../../../../domain/InputRanges'
 import { useNumberInput } from '../../../../design-system/headless/useNumberInput'
-import { tokens } from '../../../../design-system/tokens'
 import { StarterPercentClampNote } from '../ClampNote'
 
 export function StarterPercentField({
@@ -23,7 +22,7 @@ export function StarterPercentField({
   })
 
   return (
-    <div style={{ marginBottom: tokens.spacing.md }}>
+    <div className="mb-4">
       <label>
         Starter (%) <input {...input.getInputProps()} />
       </label>

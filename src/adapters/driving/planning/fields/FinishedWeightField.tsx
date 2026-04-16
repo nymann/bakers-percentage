@@ -1,6 +1,5 @@
 import type { ClampResult } from '../../../../domain/InputRanges'
 import { useNumberInput } from '../../../../design-system/headless/useNumberInput'
-import { tokens } from '../../../../design-system/tokens'
 import { ClampNote } from '../ClampNote'
 
 export function FinishedWeightField({
@@ -19,7 +18,7 @@ export function FinishedWeightField({
   const input = useNumberInput({ value: weight, onChange, resetKey })
 
   return (
-    <div style={{ marginBottom: tokens.spacing.md }}>
+    <div className="mb-4">
       <label>
         Finished weight (g) <input {...input.getInputProps()} />
       </label>
