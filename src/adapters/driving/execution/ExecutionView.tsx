@@ -5,6 +5,7 @@ import { useNow } from '../../../design-system/headless/useNow'
 import { cn } from '../../../design-system/lib/utils'
 import { formatRelative, relativeTo } from '../../../domain/Bake'
 import { formatBakeScheduleTime } from './format'
+import { BakingGuidance } from './BakingGuidance'
 
 const CHECKLIST_HEADING_ID = 'execution-step-checklist'
 const ARC_HEADING_ID = 'execution-progress-arc'
@@ -111,6 +112,8 @@ export function ExecutionView({ onBakeFinished }: ExecutionViewProps = {}) {
           </ul>
         )}
       </section>
+
+      <BakingGuidance />
 
       <section
         aria-labelledby={ARC_HEADING_ID}

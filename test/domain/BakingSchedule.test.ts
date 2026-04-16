@@ -6,14 +6,26 @@ describe('SameDaySchedule at 24C', () => {
   const bakeTime = new Date('2026-04-16T18:00:00')
   const events = new SameDaySchedule(bakeTime, bulkHours(24)).events
 
-  it('returns 7 events (no cold retard steps)', () => {
-    expect(events).toHaveLength(7)
+  it('returns 4 events (no cold retard, no oven estimates)', () => {
+    expect(events).toHaveLength(4)
   })
 
   it('omits cold retard events', () => {
     const names = events.map(e => e.name)
     expect(names).not.toContain('Refrigerate')
     expect(names).not.toContain('Remove from fridge')
+  })
+
+  it('omits pseudoscientific oven events', () => {
+    const names = events.map(e => e.name)
+    expect(names).not.toContain('Preheat oven')
+    expect(names).not.toContain('Out of oven')
+    expect(names).not.toContain('Ready to eat')
+  })
+
+  it('ends at the bake event', () => {
+    expect(events[events.length - 1].name).toBe('Bake')
+    expect(events[events.length - 1].time).toEqual(bakeTime)
   })
 
   it('places "Feed your starter" at mix minus 10h', () => {
@@ -30,34 +42,14 @@ describe('SameDaySchedule at 24C', () => {
     const shape = events.find(e => e.name === 'Shape')!
     expect(shape.time).toEqual(new Date('2026-04-16T18:00:00'))
   })
-
-  it('places "Preheat oven" at bake minus 45m', () => {
-    const preheat = events.find(e => e.name === 'Preheat oven')!
-    expect(preheat.time).toEqual(new Date('2026-04-16T17:15:00'))
-  })
-
-  it('places "Bake" at bake time', () => {
-    const bake = events.find(e => e.name === 'Bake')!
-    expect(bake.time).toEqual(bakeTime)
-  })
-
-  it('places "Out of oven" at bake plus 45m', () => {
-    const outOfOven = events.find(e => e.name === 'Out of oven')!
-    expect(outOfOven.time).toEqual(new Date('2026-04-16T18:45:00'))
-  })
-
-  it('places "Ready to eat" at bake plus 1h15m', () => {
-    const ready = events.find(e => e.name === 'Ready to eat')!
-    expect(ready.time).toEqual(new Date('2026-04-16T19:15:00'))
-  })
 })
 
 describe('YeastSchedule', () => {
   const bakeTime = new Date('2026-04-16T18:00:00')
   const events = new YeastSchedule(bakeTime).events
 
-  it('returns 8 events', () => {
-    expect(events).toHaveLength(8)
+  it('returns 5 events', () => {
+    expect(events).toHaveLength(5)
   })
 
   it('has no starter feed event', () => {
@@ -69,6 +61,13 @@ describe('YeastSchedule', () => {
     const names = events.map(e => e.name)
     expect(names).not.toContain('Refrigerate')
     expect(names).not.toContain('Remove from fridge')
+  })
+
+  it('omits pseudoscientific oven events', () => {
+    const names = events.map(e => e.name)
+    expect(names).not.toContain('Preheat oven')
+    expect(names).not.toContain('Out of oven')
+    expect(names).not.toContain('Ready to eat')
   })
 
   it('places "Mix dough" at bake minus 4h45m', () => {
@@ -91,24 +90,9 @@ describe('YeastSchedule', () => {
     expect(secondRise.time).toEqual(new Date('2026-04-16T14:45:00'))
   })
 
-  it('places "Preheat oven" at bake minus 45m', () => {
-    const preheat = events.find(e => e.name === 'Preheat oven')!
-    expect(preheat.time).toEqual(new Date('2026-04-16T17:15:00'))
-  })
-
-  it('places "Bake" at bake time', () => {
-    const bake = events.find(e => e.name === 'Bake')!
-    expect(bake.time).toEqual(bakeTime)
-  })
-
-  it('places "Out of oven" at bake plus 45m', () => {
-    const outOfOven = events.find(e => e.name === 'Out of oven')!
-    expect(outOfOven.time).toEqual(new Date('2026-04-16T18:45:00'))
-  })
-
-  it('places "Ready to eat" at bake plus 1h15m', () => {
-    const ready = events.find(e => e.name === 'Ready to eat')!
-    expect(ready.time).toEqual(new Date('2026-04-16T19:15:00'))
+  it('ends at the bake event', () => {
+    expect(events[events.length - 1].name).toBe('Bake')
+    expect(events[events.length - 1].time).toEqual(bakeTime)
   })
 })
 
@@ -146,8 +130,8 @@ describe('ColdRetardSchedule at 24C', () => {
   const bakeTime = new Date('2026-04-17T09:00:00')
   const events = new ColdRetardSchedule(bakeTime, bulkHours(24), 24).events
 
-  it('returns 9 events', () => {
-    expect(events).toHaveLength(9)
+  it('returns 6 events', () => {
+    expect(events).toHaveLength(6)
   })
 
   it('returns events in chronological order', () => {
@@ -176,28 +160,13 @@ describe('ColdRetardSchedule at 24C', () => {
     expect(refrigerate.time).toEqual(new Date('2026-04-16T12:30:00'))
   })
 
-  it('places "Remove from fridge" at bake minus 1h15m', () => {
+  it('places "Remove from fridge" at bake minus 30m (tempering only)', () => {
     const remove = events.find(e => e.name === 'Remove from fridge')!
-    expect(remove.time).toEqual(new Date('2026-04-17T07:45:00'))
+    expect(remove.time).toEqual(new Date('2026-04-17T08:30:00'))
   })
 
-  it('places "Preheat oven" at bake minus 45m', () => {
-    const preheat = events.find(e => e.name === 'Preheat oven')!
-    expect(preheat.time).toEqual(new Date('2026-04-17T08:15:00'))
-  })
-
-  it('places "Bake" at bake time', () => {
-    const bake = events.find(e => e.name === 'Bake')!
-    expect(bake.time).toEqual(bakeTime)
-  })
-
-  it('places "Out of oven" at bake plus 45m', () => {
-    const outOfOven = events.find(e => e.name === 'Out of oven')!
-    expect(outOfOven.time).toEqual(new Date('2026-04-17T09:45:00'))
-  })
-
-  it('places "Ready to eat" at bake plus 1h15m', () => {
-    const ready = events.find(e => e.name === 'Ready to eat')!
-    expect(ready.time).toEqual(new Date('2026-04-17T10:15:00'))
+  it('ends at the bake event', () => {
+    expect(events[events.length - 1].name).toBe('Bake')
+    expect(events[events.length - 1].time).toEqual(bakeTime)
   })
 })

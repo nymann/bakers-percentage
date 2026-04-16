@@ -11,9 +11,9 @@ describe('useBakingSchedule', () => {
       useBakingSchedule(bakeTime, 'sourdough', strategy),
     )
 
-    expect(result.current).toHaveLength(9)
+    expect(result.current).toHaveLength(6)
     expect(result.current[0].name).toBe('Feed your starter')
-    expect(result.current[result.current.length - 1].name).toBe('Ready to eat')
+    expect(result.current[result.current.length - 1].name).toBe('Bake')
   })
 
   it('memoizes result when inputs are stable', () => {

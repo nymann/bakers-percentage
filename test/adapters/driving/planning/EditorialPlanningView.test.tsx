@@ -366,14 +366,14 @@ function fireEventExpandSchedule() {
   }
 }
 
-function outOfOvenTimeText(): string {
+function bakeEventTimeText(): string {
   const arc = screen.getByRole('region', { name: /baking schedule/i })
   const item = within(arc)
     .getAllByRole('listitem')
-    .find((li) => li.textContent?.includes('Out of oven'))
-  if (!item) throw new Error('Out of oven event not found')
+    .find((li) => /^Bake\d/.test(li.textContent ?? ''))
+  if (!item) throw new Error('Bake event not found')
   const match = item.textContent?.match(/\d{2}:\d{2}/)
-  if (!match) throw new Error('Out of oven time not found')
+  if (!match) throw new Error('Bake event time not found')
   return match[0]
 }
 
@@ -389,22 +389,22 @@ function signedMinutesDelta(after: string, before: string): number {
   return delta
 }
 
-describe('Scenario 14-02: bake handle shifts out-of-oven time', () => {
-  it('moving the bake handle 60 minutes later advances out-of-oven by 60 minutes', () => {
+describe('Scenario 14-02: bake handle shifts bake event time', () => {
+  it('moving the bake handle 60 minutes later advances the bake event by 60 minutes', () => {
     renderEditorial()
     fireEventExpandSchedule()
 
     const bakeSlider = screen.getByRole('slider', {
       name: /bake handle/i,
     }) as HTMLInputElement
-    const before = outOfOvenTimeText()
+    const before = bakeEventTimeText()
     const beforeValueText = bakeSlider.getAttribute('aria-valuetext')
 
     fireEvent.change(bakeSlider, {
       target: { value: String(Number(bakeSlider.value) + 60) },
     })
 
-    const after = outOfOvenTimeText()
+    const after = bakeEventTimeText()
     let delta = minutesOfDay(after) - minutesOfDay(before)
     if (delta < 0) delta += 24 * 60
     expect(delta).toBe(60)
