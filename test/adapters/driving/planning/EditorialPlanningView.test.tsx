@@ -868,6 +868,32 @@ describe('Scenario 16-01: long yeast duration shows refrigerate event', () => {
   })
 })
 
+describe('Scenario 16-02: long yeast duration stays in the green zone', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 3, 16, 10, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('14h duration on dry yeast at 22°C announces green zone with no warning', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderEditorial()
+
+    const fermentGroup = screen.getByRole('radiogroup', { name: /fermentation path/i })
+    await user.click(within(fermentGroup).getByRole('radio', { name: /dry yeast/i }))
+
+    const tempInput = screen.getByRole('spinbutton', { name: /room temperature/i }) as HTMLInputElement
+    fireEvent.change(tempInput, { target: { value: '22' } })
+    fireEvent.blur(tempInput)
+
+    expect(screen.getByRole('status')).toHaveTextContent(/green/i)
+    expect(screen.queryByText(/over-proof/i)).not.toBeInTheDocument()
+  })
+})
+
 describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
