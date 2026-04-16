@@ -38,6 +38,7 @@ function renderApp(overrides: FlagOverrides = {}) {
     'baking-schedule': true,
     'visual-timeline': true,
     'editorial-shell': false,
+    'editorial-planning': false,
     ...overrides,
   })
   return render(

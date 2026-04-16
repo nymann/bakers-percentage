@@ -23,10 +23,13 @@ import { BakeTimeField } from './fields/BakeTimeField'
 import { TimelineField } from './fields/TimelineField'
 import { IngredientTable } from './fields/IngredientTable'
 import { BakingScheduleTable } from './fields/BakingScheduleTable'
+import { EditorialPlanningView } from './EditorialPlanningView'
 
 export function RecipeCalculator() {
   const enabled = useFeatureFlag('yeast-recipe-calculator')
+  const editorialEnabled = useFeatureFlag('editorial-planning')
   if (!enabled) return null
+  if (editorialEnabled) return <EditorialPlanningView />
 
   return <RecipeCalculatorView />
 }
