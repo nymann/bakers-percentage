@@ -267,11 +267,26 @@ describe('Scenario 08: baking schedule arc preview', () => {
   })
 })
 
-describe('Scenario 09: bake time datetime input preserved', () => {
-  it('renders datetime-local bake time input', () => {
+describe('Scenario 14-01: timeline replaces bake time for sourdough', () => {
+  it('renders a mix handle slider on the fermentation timeline', () => {
     renderEditorial()
 
-    const bakeTime = screen.getByLabelText(/bake time/i)
-    expect(bakeTime).toHaveAttribute('type', 'datetime-local')
+    expect(
+      screen.getByRole('slider', { name: /mix handle/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('renders a bake handle slider on the fermentation timeline', () => {
+    renderEditorial()
+
+    expect(
+      screen.getByRole('slider', { name: /bake handle/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('does not render the legacy bake time datetime input when sourdough', () => {
+    renderEditorial()
+
+    expect(screen.queryByLabelText(/bake time/i)).not.toBeInTheDocument()
   })
 })

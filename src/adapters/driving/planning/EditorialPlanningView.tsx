@@ -3,6 +3,7 @@ import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCal
 import { useFermentationZone } from '../../../application/use-cases/useFermentationZone'
 import { useStarterRecommendation } from '../../../application/use-cases/useStarterRecommendation'
 import { useBakeTime } from '../../../application/use-cases/useBakeTime'
+import { useTimeline } from '../../../application/use-cases/useTimeline'
 import { useBakingSchedule } from '../../../application/use-cases/useBakingSchedule'
 import { SegmentedSelector } from '../../../design-system/atoms/SegmentedSelector'
 import { ToggleCard } from '../../../design-system/atoms/ToggleCard'
@@ -68,15 +69,17 @@ export function EditorialPlanningView() {
   const fermentation = useFermentationZone(doughTemperature, hydration)
   const { changeFermentationDuration } = fermentation
   const bakeTime = useBakeTime(fermentation.duration)
+  const timeline = useTimeline()
 
   const autoRecommendActive = leavingType === 'sourdough'
-  const effectiveDuration = autoRecommendActive ? bakeTime.duration : fermentation.duration
+  const effectiveBakeTime = autoRecommendActive ? timeline.bakeTime : bakeTime.bakeTime
+  const effectiveDuration = autoRecommendActive ? timeline.duration : fermentation.duration
 
   useEffect(() => {
     if (autoRecommendActive) {
-      changeFermentationDuration(bakeTime.duration)
+      changeFermentationDuration(timeline.duration)
     }
-  }, [autoRecommendActive, bakeTime.duration, changeFermentationDuration])
+  }, [autoRecommendActive, timeline.duration, changeFermentationDuration])
 
   const recommendation = useStarterRecommendation(
     doughTemperature,
@@ -91,7 +94,7 @@ export function EditorialPlanningView() {
   }, [autoRecommendActive, recommendation.effectivePercent, changeStarterPercent])
 
   const schedule = useBakingSchedule(
-    bakeTime.bakeTime,
+    effectiveBakeTime,
     leavingType,
     leavingType === 'sourdough' ? recommendation.effectiveStrategy : null,
   )
@@ -218,15 +221,19 @@ export function EditorialPlanningView() {
             />
           )}
 
-          <BakeTimeField
-            bakeTime={bakeTime.bakeTime}
-            onChange={bakeTime.changeBakeTime}
-          />
+          {leavingType === 'yeast' && (
+            <BakeTimeField
+              bakeTime={bakeTime.bakeTime}
+              onChange={bakeTime.changeBakeTime}
+            />
+          )}
 
           {showSourdoughAdvanced && (
-            <div role="status" className="font-label text-xs uppercase tracking-wider text-on-surface-variant">
-              {fermentation.zone}
-            </div>
+            <FermentationTimeline
+              mixHandleProps={timeline.getMixHandleProps()}
+              bakeHandleProps={timeline.getBakeHandleProps()}
+              zone={fermentation.zone}
+            />
           )}
         </section>
 
@@ -426,6 +433,46 @@ function HydrationSegmentedField({
           />
         </div>
       )}
+    </div>
+  )
+}
+
+type TimelineHandleProps = ReturnType<ReturnType<typeof useTimeline>['getMixHandleProps']>
+
+function FermentationTimeline({
+  mixHandleProps,
+  bakeHandleProps,
+  zone,
+}: {
+  mixHandleProps: TimelineHandleProps
+  bakeHandleProps: TimelineHandleProps
+  zone: 'green' | 'yellow' | 'red'
+}) {
+  return (
+    <div className="mb-4">
+      <label className="block mb-2">
+        <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-2">
+          Mix handle
+        </span>
+        <input
+          {...mixHandleProps}
+          aria-label="Mix handle"
+          className="w-full"
+        />
+      </label>
+      <label className="block mb-2">
+        <span className="font-label text-[0.75rem] uppercase tracking-widest text-on-surface-variant block mb-2">
+          Bake handle
+        </span>
+        <input
+          {...bakeHandleProps}
+          aria-label="Bake handle"
+          className="w-full"
+        />
+      </label>
+      <div role="status" className="font-label text-xs uppercase tracking-wider text-on-surface-variant">
+        {zone}
+      </div>
     </div>
   )
 }
