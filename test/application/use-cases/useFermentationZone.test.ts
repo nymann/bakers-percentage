@@ -41,4 +41,26 @@ describe('useFermentationZone', () => {
     expect(result.current.duration).toBe(1)
     expect(result.current.clampNote.clamped).toBe(true)
   })
+
+  it('exposes zone boundaries in hours for current temperature and hydration', () => {
+    const { result } = renderHook(() => useFermentationZone(24, 0.75))
+
+    expect(result.current.boundaries).toEqual({
+      greenLow: 6,
+      greenHigh: 24,
+      yellowLow: 4,
+      yellowHigh: 36,
+    })
+  })
+
+  it('recomputes boundaries when temperature changes', () => {
+    const { result, rerender } = renderHook(
+      ({ temp }) => useFermentationZone(temp, 0.75),
+      { initialProps: { temp: 24 } },
+    )
+
+    const at24 = result.current.boundaries
+    rerender({ temp: 30 })
+    expect(result.current.boundaries).not.toEqual(at24)
+  })
 })

@@ -233,6 +233,7 @@ export function EditorialPlanningView() {
               mixHandleProps={timeline.getMixHandleProps()}
               bakeHandleProps={timeline.getBakeHandleProps()}
               zone={fermentation.zone}
+              boundaries={fermentation.boundaries}
             />
           )}
         </section>
@@ -443,11 +444,14 @@ function FermentationTimeline({
   mixHandleProps,
   bakeHandleProps,
   zone,
+  boundaries,
 }: {
   mixHandleProps: TimelineHandleProps
   bakeHandleProps: TimelineHandleProps
   zone: 'green' | 'yellow' | 'red'
+  boundaries: import('../../../domain/Fermentation').FermentationBoundaries
 }) {
+  const { greenLow, greenHigh, yellowLow, yellowHigh } = boundaries
   return (
     <div className="mb-4">
       <label className="block mb-2">
@@ -470,6 +474,29 @@ function FermentationTimeline({
           className="w-full"
         />
       </label>
+      <div
+        role="presentation"
+        aria-label="Fermentation zones"
+        className="relative h-3 mb-2 rounded bg-surface-container-low overflow-hidden"
+      >
+        <div
+          role="img"
+          aria-label={`Red zone – unsafe below ${yellowLow}h or above ${yellowHigh}h`}
+          className="absolute inset-0 bg-red-300/40"
+        />
+        <div
+          role="img"
+          aria-label={`Yellow zone – cautionary ${yellowLow}h to ${greenLow}h and ${greenHigh}h to ${yellowHigh}h`}
+          className="absolute inset-y-0 bg-yellow-300/50"
+          style={{ left: `${(yellowLow / 48) * 100}%`, right: `${((48 - yellowHigh) / 48) * 100}%` }}
+        />
+        <div
+          role="img"
+          aria-label={`Green zone – ideal ${greenLow}h to ${greenHigh}h`}
+          className="absolute inset-y-0 bg-green-300/60"
+          style={{ left: `${(greenLow / 48) * 100}%`, right: `${((48 - greenHigh) / 48) * 100}%` }}
+        />
+      </div>
       <div role="status" className="font-label text-xs uppercase tracking-wider text-on-surface-variant">
         {zone}
       </div>

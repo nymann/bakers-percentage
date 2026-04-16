@@ -381,6 +381,34 @@ describe('Scenario 14-03: mix handle adjusts fermentation duration', () => {
   })
 })
 
+describe('Scenario 14-04: zone bands render on the track', () => {
+  it('renders three fermentation zone bands with green, yellow, and red accessible names', () => {
+    renderEditorial()
+
+    const zones = screen.getByLabelText(/fermentation zones/i)
+    const bands = within(zones).getAllByRole('img')
+    expect(bands).toHaveLength(3)
+
+    const names = bands.map((b) => (b.getAttribute('aria-label') ?? '').toLowerCase())
+    expect(names.some((n) => /green|ideal|safe/.test(n))).toBe(true)
+    expect(names.some((n) => /yellow|cautionary/.test(n))).toBe(true)
+    expect(names.some((n) => /red|unsafe/.test(n))).toBe(true)
+  })
+
+  it('band accessible names carry boundaries from useFermentationZone (24°C, 75%)', () => {
+    renderEditorial()
+
+    const zones = screen.getByLabelText(/fermentation zones/i)
+    const bands = within(zones).getAllByRole('img')
+    const byColor = (re: RegExp) =>
+      bands.find((b) => re.test(b.getAttribute('aria-label') ?? ''))
+    // default 24°C, 75% → greenLow=6, greenHigh=24, yellowLow=4, yellowHigh=36
+    expect(byColor(/green/i)?.getAttribute('aria-label')).toMatch(/6.*24/)
+    expect(byColor(/yellow/i)?.getAttribute('aria-label')).toMatch(/4|36/)
+    expect(byColor(/red/i)?.getAttribute('aria-label')).toMatch(/4|36/)
+  })
+})
+
 function starterRowGrams(table: HTMLElement): string {
   const rows = within(table).getAllByRole('row')
   const starter = rows.find(
