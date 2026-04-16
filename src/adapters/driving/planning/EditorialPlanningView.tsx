@@ -822,15 +822,15 @@ function FermentationTimeline({
         </div>
       </div>
 
-      <div className="flex items-baseline gap-2">
+      <div role="status" className="flex items-baseline justify-between gap-2">
         <span className="font-headline text-2xl italic text-on-surface">
           {formatHours(duration)}
         </span>
-        <span
-          role="status"
-          className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant"
-        >
-          {ZONE_LABELS[zone]} · {zone}
+        <span className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant">
+          {ZONE_LABELS[zone]}
+        </span>
+        <span className="font-label text-[0.7rem] uppercase tracking-widest text-on-surface-variant">
+          {zone}
         </span>
       </div>
       {warning && (
