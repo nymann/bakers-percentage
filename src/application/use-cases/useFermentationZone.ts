@@ -48,15 +48,14 @@ export function useFermentationZone(
   const yeastType: YeastType | null = isYeast ? context.yeastType : null
   const salt = isYeast ? context.salt : 0
 
-  const autoYeastTempC =
-    isYeast && duration > YEAST_SAME_DAY_MAX_HOURS ? FRIDGE_TEMP : tempC
+  const isYeastRetard = isYeast && duration > YEAST_SAME_DAY_MAX_HOURS
 
   const strategy = useMemo(
     () =>
       isYeast && yeastType !== null
-        ? createYeastFermentation(duration, autoYeastTempC, yeastType, salt)
+        ? createYeastFermentation(duration, tempC, yeastType, salt, isYeastRetard)
         : Fermentation.create(tempC, tempC, hydration, duration),
-    [duration, tempC, autoYeastTempC, hydration, isYeast, yeastType, salt],
+    [duration, tempC, hydration, isYeast, isYeastRetard, yeastType, salt],
   )
 
   const zone = strategy.zone
@@ -65,9 +64,9 @@ export function useFermentationZone(
   const boundaries = useMemo(
     () =>
       isYeast
-        ? yeastFermentationBoundaries(autoYeastTempC)
+        ? yeastFermentationBoundaries(isYeastRetard ? FRIDGE_TEMP : tempC)
         : fermentationBoundaries(tempC, hydration),
-    [tempC, autoYeastTempC, hydration, isYeast],
+    [tempC, hydration, isYeast, isYeastRetard],
   )
 
   const changeFermentationDuration = useCallback((hours: number) => {

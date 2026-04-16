@@ -228,52 +228,60 @@ export class YeastFermentation implements FermentationStrategy {
   }
 }
 
-// Cold-retard yeast: at fridge temperatures yeast keeps fermenting (unlike
-// LAB-only retard). Uses the same Q10 model extended to ~4 °C — yeast
-// doesn't stop, just slows ~8×. No bloom step in the schedule.
+const YEAST_RETARD_BULK_HOURS = 1.5
+
+// Cold-retard yeast: short bulk at ambient, then fridge overnight. The inoculum
+// integrates yeast progress across both stages, so a 14 h retard needs far less
+// yeast than plugging 14 h into the single-temp Q10 formula would suggest.
+// No bloom step in the schedule.
 export class YeastRetardFermentation implements FermentationStrategy {
   readonly method = 'yeast-retard' as const
   readonly totalHours: number
-  readonly tempC: number
+  readonly ambientC: number
   readonly yeastType: YeastType
   readonly salt: number
 
-  constructor(totalHours: number, tempC: number, yeastType: YeastType, salt: number = SALT_REF) {
+  constructor(totalHours: number, ambientC: number, yeastType: YeastType, salt: number = SALT_REF) {
     this.totalHours = totalHours
-    this.tempC = tempC
+    this.ambientC = ambientC
     this.yeastType = yeastType
     this.salt = salt
   }
 
   get inoculumPercent(): number {
-    const tempFactor = yeastTempFactor(this.tempC)
+    const bulkHours = Math.min(YEAST_RETARD_BULK_HOURS, this.totalHours)
+    const retardHours = Math.max(0, this.totalHours - bulkHours)
+    const progressPerHourAt = (tempC: number) => 1 / yeastTempFactor(tempC)
+    const referenceHours =
+      bulkHours * progressPerHourAt(this.ambientC) +
+      retardHours * progressPerHourAt(FRIDGE_TEMP)
     const saltFactor = yeastSaltFactor(this.salt)
-    const idy = YEAST_PCT_REF * (YEAST_TIME_REF / this.totalHours) * tempFactor * saltFactor
+    const idy = YEAST_PCT_REF * (YEAST_TIME_REF / referenceHours) * saltFactor
     return this.yeastType === 'fresh' ? idy * FRESH_TO_IDY_RATIO : idy
   }
 
   get zone(): FermentationZone {
-    return assessYeastZone(this.totalHours, this.tempC).zone
+    return assessYeastZone(this.totalHours, FRIDGE_TEMP).zone
   }
 
   get warning(): string | null {
-    return assessYeastZone(this.totalHours, this.tempC).warning
+    return assessYeastZone(this.totalHours, FRIDGE_TEMP).warning
   }
 
   schedule(bakeTime: Date): ScheduleEvent[] {
-    // Reuse ColdRetardSchedule shape; bulk happens at ambient before fridge.
-    return new ColdRetardSchedule(bakeTime, 1.5, this.totalHours).events
+    return new ColdRetardSchedule(bakeTime, YEAST_RETARD_BULK_HOURS, this.totalHours).events
   }
 }
 
 export function createYeastFermentation(
   totalHours: number,
-  tempC: number,
+  ambientC: number,
   yeastType: YeastType,
   salt: number,
+  retardMode: boolean = false,
 ): FermentationStrategy {
-  if (tempC < COLD_THRESHOLD) {
-    return new YeastRetardFermentation(totalHours, tempC, yeastType, salt)
+  if (retardMode || ambientC < COLD_THRESHOLD) {
+    return new YeastRetardFermentation(totalHours, ambientC, yeastType, salt)
   }
-  return new YeastFermentation(totalHours, tempC, yeastType, salt)
+  return new YeastFermentation(totalHours, ambientC, yeastType, salt)
 }
