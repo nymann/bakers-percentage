@@ -15,15 +15,26 @@ export interface BakingSchedule {
   readonly events: ScheduleEvent[]
 }
 
+export interface ColdRetardScheduleOptions {
+  readonly includeStarterFeed?: boolean
+}
+
 export class ColdRetardSchedule implements BakingSchedule {
   readonly bakeTime: Date
   readonly bulkHours: number
   readonly totalHours: number
+  readonly includeStarterFeed: boolean
 
-  constructor(bakeTime: Date, bulkHours: number, totalHours: number) {
+  constructor(
+    bakeTime: Date,
+    bulkHours: number,
+    totalHours: number,
+    options: ColdRetardScheduleOptions = {},
+  ) {
     this.bakeTime = bakeTime
     this.bulkHours = bulkHours
     this.totalHours = totalHours
+    this.includeStarterFeed = options.includeStarterFeed ?? true
   }
 
   get events(): ScheduleEvent[] {
@@ -33,14 +44,18 @@ export class ColdRetardSchedule implements BakingSchedule {
     const refrigerateTime = offsetMinutes(shapeTime, SHAPE_MIN)
     const removeTime = offsetMinutes(this.bakeTime, -TEMPERING_MIN)
 
-    return [
-      { name: 'Feed your starter', time: feedTime },
+    const events: ScheduleEvent[] = []
+    if (this.includeStarterFeed) {
+      events.push({ name: 'Feed your starter', time: feedTime })
+    }
+    events.push(
       { name: 'Mix & bulk fermentation', time: mixTime },
       { name: 'Shape', time: shapeTime },
       { name: 'Refrigerate', time: refrigerateTime },
       { name: 'Remove from fridge', time: removeTime },
       { name: 'Bake', time: this.bakeTime },
-    ]
+    )
+    return events
   }
 }
 

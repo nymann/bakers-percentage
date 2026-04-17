@@ -268,7 +268,9 @@ export class YeastRetardFermentation implements FermentationStrategy {
   }
 
   schedule(bakeTime: Date): ScheduleEvent[] {
-    return new ColdRetardSchedule(bakeTime, YEAST_RETARD_BULK_HOURS, this.totalHours).events
+    return new ColdRetardSchedule(bakeTime, YEAST_RETARD_BULK_HOURS, this.totalHours, {
+      includeStarterFeed: false,
+    }).events
   }
 }
 

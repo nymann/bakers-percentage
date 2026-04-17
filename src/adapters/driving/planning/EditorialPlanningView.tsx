@@ -10,7 +10,7 @@ import { useBakingSchedule } from '../../../application/use-cases/useBakingSched
 import { useActiveBatch } from '../../../application/use-cases/useActiveBatch'
 import { useBakeStorageValue } from '../../../use-bake-storage'
 import type { PlanningPreferences } from '../../../domain/PlanningPreferences'
-import { bakeNameFor, checklistForLeavening } from './startBake'
+import { bakeNameFor, checklistFor } from './startBake'
 import { Ledger, type LedgerRow } from '../../../design-system/molecules/Ledger'
 import { ArcPreview, type ArcStep } from '../../../design-system/molecules/ArcPreview'
 import { PillGroup, type PillOption } from '../../../design-system/atoms/PillGroup'
@@ -216,11 +216,9 @@ export function EditorialPlanningView({
     changeYeastPercent(fermentation.strategy.inoculumPercent)
   }, [leavingType, fermentation.strategy, changeYeastPercent])
 
-  const schedule = useBakingSchedule(
-    effectiveBakeTime,
-    leavingType,
-    leavingType === 'sourdough' ? recommendation.effectiveStrategy : fermentation.strategy,
-  )
+  const activeStrategy =
+    leavingType === 'sourdough' ? recommendation.effectiveStrategy : fermentation.strategy
+  const schedule = useBakingSchedule(effectiveBakeTime, leavingType, activeStrategy)
 
   const selectedWeightPreset: WeightPresetValue | null =
     WEIGHT_PRESETS.find((p) => p.grams === recipe.finishedWeightPerLoaf)?.value ?? null
@@ -282,7 +280,7 @@ export function EditorialPlanningView({
         name: ev.name,
         timeMs: ev.time.getTime(),
       })),
-      checklistLabels: checklistForLeavening(leavingType),
+      checklistLabels: checklistFor(activeStrategy?.method ?? 'same-day'),
       preferences,
       now: new Date(),
     })

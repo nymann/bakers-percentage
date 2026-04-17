@@ -115,3 +115,145 @@ describe('useActiveBatch: seeded active bake', () => {
     expect(result.current.batch?.checklist[0]?.checked).toBe(true)
   })
 })
+
+describe('useActiveBatch: oven type selection', () => {
+  it('stores the selected oven type on the active bake', () => {
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), {
+      wrapper: withTestProviders(),
+    })
+
+    act(() => result.current.startBake(startInput()))
+    act(() => result.current.selectOvenType('dutch-oven'))
+
+    expect(result.current.batch?.ovenType).toBe('dutch-oven')
+  })
+
+  it('seeds oven type from user preferences on a new bake', () => {
+    const wrapper = withTestProviders()
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), { wrapper })
+
+    act(() => result.current.startBake(startInput()))
+    act(() => result.current.selectOvenType('stone-steel'))
+    act(() => result.current.finishBake(new Date(NOW.getTime() + 3600_000)))
+    act(() => result.current.startBake(startInput()))
+
+    expect(result.current.batch?.ovenType).toBe('stone-steel')
+  })
+})
+
+describe('useActiveBatch: preheat minutes', () => {
+  it('stores preheat minutes on the active bake', () => {
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), {
+      wrapper: withTestProviders(),
+    })
+
+    act(() => result.current.startBake(startInput()))
+    act(() => result.current.changePreheatMinutes(40))
+
+    expect(result.current.batch?.preheatMinutes).toBe(40)
+  })
+
+  it('seeds preheat minutes from preferences on a new bake', () => {
+    const wrapper = withTestProviders()
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), { wrapper })
+
+    act(() => result.current.startBake(startInput()))
+    act(() => result.current.changePreheatMinutes(55))
+    act(() => result.current.finishBake(new Date(NOW.getTime() + 3600_000)))
+    act(() => result.current.startBake(startInput()))
+
+    expect(result.current.batch?.preheatMinutes).toBe(55)
+  })
+})
+
+describe('useActiveBatch: bake phase derivations', () => {
+  it('reports bakePhaseStarted as false before the final event is reached', () => {
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), {
+      wrapper: withTestProviders(),
+    })
+
+    act(() => result.current.startBake(startInput()))
+
+    expect(result.current.bakePhaseStarted).toBe(false)
+  })
+
+  it('reports bakePhaseStarted as true once all prior events are completed', () => {
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), {
+      wrapper: withTestProviders(),
+    })
+
+    act(() => result.current.startBake(startInput()))
+    act(() => result.current.toggleEventCompletion(0))
+    act(() => result.current.toggleEventCompletion(1))
+
+    expect(result.current.bakePhaseStarted).toBe(true)
+  })
+
+  it('groups checklist entries by phase', () => {
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), {
+      wrapper: withTestProviders(),
+    })
+
+    act(() =>
+      result.current.startBake({
+        ...startInput(),
+        checklistLabels: [
+          { label: 'Fold 1', phase: 'Mix & bulk fermentation' },
+          { label: 'Fold 2', phase: 'Mix & bulk fermentation' },
+          { label: 'Score', phase: 'Bake' },
+        ],
+      }),
+    )
+
+    const byPhase = result.current.checklistByPhase
+    expect(byPhase.get('Mix & bulk fermentation')?.map((e) => e.item.label))
+      .toEqual(['Fold 1', 'Fold 2'])
+    expect(byPhase.get('Bake')?.map((e) => e.item.label)).toEqual(['Score'])
+  })
+
+  it('toggles a schedule event completion and advances current', () => {
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), {
+      wrapper: withTestProviders(),
+    })
+
+    act(() => result.current.startBake(startInput()))
+    act(() => result.current.toggleEventCompletion(0))
+
+    expect(result.current.progress.map((p) => p.status)).toEqual([
+      'done',
+      'current',
+      'upcoming',
+    ])
+
+    act(() => result.current.toggleEventCompletion(0))
+
+    expect(result.current.progress.map((p) => p.status)).toEqual([
+      'current',
+      'upcoming',
+      'upcoming',
+    ])
+  })
+
+  it('exposes focusSteps using a 10-minute cluster threshold', () => {
+    const schedule = [
+      { name: 'Mix', timeMs: NOW.getTime() },
+      { name: 'Fold 1', timeMs: NOW.getTime() + 5 * 60_000 },
+      { name: 'Shape', timeMs: NOW.getTime() + 6 * 3600_000 },
+    ]
+    const { result } = renderHook(() => useActiveBatch({ now: NOW }), {
+      wrapper: withTestProviders(),
+    })
+
+    act(() =>
+      result.current.startBake({
+        ...startInput(),
+        schedule,
+      }),
+    )
+
+    expect(result.current.focusSteps.map((s) => s.event.name)).toEqual([
+      'Mix',
+      'Fold 1',
+    ])
+  })
+})

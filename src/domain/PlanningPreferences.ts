@@ -1,4 +1,5 @@
 import type { HydrationPresetName } from './Hydration'
+import type { OvenType } from './Oven'
 import type { YeastType } from './Recipe'
 import type { LeavingType } from './SourdoughRecipe'
 
@@ -17,6 +18,8 @@ export type PlanningPreferences = {
   readonly starterPercent: number
   readonly starterHydration: number
   readonly doughTemperature: number
+  readonly ovenType?: OvenType
+  readonly preheatMinutes?: number
 }
 
 export const DEFAULT_PLANNING_PREFERENCES: PlanningPreferences = {

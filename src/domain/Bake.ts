@@ -1,3 +1,4 @@
+import type { OvenType } from './Oven'
 import type { PlanningPreferences } from './PlanningPreferences'
 
 export type Milliseconds = number
@@ -24,6 +25,7 @@ export type RecipeSnapshot = {
 export type ChecklistItem = {
   readonly label: string
   readonly checked: boolean
+  readonly phase?: string
 }
 
 export type ActiveBake = {
@@ -34,6 +36,9 @@ export type ActiveBake = {
   readonly schedule: readonly BakeScheduleEvent[]
   readonly checklist: readonly ChecklistItem[]
   readonly preferences?: PlanningPreferences
+  readonly ovenType?: OvenType
+  readonly preheatMinutes?: number
+  readonly completedEventIndices?: readonly number[]
 }
 
 export type FinishedBake = ActiveBake & {
@@ -46,21 +51,59 @@ export type ProgressStatus = 'done' | 'current' | 'upcoming'
 export type ProgressStep = {
   readonly event: BakeScheduleEvent
   readonly status: ProgressStatus
+  readonly index: number
+}
+
+export function focusSteps(
+  progress: readonly ProgressStep[],
+  thresholdMs: Milliseconds,
+): readonly ProgressStep[] {
+  if (progress.length === 0) return []
+
+  const currentIdx = progress.findIndex((p) => p.status === 'current')
+  const firstUpcomingIdx = progress.findIndex((p) => p.status === 'upcoming')
+  const anchorIdx = currentIdx >= 0 ? currentIdx : firstUpcomingIdx
+  if (anchorIdx < 0) return []
+
+  const focus: ProgressStep[] = [progress[anchorIdx]!]
+  let prev = progress[anchorIdx]!
+
+  for (let i = anchorIdx + 1; i < progress.length; i++) {
+    const step = progress[i]!
+    const isFirstAfterAnchor = focus.length === 1
+    const withinThreshold = step.event.timeMs - prev.event.timeMs <= thresholdMs
+    if (isFirstAfterAnchor || withinThreshold) {
+      focus.push(step)
+      prev = step
+      continue
+    }
+    break
+  }
+  return focus
 }
 
 export function scheduleProgress(
   schedule: readonly BakeScheduleEvent[],
-  nowMs: Milliseconds,
+  completedIndices: readonly number[] = [],
 ): readonly ProgressStep[] {
-  let currentIdx = -1
-  for (let i = 0; i < schedule.length; i++) {
-    if (schedule[i]!.timeMs <= nowMs) currentIdx = i
-  }
+  const completed = new Set(completedIndices)
+  const firstIncompleteIdx = schedule.findIndex((_, i) => !completed.has(i))
   return schedule.map((event, i) => {
-    if (i < currentIdx) return { event, status: 'done' as const }
-    if (i === currentIdx) return { event, status: 'current' as const }
-    return { event, status: 'upcoming' as const }
+    if (completed.has(i)) return { event, status: 'done' as const, index: i }
+    if (i === firstIncompleteIdx)
+      return { event, status: 'current' as const, index: i }
+    return { event, status: 'upcoming' as const, index: i }
   })
+}
+
+export function toggleEventCompletion(
+  completed: readonly number[],
+  index: number,
+): readonly number[] {
+  const set = new Set(completed)
+  if (set.has(index)) set.delete(index)
+  else set.add(index)
+  return [...set].sort((a, b) => a - b)
 }
 
 export function toggleChecklistItem(
@@ -97,16 +140,17 @@ export function relativeTo(
 }
 
 export function formatRelative(relative: RelativeTime): string {
-  if (relative.direction === 'now') return 'now'
-  const totalMinutes = Math.round(relative.deltaMs / 60_000)
-  if (totalMinutes < 1) {
-    return relative.direction === 'future' ? 'in <1m' : 'just now'
-  }
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  const parts: string[] = []
-  if (hours > 0) parts.push(`${hours}h`)
-  if (minutes > 0) parts.push(`${minutes}m`)
-  const body = parts.join(' ')
+  if (relative.direction === 'now' || relative.deltaMs < 1_000) return 'now'
+  const body = formatDeltaBody(relative.deltaMs)
   return relative.direction === 'future' ? `in ${body}` : `${body} ago`
+}
+
+function formatDeltaBody(deltaMs: Milliseconds): string {
+  const totalSeconds = Math.floor(deltaMs / 1_000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`
+  if (minutes > 0) return `${minutes}m ${seconds}s`
+  return `${seconds}s`
 }

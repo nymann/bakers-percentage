@@ -96,6 +96,27 @@ describe('YeastSchedule', () => {
   })
 })
 
+describe('ColdRetardSchedule without starter feed (yeast retard)', () => {
+  const bakeTime = new Date('2026-04-17T09:00:00')
+  const events = new ColdRetardSchedule(bakeTime, 1.5, 14, {
+    includeStarterFeed: false,
+  }).events
+
+  it('omits the starter feed event', () => {
+    expect(events.map((e) => e.name)).not.toContain('Feed your starter')
+  })
+
+  it('keeps the rest of the cold-retard events', () => {
+    expect(events.map((e) => e.name)).toEqual([
+      'Mix & bulk fermentation',
+      'Shape',
+      'Refrigerate',
+      'Remove from fridge',
+      'Bake',
+    ])
+  })
+})
+
 describe('starter feed tracks mix time', () => {
   const bakeTime = new Date('2026-04-17T09:00:00')
 
