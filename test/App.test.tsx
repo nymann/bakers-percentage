@@ -143,4 +143,20 @@ describe('Scenario 07: settings cogwheel in side nav opens the advanced dialog',
       screen.getByRole('dialog', { name: /advanced settings/i }),
     ).toBeInTheDocument()
   })
+
+  it('opens the advanced dialog from a non-planning view', async () => {
+    const user = userEvent.setup()
+    render(
+      <TestProviders flags={{ execution: true, history: true }}>
+        <AppContent />
+      </TestProviders>,
+    )
+
+    await user.click(screen.getByRole('tab', { name: /execution/i }))
+    await user.click(screen.getByRole('button', { name: /settings/i }))
+
+    expect(
+      screen.getByRole('dialog', { name: /advanced settings/i }),
+    ).toBeInTheDocument()
+  })
 })

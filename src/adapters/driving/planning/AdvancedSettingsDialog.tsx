@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import type { ClampResult } from '../../../domain/InputRanges'
 import { SaltField } from './fields/SaltField'
 import { BakeOffLossField } from './fields/BakeOffLossField'
@@ -71,7 +72,9 @@ export function AdvancedSettingsDialog(props: AdvancedSettingsDialogProps) {
     if (e.target === ref.current) props.onClose()
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <dialog
       ref={ref}
       aria-labelledby={titleId}
@@ -129,6 +132,7 @@ export function AdvancedSettingsDialog(props: AdvancedSettingsDialogProps) {
           </Section>
         )}
       </div>
-    </dialog>
+    </dialog>,
+    document.body,
   )
 }

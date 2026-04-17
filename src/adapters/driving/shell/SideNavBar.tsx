@@ -22,7 +22,7 @@ export function SideNavBar({ view, onOpenSettings }: SideNavBarProps) {
       aria-label="Primary shell"
       data-expanded={expanded}
       className={cn(
-        'relative flex flex-col min-h-screen sticky top-0 bg-surface-container-high shadow-[20px_0_40px_rgba(49,51,44,0.05)] transition-[width] duration-200 ease-in-out',
+        'relative flex flex-col h-screen sticky top-0 overflow-y-auto bg-surface-container-high shadow-[20px_0_40px_rgba(49,51,44,0.05)] transition-[width] duration-200 ease-in-out',
         expanded ? 'w-60 sm:w-72' : 'w-20',
       )}
     >
