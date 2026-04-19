@@ -8,6 +8,7 @@ import { EditorialShell } from './adapters/driving/shell/EditorialShell'
 const featureFlags = createInMemoryFeatureFlags({
   execution: true,
   history: true,
+  twoStepPlanning: true,
 })
 
 export function AppContent() {

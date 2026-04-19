@@ -1,4 +1,8 @@
 import { useEffect, useImperativeHandle, useMemo, useState, type ReactElement, type Ref } from 'react'
+import { useFeatureFlag } from '../../../use-feature-flag'
+import { usePlanningWizard, type UsePlanningWizard } from '../../../application/use-cases/usePlanningWizard'
+import { PlanningStepIndicator } from './PlanningStepIndicator'
+import { SetupStepPanel } from './SetupStepPanel'
 import { useRecipeCalculator } from '../../../application/use-cases/useRecipeCalculator'
 import {
   useFermentationZone,
@@ -289,70 +293,90 @@ export function EditorialPlanningView({
 
   const showSourdoughAdvanced = leavingType === 'sourdough'
 
+  const twoStepEnabled = useFeatureFlag('twoStepPlanning')
+  const wizard = usePlanningWizard()
+
+  const setupProps = {
+    selectedPreset: selectedWeightPreset,
+    weight: recipe.finishedWeightPerLoaf,
+    weightClampNote: clampNotes.finishedWeight,
+    onSelectPreset: (v: WeightPresetValue) =>
+      changeFinishedWeight(WEIGHT_PRESETS.find((p) => p.value === v)!.grams),
+    onChangeWeight: changeFinishedWeight,
+    loaves,
+    loavesClampNote: clampNotes.loaves,
+    onChangeLoaves: changeLoafCount,
+    fermentChoice,
+    onSelectFerment: selectFerment,
+    selectedHydration,
+    hydrationPercent: hydration,
+    onSelectHydrationPreset: selectHydrationPreset,
+    onUnlockCustomHydration: unlockCustomHydration,
+    onEnterCustomHydration: enterCustomHydration,
+  }
+
+  const compactSetupPanel = <RecipeControlsStrip {...setupProps} />
+  const expandedSetupPanel = <SetupStepPanel {...setupProps} />
+
+  const timingPanel = (
+    <>
+      <div className="grid gap-4 items-stretch grid-cols-1 md:[grid-template-columns:minmax(0,1fr)_minmax(22rem,28rem)]">
+        <div className="min-w-0 flex flex-col">
+          <FermentationTimeline
+            mixHandleProps={timeline.getMixHandleProps()}
+            bakeHandleProps={timeline.getBakeHandleProps()}
+            mixTimeLabel={formatScheduleTime(timeline.mixTime)}
+            bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
+            duration={timeline.duration}
+            zone={fermentation.zone}
+            warning={fermentation.warning}
+            boundaries={fermentation.boundaries}
+            roomTemperature={doughTemperature}
+            onChangeRoomTemperature={changeDoughTemperature}
+          />
+        </div>
+
+        <aside className="min-w-0">
+          <Ledger
+            rows={ledgerRows}
+            multiLoaf={loaves > 1}
+            totalDoughWeight={recipe.totalDoughWeight}
+            finishedLoafWeight={recipe.finishedWeightPerLoaf}
+            hydrationPercent={hydration}
+          />
+        </aside>
+      </div>
+
+      {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
+
+      {canStartBake && (
+        <div className="animate-slide-up-fade">
+          <StartBakeButton
+            onStart={handleStartBake}
+            hasActiveBake={activeBake !== null}
+          />
+        </div>
+      )}
+    </>
+  )
+
   return (
     <section
       aria-label="Recipe calculator"
       className="bg-background text-on-surface font-body animate-fade-in"
     >
-      <div className="space-y-4">
-        <RecipeControlsStrip
-          selectedPreset={selectedWeightPreset}
-          weight={recipe.finishedWeightPerLoaf}
-          weightClampNote={clampNotes.finishedWeight}
-          onSelectPreset={(v) =>
-            changeFinishedWeight(WEIGHT_PRESETS.find((p) => p.value === v)!.grams)
-          }
-          onChangeWeight={changeFinishedWeight}
-          loaves={loaves}
-          loavesClampNote={clampNotes.loaves}
-          onChangeLoaves={changeLoafCount}
-          fermentChoice={fermentChoice}
-          onSelectFerment={selectFerment}
-          selectedHydration={selectedHydration}
-          hydrationPercent={hydration}
-          onSelectHydrationPreset={selectHydrationPreset}
-          onUnlockCustomHydration={unlockCustomHydration}
-          onEnterCustomHydration={enterCustomHydration}
+      {twoStepEnabled ? (
+        <TwoStepLayout
+          wizard={wizard}
+          setup={expandedSetupPanel}
+          timing={timingPanel}
         />
-
-        <div className="grid gap-4 items-stretch grid-cols-1 md:[grid-template-columns:minmax(0,1fr)_minmax(22rem,28rem)]">
-          <div className="min-w-0 flex flex-col">
-            <FermentationTimeline
-              mixHandleProps={timeline.getMixHandleProps()}
-              bakeHandleProps={timeline.getBakeHandleProps()}
-              mixTimeLabel={formatScheduleTime(timeline.mixTime)}
-              bakeTimeLabel={formatScheduleTime(timeline.bakeTime)}
-              duration={timeline.duration}
-              zone={fermentation.zone}
-              warning={fermentation.warning}
-              boundaries={fermentation.boundaries}
-              roomTemperature={doughTemperature}
-              onChangeRoomTemperature={changeDoughTemperature}
-            />
-          </div>
-
-          <aside className="min-w-0">
-            <Ledger
-              rows={ledgerRows}
-              multiLoaf={loaves > 1}
-              totalDoughWeight={recipe.totalDoughWeight}
-              finishedLoafWeight={recipe.finishedWeightPerLoaf}
-              hydrationPercent={hydration}
-            />
-          </aside>
+      ) : (
+        <div className="space-y-4">
+          {compactSetupPanel}
+          {timingPanel}
         </div>
-
-        {arcSteps.length > 0 && <ArcPreview steps={arcSteps} />}
-
-        {canStartBake && (
-          <div className="animate-slide-up-fade">
-            <StartBakeButton
-              onStart={handleStartBake}
-              hasActiveBake={activeBake !== null}
-            />
-          </div>
-        )}
-      </div>
+      )}
 
       <AdvancedSettingsDialog
         isOpen={settingsOpen}
@@ -373,6 +397,57 @@ export function EditorialPlanningView({
         onChangeStarterPercent={handleStarterPercentChange}
       />
     </section>
+  )
+}
+
+function TwoStepLayout({
+  wizard,
+  setup,
+  timing,
+}: {
+  wizard: UsePlanningWizard
+  setup: ReactElement
+  timing: ReactElement
+}) {
+  const setupPanelProps = wizard.getSetupPanelProps()
+  const timingPanelProps = wizard.getTimingPanelProps()
+  const nextProps = wizard.getNextButtonProps()
+  const backProps = wizard.getBackButtonProps()
+
+  return (
+    <div className="space-y-4">
+      <PlanningStepIndicator wizard={wizard} />
+
+      <section {...setupPanelProps} className="space-y-4">
+        {setup}
+        <div className="flex justify-end">
+          <button
+            {...nextProps}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-label uppercase tracking-[0.18em] text-[0.75rem] shadow-[0_8px_20px_rgba(49,51,44,0.14)] hover:shadow-[0_12px_28px_rgba(49,51,44,0.2)] hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all"
+          >
+            Continue to timing
+            <span aria-hidden="true" className="material-symbols-outlined !text-[18px]">
+              arrow_forward
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section {...timingPanelProps} className="space-y-4">
+        <div className="flex">
+          <button
+            {...backProps}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-low text-on-surface-variant font-label uppercase tracking-widest text-[0.72rem] hover:bg-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined !text-[16px]">
+              arrow_back
+            </span>
+            Edit setup
+          </button>
+        </div>
+        {timing}
+      </section>
+    </div>
   )
 }
 
@@ -824,7 +899,7 @@ function FermentationTimeline({
   )
 }
 
-function CustomHydrationInput({
+export function CustomHydrationInput({
   percentage,
   onChange,
 }: {

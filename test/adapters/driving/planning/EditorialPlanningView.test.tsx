@@ -15,6 +15,17 @@ function renderEditorial(opts: { settingsOpen?: boolean } = {}) {
   )
 }
 
+function renderTwoStep(opts: { settingsOpen?: boolean } = {}) {
+  return render(
+    <TestProviders flags={{ twoStepPlanning: true }}>
+      <RecipeCalculator
+        settingsOpen={opts.settingsOpen ?? false}
+        onCloseSettings={() => {}}
+      />
+    </TestProviders>,
+  )
+}
+
 describe('RecipeCalculator renders the editorial layout', () => {
   it('renders the ingredient ledger', () => {
     renderEditorial()
@@ -1036,5 +1047,118 @@ describe('Scenario 15-08: over-proof yeast duration shows red zone warning', () 
 
     expect(screen.getByRole('status')).toHaveTextContent(/red/i)
     expect(screen.getByText(/over-proof/i)).toBeInTheDocument()
+  })
+})
+
+describe('Two-step planning flag: flag OFF keeps the single-screen layout', () => {
+  it('renders setup and timeline together with no step indicator', () => {
+    renderEditorial()
+
+    expect(
+      screen.getByRole('radiogroup', { name: /finished weight/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('slider', { name: /mix handle/i })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /continue to timing/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /edit setup/i }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Two-step planning flag: flag ON starts on the setup step', () => {
+  it('shows setup controls and hides the fermentation timeline', () => {
+    renderTwoStep()
+
+    expect(
+      screen.getByRole('radiogroup', { name: /finished weight/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('radiogroup', { name: /fermentation path/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('slider', { name: /mix handle/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('region', { name: /ingredient ledger/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('exposes a Continue to timing button and no Edit setup button', () => {
+    renderTwoStep()
+
+    expect(
+      screen.getByRole('button', { name: /continue to timing/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /edit setup/i }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Two-step planning flag: advancing to the timing step', () => {
+  it('clicking Continue reveals the timeline, ledger, and Back button', async () => {
+    const user = userEvent.setup()
+    renderTwoStep()
+
+    await user.click(screen.getByRole('button', { name: /continue to timing/i }))
+
+    expect(screen.getByRole('slider', { name: /mix handle/i })).toBeInTheDocument()
+    expect(screen.getByRole('slider', { name: /bake handle/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: /ingredient ledger/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /edit setup/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('hides the setup controls once on the timing step', async () => {
+    const user = userEvent.setup()
+    renderTwoStep()
+
+    await user.click(screen.getByRole('button', { name: /continue to timing/i }))
+
+    expect(
+      screen.queryByRole('radiogroup', { name: /finished weight/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('radiogroup', { name: /fermentation path/i }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Two-step planning flag: Back returns to setup with values preserved', () => {
+  it('Edit setup restores setup controls', async () => {
+    const user = userEvent.setup()
+    renderTwoStep()
+
+    await user.click(screen.getByRole('button', { name: /continue to timing/i }))
+    await user.click(screen.getByRole('button', { name: /edit setup/i }))
+
+    expect(
+      screen.getByRole('radiogroup', { name: /finished weight/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('slider', { name: /mix handle/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('a finished-weight choice survives navigation between steps', async () => {
+    const user = userEvent.setup()
+    renderTwoStep()
+
+    const weightGroup = screen.getByRole('radiogroup', { name: /finished weight/i })
+    await user.click(within(weightGroup).getByRole('radio', { name: /^L$/i }))
+
+    await user.click(screen.getByRole('button', { name: /continue to timing/i }))
+    await user.click(screen.getByRole('button', { name: /edit setup/i }))
+
+    const restored = screen.getByRole('radiogroup', { name: /finished weight/i })
+    expect(within(restored).getByRole('radio', { name: /^L$/i })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
   })
 })

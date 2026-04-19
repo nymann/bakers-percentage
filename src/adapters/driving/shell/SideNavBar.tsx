@@ -22,7 +22,7 @@ export function SideNavBar({ view, onOpenSettings }: SideNavBarProps) {
       aria-label="Primary shell"
       data-expanded={expanded}
       className={cn(
-        'relative flex flex-col h-screen sticky top-0 overflow-y-auto bg-surface-container-high shadow-[20px_0_40px_rgba(49,51,44,0.05)] transition-[width] duration-200 ease-in-out',
+        'relative sticky top-0 h-screen flex flex-col bg-surface-container-high shadow-[20px_0_40px_rgba(49,51,44,0.05)] transition-[width] duration-200 ease-in-out z-20',
         expanded ? 'w-60 sm:w-72' : 'w-20',
       )}
     >
@@ -32,13 +32,14 @@ export function SideNavBar({ view, onOpenSettings }: SideNavBarProps) {
         aria-controls="side-nav-body"
         aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
         onClick={toggle}
-        className="absolute top-5 -right-3 w-6 h-6 rounded-full bg-surface-container-high border border-outline-variant/30 shadow-sm flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors z-10"
+        className="absolute top-5 -right-3 w-6 h-6 rounded-full bg-surface-container-high border border-outline-variant/30 shadow-sm flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors z-30"
       >
         <span aria-hidden="true" className="material-symbols-outlined !text-[16px] leading-none">
           {expanded ? 'chevron_left' : 'chevron_right'}
         </span>
       </button>
 
+      <div className="flex-1 flex flex-col overflow-y-auto min-h-0">
       <div id="side-nav-body" className={cn('pt-8', expanded ? 'px-6 sm:px-8' : 'px-3')}>
         <header
           role="banner"
@@ -139,6 +140,7 @@ export function SideNavBar({ view, onOpenSettings }: SideNavBarProps) {
           </span>
           {expanded && <span>Settings</span>}
         </button>
+      </div>
       </div>
     </aside>
   )
